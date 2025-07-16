@@ -8,6 +8,10 @@ const usersRoutes = require('./routes/users'); // Nouvelle ligne
 const path = require('path');
 
 dotenv.config();
+// server.js
+const connectDB = require('./db/config');
+connectDB(); // juste après dotenv.config()
+
 
 const app = express();
 

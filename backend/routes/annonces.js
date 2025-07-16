@@ -1,103 +1,56 @@
 const express = require('express');
-const pool = require('../db/config');
 const authenticateToken = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
+const Annonce = require('../models/Annonce');
 
 const router = express.Router();
 
-// Configuration Multer pour l'upload d'images
+// Multer pour upload d'images
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  }
+  destination: (req, file, cb) => cb(null, 'uploads/'),
+  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
 });
-
 const upload = multer({ storage });
 
-// Obtenir toutes les annonces avec filtres
+
+
+// Obtenir annonces avec filtres
 router.get('/', async (req, res) => {
+  const filters = { is_active: req.query.show_inactive === 'true' ? { $in: [true, false] } : true };
+  if (req.query.categorie) filters.categorie_id = req.query.categorie;
+  if (req.query.ville) filters.ville = new RegExp(req.query.ville, 'i');
+  if (req.query.min_prix) filters.prix = { ...filters.prix, $gte: req.query.min_prix };
+  if (req.query.max_prix) filters.prix = { ...filters.prix, $lte: req.query.max_prix };
+  if (req.query.recherche) {
+    filters.$or = [
+      { titre: new RegExp(req.query.recherche, 'i') },
+      { description: new RegExp(req.query.recherche, 'i') }
+    ];
+  }
+
   try {
-    const { categorie, ville, min_prix, max_prix, recherche } = req.query;
-    let query = `
-      SELECT a.*, c.nom as categorie_nom, u.nom as user_nom, u.telephone, u.email
-      FROM annonces a
-      JOIN categories c ON a.categorie_id = c.id
-      JOIN users u ON a.user_id = u.id
-      WHERE 1=1
-    `;
-    const params = [];
-    let paramIndex = 1;
-
-    if (categorie && !isNaN(parseInt(categorie))) {
-      query += ` AND a.categorie_id = $${paramIndex}`;
-      params.push(categorie);
-      paramIndex++;
-    }
-
-
-    if (ville && ville.trim() !== '') {
-      query += ` AND LOWER(a.ville) LIKE LOWER($${paramIndex})`;
-      params.push(`%${ville}%`);
-      paramIndex++;
-    }
-
-    if (min_prix && !isNaN(parseFloat(min_prix))) {
-      query += ` AND a.prix >= $${paramIndex}`;
-      params.push(min_prix);
-      paramIndex++;
-    }
-
-    if (max_prix && !isNaN(parseFloat(max_prix))) {
-      query += ` AND a.prix <= $${paramIndex}`;
-      params.push(max_prix);
-      paramIndex++;
-    }
-
-    if (recherche && recherche.trim() !== '') {
-      query += ` AND (LOWER(a.titre) LIKE LOWER($${paramIndex}) OR LOWER(a.description) LIKE LOWER($${paramIndex}))`;
-      params.push(`%${recherche}%`);
-      paramIndex++;
-    }
-
-    query += ' ORDER BY a.date_publication DESC';
-
-    const result = await pool.query(query, params);
-    res.json(result.rows);
+    const annonces = await Annonce.find(filters)
+      .populate('categorie_id')
+      .populate('user_id')
+      .sort({ date_publication: -1 });
+    res.json(annonces);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
 
-// Obtenir une annonce par ID et incrémenter les vues
+// Obtenir annonce par ID
 router.get('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-    
-    // Incrémenter le nombre de vues
-    // await pool.query(
-    //   'UPDATE annonces SET nombre_vues = nombre_vues + 1 WHERE id = $1',
-    //   [id]
-    // );
-    
-    // Récupérer l'annonce avec les détails
-    const result = await pool.query(`
-      SELECT a.*, c.nom as categorie_nom, u.nom as user_nom, u.telephone, u.email
-      FROM annonces a
-      JOIN categories c ON a.categorie_id = c.id
-      JOIN users u ON a.user_id = u.id
-      WHERE a.id = $1
-    `, [id]);
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Annonce non trouvée' });
-    }
-    
-    res.json(result.rows[0]);
+    const annonce = await Annonce.findById(req.params.id)
+      .populate('categorie_id')
+      .populate('user_id');
+
+    if (!annonce) return res.status(404).json({ message: 'Annonce non trouvée' });
+
+    res.json(annonce);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Erreur serveur' });
@@ -106,16 +59,20 @@ router.get('/:id', async (req, res) => {
 
 // Incrémenter les vues d'une annonce
 router.patch('/:id/vues', async (req, res) => {
-  const { id } = req.params;
-
   try {
-    await pool.query(
-      'UPDATE annonces SET nombre_vues = nombre_vues + 1 WHERE id = $1',
-      [id]
+    const annonce = await Annonce.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { nombre_vues: 1 } },
+      { new: true }
     );
-    res.status(200).json({ message: 'Vues incrémentées' });
+
+    if (!annonce) {
+      return res.status(404).json({ message: 'Annonce non trouvée' });
+    }
+
+    res.json({ message: 'Nombre de vues incrémenté', nombre_vues: annonce.nombre_vues });
   } catch (error) {
-    console.error('Erreur incrémentation vues :', error);
+    console.error(error);
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
@@ -124,21 +81,11 @@ router.patch('/:id/vues', async (req, res) => {
 // Créer une nouvelle annonce (authentification requise)
 router.post('/', authenticateToken, upload.array('images', 5), async (req, res) => {
   try {
-    const { titre, description, prix, categorie_id, ville, marque, etat } = req.body;
-    const user_id = req.user.id;
-    const images = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
-    
-    const result = await pool.query(
-      `INSERT INTO annonces (titre, description, prix, categorie_id, user_id, ville, marque, etat, images)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-       RETURNING *`,
-      [titre, description, prix, categorie_id, user_id, ville, marque, etat, images]
-    );
-    
-    res.status(201).json({
-      message: 'Annonce créée avec succès',
-      annonce: result.rows[0]
-    });
+    const images = req.files ? req.files.map(f => `/uploads/${f.filename}`) : [];
+    const annonce = new Annonce({ ...req.body, user_id: req.user.id, images });
+
+    await annonce.save();
+    res.status(201).json({ message: 'Annonce créée', annonce });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Erreur serveur' });
@@ -148,17 +95,11 @@ router.post('/', authenticateToken, upload.array('images', 5), async (req, res) 
 // Obtenir les annonces d'un utilisateur
 router.get('/user/mes-annonces', authenticateToken, async (req, res) => {
   try {
-    const user_id = req.user.id;
-    
-    const result = await pool.query(`
-      SELECT a.*, c.nom as categorie_nom
-      FROM annonces a
-      JOIN categories c ON a.categorie_id = c.id
-      WHERE a.user_id = $1
-      ORDER BY a.date_publication DESC
-    `, [user_id]);
-    
-    res.json(result.rows);
+    const annonces = await Annonce.find({ user_id: req.user.id })
+      .populate('categorie_id')
+      .sort({ date_publication: -1 });
+
+    res.json(annonces);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Erreur serveur' });
@@ -166,16 +107,13 @@ router.get('/user/mes-annonces', authenticateToken, async (req, res) => {
 });
 
 router.delete('/:id', authenticateToken, async (req, res) => {
-  const { id } = req.params;
-  const userId = req.user.id;
-
   try {
-    const check = await pool.query('SELECT * FROM annonces WHERE id = $1 AND user_id = $2', [id, userId]);
-    if (check.rows.length === 0) {
-      return res.status(403).json({ message: 'Accès refusé' });
+    const annonce = await Annonce.findOneAndDelete({ _id: req.params.id, user_id: req.user.id });
+
+    if (!annonce) {
+      return res.status(403).json({ message: 'Accès refusé ou annonce inexistante' });
     }
 
-    await pool.query('DELETE FROM annonces WHERE id = $1', [id]);
     res.json({ message: 'Annonce supprimée avec succès' });
   } catch (error) {
     console.error(error);
@@ -184,45 +122,37 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 });
 
 router.put('/:id', authenticateToken, upload.array('images', 5), async (req, res) => {
-  const { id } = req.params;
-  const userId = req.user.id;
   const { titre, description, prix, ville, marque, etat, categorie_id, existingImages } = req.body;
 
   try {
-    const check = await pool.query('SELECT * FROM annonces WHERE id = $1 AND user_id = $2', [id, userId]);
-    if (check.rows.length === 0) {
+    const annonce = await Annonce.findOne({ _id: req.params.id, user_id: req.user.id });
+    if (!annonce) {
       return res.status(403).json({ message: 'Accès refusé' });
     }
 
-    // Gérer les images
     let finalImages = [];
-    
-    // Conserver les images existantes
+
     if (existingImages) {
-      const parsedExistingImages = JSON.parse(existingImages);
-      finalImages = [...parsedExistingImages];
+      finalImages = JSON.parse(existingImages);
     }
-    
-    // Ajouter les nouvelles images
+
     if (req.files && req.files.length > 0) {
       const newImages = req.files.map(file => `/uploads/${file.filename}`);
-      finalImages = [...finalImages, ...newImages];
+      finalImages = finalImages.concat(newImages);
     }
 
-    await pool.query(`
-      UPDATE annonces SET
-        titre = $1,
-        description = $2,
-        prix = $3,
-        ville = $4,
-        marque = $5,
-        etat = $6,
-        categorie_id = $7,
-        images = $8
-      WHERE id = $9
-    `, [titre, description, prix, ville, marque, etat, categorie_id, finalImages, id]);
+    annonce.titre = titre;
+    annonce.description = description;
+    annonce.prix = prix;
+    annonce.ville = ville;
+    annonce.marque = marque;
+    annonce.etat = etat;
+    annonce.categorie_id = categorie_id;
+    annonce.images = finalImages;
 
-    res.json({ message: 'Annonce mise à jour avec succès' });
+    await annonce.save();
+
+    res.json({ message: 'Annonce mise à jour avec succès', annonce });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Erreur serveur' });
@@ -231,17 +161,26 @@ router.put('/:id', authenticateToken, upload.array('images', 5), async (req, res
 
 router.get('/user/:userId', async (req, res) => {
   try {
-    const { userId } = req.params;
-    
-    const result = await pool.query(`
-      SELECT a.*, c.nom as categorie_nom
-      FROM annonces a
-      JOIN categories c ON a.categorie_id = c.id
-      WHERE a.user_id = $1
-      ORDER BY a.date_publication DESC
-    `, [userId]);
-    
-    res.json(result.rows);
+    const annonces = await Annonce.find({ user_id: req.params.userId, is_active: true })
+      .populate('categorie_id')
+      .sort({ date_publication: -1 });
+
+    res.json(annonces);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// Activer/Désactiver une annonce
+router.patch('/:id/toggle-status', authenticateToken, async (req, res) => {
+  try {
+    const annonce = await Annonce.findOne({ _id: req.params.id, user_id: req.user.id });
+    if (!annonce) return res.status(403).json({ message: 'Accès refusé' });
+
+    annonce.is_active = !annonce.is_active;
+    await annonce.save();
+    res.json({ message: 'Statut mis à jour', is_active: annonce.is_active });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Erreur serveur' });

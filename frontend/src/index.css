@@ -1,3 +1,27 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Animation pour le toggle switch */
+.toggle-switch {
+  transition: background-color 0.2s ease-in-out;
+}
+
+.toggle-switch span {
+  transition: transform 0.2s ease-in-out;
+}
+
+/* Hover effects pour le tableau */
+tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+/* Style pour les boutons de pagination */
+.pagination-button:not(:disabled):hover {
+  background-color: #f3f4f6;
+}
+
+.pagination-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}

@@ -33,9 +33,14 @@ const HomePage = () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
+      
+      // Ajouter les filtres
       Object.keys(filters).forEach(key => {
         if (filters[key]) params.append(key, filters[key]);
       });
+      
+      // Ne pas afficher les annonces inactives sur la page d'accueil
+      params.append('show_inactive', 'false');
       
       const response = await axios.get(`http://localhost:5000/api/annonces?${params}`);
       setAnnonces(response.data);

@@ -1,12 +1,16 @@
-const { Pool } = require('pg');
-require('dotenv').config();
+const mongoose = require('mongoose');
 
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
-});
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/annoncesDB', {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
+    console.log('✅ MongoDB connecté');
+  } catch (err) {
+    console.error('❌ Erreur connexion MongoDB:', err.message);
+    process.exit(1);
+  }
+};
 
-module.exports = pool;
+module.exports = connectDB;
