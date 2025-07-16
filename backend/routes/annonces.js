@@ -183,15 +183,30 @@ router.delete('/:id', authenticateToken, async (req, res) => {
   }
 });
 
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', authenticateToken, upload.array('images', 5), async (req, res) => {
   const { id } = req.params;
   const userId = req.user.id;
-  const { titre, description, prix, ville, marque, etat, categorie_id, images } = req.body;
+  const { titre, description, prix, ville, marque, etat, categorie_id, existingImages } = req.body;
 
   try {
     const check = await pool.query('SELECT * FROM annonces WHERE id = $1 AND user_id = $2', [id, userId]);
     if (check.rows.length === 0) {
       return res.status(403).json({ message: 'Accès refusé' });
+    }
+
+    // Gérer les images
+    let finalImages = [];
+    
+    // Conserver les images existantes
+    if (existingImages) {
+      const parsedExistingImages = JSON.parse(existingImages);
+      finalImages = [...parsedExistingImages];
+    }
+    
+    // Ajouter les nouvelles images
+    if (req.files && req.files.length > 0) {
+      const newImages = req.files.map(file => `/uploads/${file.filename}`);
+      finalImages = [...finalImages, ...newImages];
     }
 
     await pool.query(`
@@ -205,9 +220,28 @@ router.put('/:id', authenticateToken, async (req, res) => {
         categorie_id = $7,
         images = $8
       WHERE id = $9
-    `, [titre, description, prix, ville, marque, etat, categorie_id, images, id]);
+    `, [titre, description, prix, ville, marque, etat, categorie_id, finalImages, id]);
 
     res.json({ message: 'Annonce mise à jour avec succès' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+router.get('/user/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    const result = await pool.query(`
+      SELECT a.*, c.nom as categorie_nom
+      FROM annonces a
+      JOIN categories c ON a.categorie_id = c.id
+      WHERE a.user_id = $1
+      ORDER BY a.date_publication DESC
+    `, [userId]);
+    
+    res.json(result.rows);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Erreur serveur' });

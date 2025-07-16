@@ -8,8 +8,9 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import CreateAnnonce from './pages/CreateAnnonce';
 import MesAnnonces from './pages/MesAnnonces';
-import PrivateRoute from './components/PrivateRoute';
 import EditAnnoncePage from './pages/EditAnnoncePage';
+import ProfilePage from './pages/ProfilePage';
+import PrivateRoute from './components/PrivateRoute';
 
 function App() {
   return (
@@ -22,8 +23,7 @@ function App() {
             <Route path="/annonce/:id" element={<AnnonceDetail />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/modifier-annonce/:id" element={<EditAnnoncePage />} />
-
+            <Route path="/profil/:userId" element={<ProfilePage />} />
             <Route
               path="/nouvelle-annonce"
               element={
@@ -37,6 +37,14 @@ function App() {
               element={
                 <PrivateRoute>
                   <MesAnnonces />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/modifier-annonce/:id"
+              element={
+                <PrivateRoute>
+                  <EditAnnoncePage />
                 </PrivateRoute>
               }
             />

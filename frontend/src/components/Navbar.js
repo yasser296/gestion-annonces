@@ -48,6 +48,13 @@ const Navbar = () => {
                       {user.nom}
                     </div>
                     <Link
+                      to={`/profil/${user.id}`}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setShowMenu(false)}
+                    >
+                      Mon profil
+                    </Link>
+                    <Link
                       to="/mes-annonces"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       onClick={() => setShowMenu(false)}
