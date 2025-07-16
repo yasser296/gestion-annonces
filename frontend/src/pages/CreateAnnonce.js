@@ -145,11 +145,19 @@ const CreateAnnonce = () => {
               <input
                 type="number"
                 name="prix"
-                required
                 value={formData.prix}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={(e) => {
+                  const value = parseFloat(e.target.value);
+                  if (value >= 0 || e.target.value === '') {
+                    setFormData({ ...formData, prix: e.target.value });
+                  }
+                }}
+                placeholder="Prix"
+                className="w-full p-2 border rounded"
+                min="0"
+                step="1"
               />
+
             </div>
             
             <div>
