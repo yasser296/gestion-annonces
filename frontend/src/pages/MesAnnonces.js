@@ -37,6 +37,7 @@ const MesAnnonces = () => {
 
   const handleToggleStatus = async (id, currentStatus) => {
     try {
+      // console.log("working");
       await axios.patch(
         `http://localhost:5000/api/annonces/${id}/toggle-status`,
         {},
@@ -49,7 +50,7 @@ const MesAnnonces = () => {
       
       // Mettre à jour l'état local
       setAnnonces(annonces.map(annonce => 
-        annonce.id === id ? { ...annonce, is_active: !currentStatus } : annonce
+        annonce._id === id ? { ...annonce, is_active: !currentStatus } : annonce
       ));
     } catch (error) {
       console.error('Erreur lors du changement de statut:', error);
@@ -87,7 +88,7 @@ const MesAnnonces = () => {
       setSelectedIds([]);
       setSelectAll(false);
     } else {
-      const allIds = currentAnnonces.map(annonce => annonce.id);
+      const allIds = currentAnnonces.map(annonce => annonce._id);
       setSelectedIds(allIds);
       setSelectAll(true);
     }
@@ -133,7 +134,7 @@ const MesAnnonces = () => {
       // Modifier le statut de chaque annonce sélectionnée
       await Promise.all(
         selectedIds.map(id => {
-          const annonce = annonces.find(a => a.id === id);
+          const annonce = annonces.find(a => a._id === id);
           if (annonce && annonce.is_active !== activate) {
             return axios.patch(
               `http://localhost:5000/api/annonces/${id}/toggle-status`,
@@ -167,7 +168,7 @@ const MesAnnonces = () => {
   // Vérifier si toutes les annonces de la page actuelle sont sélectionnées
   useEffect(() => {
     const allCurrentSelected = currentAnnonces.length > 0 && 
-      currentAnnonces.every(annonce => selectedIds.includes(annonce.id));
+      currentAnnonces.every(annonce => selectedIds.includes(annonce._id));
     setSelectAll(allCurrentSelected);
   }, [selectedIds, currentAnnonces]);
 
@@ -281,10 +282,10 @@ const MesAnnonces = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {currentAnnonces.map((annonce) => (
                   <tr 
-                    key={annonce.id} 
+                    key={annonce._id} 
                     className="hover:bg-gray-50 cursor-pointer"
                     onClick={(e) => {
-                      // Ne pas naviguer si on clique sur un bouton, checkbox ou toggle
+                      // Ne pas naviguer si on clique sur un bouton, checkbox ou 
                       if (
                         e.target.type === 'checkbox' || 
                         e.target.closest('button') ||
@@ -292,15 +293,15 @@ const MesAnnonces = () => {
                       ) {
                         return;
                       }
-                      navigate(`/annonce/${annonce.id}`);
+                      navigate(`/annonce/${annonce._id}`);
                     }}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <input 
                         type="checkbox" 
                         className="rounded"
-                        checked={selectedIds.includes(annonce.id)}
-                        onChange={() => handleSelectOne(annonce.id)}
+                        checked={selectedIds.includes(annonce._id)}
+                        onChange={() => handleSelectOne(annonce._id)}
                         onClick={(e) => e.stopPropagation()}
                       />
                     </td>
@@ -332,7 +333,9 @@ const MesAnnonces = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-900">{annonce.categorie_nom}</span>
+                      <span className="text-sm text-gray-900">
+                        {annonce.categorie_id?.nom || 'Sans catégorie'}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div 
@@ -340,7 +343,7 @@ const MesAnnonces = () => {
                         onClick={(e) => e.stopPropagation()}
                       >
                         <button
-                          onClick={() => handleToggleStatus(annonce.id, annonce.is_active)}
+                          onClick={() => handleToggleStatus(annonce._id, annonce.is_active)}
                           className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                           style={{ backgroundColor: annonce.is_active !== false ? '#10b981' : '#ef4444' }}
                         >
@@ -364,7 +367,7 @@ const MesAnnonces = () => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate(`/modifier-annonce/${annonce.id}`);
+                          navigate(`/modifier-annonce/${annonce._id}`);
                         }}
                         className="text-blue-600 hover:text-blue-900 mr-3"
                       >
@@ -375,7 +378,7 @@ const MesAnnonces = () => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDelete(annonce.id);
+                          handleDelete(annonce._id);
                         }}
                         className="text-red-600 hover:text-red-900"
                       >

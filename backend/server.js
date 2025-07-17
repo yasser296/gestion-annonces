@@ -4,7 +4,8 @@ const dotenv = require('dotenv');
 const authRoutes = require('./routes/auth');
 const annoncesRoutes = require('./routes/annonces');
 const categoriesRoutes = require('./routes/categories');
-const usersRoutes = require('./routes/users'); // Nouvelle ligne
+const usersRoutes = require('./routes/users');
+const adminRoutes = require('./routes/admin'); 
 const path = require('path');
 
 dotenv.config();
@@ -25,7 +26,8 @@ app.use('/uploads', express.static('uploads'));
 app.use('/api/auth', authRoutes);
 app.use('/api/annonces', annoncesRoutes);
 app.use('/api/categories', categoriesRoutes);
-app.use('/api/users', usersRoutes); // Nouvelle ligne
+app.use('/api/users', usersRoutes);
+app.use('/api/admin', adminRoutes);
 
 const PORT = process.env.PORT || 5000;
 

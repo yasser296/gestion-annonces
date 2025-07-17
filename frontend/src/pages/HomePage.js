@@ -34,12 +34,10 @@ const HomePage = () => {
       setLoading(true);
       const params = new URLSearchParams();
       
-      // Ajouter les filtres
       Object.keys(filters).forEach(key => {
         if (filters[key]) params.append(key, filters[key]);
       });
       
-      // Ne pas afficher les annonces inactives sur la page d'accueil
       params.append('show_inactive', 'false');
       
       const response = await axios.get(`http://localhost:5000/api/annonces?${params}`);
@@ -96,7 +94,7 @@ const HomePage = () => {
           >
             <option value="">Toutes catégories</option>
             {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
+              <option key={cat._id} value={cat._id}>
                 {cat.nom}
               </option>
             ))}
@@ -147,8 +145,8 @@ const HomePage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {annonces.map((annonce) => (
             <div
-              key={annonce.id}
-              onClick={() => navigate(`/annonce/${annonce.id}`)}
+              key={annonce._id}
+              onClick={() => navigate(`/annonce/${annonce._id}`)}
               className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-xl transition-shadow"
             >
               <div className="h-48 bg-gray-200">
@@ -173,7 +171,7 @@ const HomePage = () => {
                 
                 <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
                   <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                    {annonce.categorie_nom}
+                    {annonce.categorie_id?.nom || 'Sans catégorie'}
                   </span>
                   <span className="flex items-center">
                     <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

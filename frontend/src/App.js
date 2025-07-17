@@ -11,6 +11,10 @@ import MesAnnonces from './pages/MesAnnonces';
 import EditAnnoncePage from './pages/EditAnnoncePage';
 import ProfilePage from './pages/ProfilePage';
 import PrivateRoute from './components/PrivateRoute';
+import AdminRoute from './components/AdminRoute';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminAnnonces from './pages/admin/AdminAnnonces';
 
 function App() {
   return (
@@ -46,6 +50,30 @@ function App() {
                 <PrivateRoute>
                   <EditAnnoncePage />
                 </PrivateRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                <AdminRoute>
+                  <AdminUsers />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/annonces"
+              element={
+                <AdminRoute>
+                  <AdminAnnonces />
+                </AdminRoute>
               }
             />
           </Routes>

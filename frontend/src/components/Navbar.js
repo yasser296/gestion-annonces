@@ -6,6 +6,8 @@ const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
+  console.log(user);
+
 
   const handleLogout = () => {
     logout();
@@ -47,6 +49,15 @@ const Navbar = () => {
                     <div className="px-4 py-2 text-sm text-gray-700 border-b">
                       {user.nom}
                     </div>
+                    {user && user.role === 'admin' && (
+                      <Link
+                        to="/admin"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setShowMenu(false)}
+                      >
+                        Administration
+                      </Link>
+                    )}
                     <Link
                       to={`/profil/${user.id}`}
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -86,6 +97,7 @@ const Navbar = () => {
                 </Link>
               </div>
             )}
+            
           </div>
         </div>
       </div>

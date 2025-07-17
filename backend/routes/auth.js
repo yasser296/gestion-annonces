@@ -50,17 +50,20 @@ router.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user._id, email: user.email },
+      { id: user._id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
+    console.log("USER RENVOYÉ", user);
+
 
     res.json({
       token,
       user: {
         id: user._id,
         nom: user.nom,
-        email: user.email
+        email: user.email,
+        role: user.role
       }
     });
   } catch (error) {

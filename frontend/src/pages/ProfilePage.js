@@ -155,7 +155,7 @@ const ProfilePage = () => {
                   <p className="font-medium">{profileData.telephone}</p>
                 </div>
                 
-                {isOwnProfile && (
+                {(isOwnProfile || currentUser.role === "admin") && (
                   <button
                     onClick={() => setEditMode(true)}
                     className="w-full mt-4 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
@@ -262,8 +262,8 @@ const ProfilePage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {userAnnonces.map((annonce) => (
                 <div
-                  key={annonce.id}
-                  onClick={() => navigate(`/annonce/${annonce.id}`)}
+                  key={annonce._id}
+                  onClick={() => navigate(`/annonce/${annonce._id}`)}
                   className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-xl transition-shadow"
                 >
                   <div className="h-48 bg-gray-200">
