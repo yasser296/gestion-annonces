@@ -21,13 +21,18 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['user', 'admin'],
+    enum: ['user', 'vendeur', 'admin'],
     default: 'user'
   },
   date_inscription: {
     type: Date,
     default: Date.now
-  }
+  },
+  bloque_demande_vendeur: {
+  type: Boolean,
+  default: false,
+}
+
 });
 
 module.exports = mongoose.model('User', userSchema);

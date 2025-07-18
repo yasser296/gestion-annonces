@@ -1,18 +1,62 @@
-import React, { useState } from 'react';
+import React, { useEffect ,useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import axios from 'axios';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
-  console.log(user);
+  const [canCreateAnnonce, setCanCreateAnnonce] = useState(false);
+  const [createAnnonceReason, setCreateAnnonceReason] = useState('');
 
 
   const handleLogout = () => {
     logout();
     navigate('/');
     setShowMenu(false);
+  };
+
+  useEffect(() => {
+    if (user) {
+      checkCanCreateAnnonce();
+    }
+  }, [user]);
+
+  const checkCanCreateAnnonce = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/demandes-vendeur/can-create-annonce', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      setCanCreateAnnonce(response.data.canCreate);
+      setCreateAnnonceReason(response.data.reason);
+    } catch (error) {
+      console.error('Erreur:', error);
+    }
+  };
+
+  const handleCreateAnnonceClick = () => {
+    console.log(canCreateAnnonce);
+    console.log(createAnnonceReason);
+    if (canCreateAnnonce) {
+      navigate('/nouvelle-annonce');
+    } 
+    else if (createAnnonceReason === 'demande_en_cours') {
+      alert('Votre demande pour devenir vendeur est en cours de traitement');
+    }
+    else if (createAnnonceReason === 'demande_refusee') {
+      navigate('/demande-vendeur');
+    } 
+
+    else if (createAnnonceReason === 'not_vendeur') {
+      navigate('/demande-vendeur');
+    } 
+    else {
+      alert("Vous n'avez pas la permission de créer une annonce ");
+      navigate('/');
+    }
   };
 
   return (
@@ -26,12 +70,21 @@ const Navbar = () => {
           </div>
           
           <div className="flex items-center space-x-4">
-            <Link
-              to="/nouvelle-annonce"
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-            >
-              + Déposer une annonce
-            </Link>
+            {user ? (
+              <button
+                onClick={handleCreateAnnonceClick}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+              >
+                + Déposer une annonce
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+              >
+                + Déposer une annonce
+              </Link>
+            )}
 
             {user ? (
               <div className="relative">

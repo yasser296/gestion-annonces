@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { categoryColors } from "../components/colorMap";
 
 const HomePage = () => {
   const [annonces, setAnnonces] = useState([]);
@@ -14,6 +15,26 @@ const HomePage = () => {
     recherche: ''
   });
   const navigate = useNavigate();
+  const categoryNames = [
+    "Appartements", "Meubles", "Voitures", "Vêtements", "Électronique"
+  ];
+
+  const [categoryFilter, setCategoryFilter] = useState(null);
+  const annoncesFiltrees = categoryFilter
+  ? annonces.filter(a => a.categorie_id?.nom === categoryFilter)
+  : annonces;
+
+  // categoryColors.js (ou en haut du composant)
+  
+  
+  // const categoryColors = {
+  //   "Appartements": "bg-green-100 text-green-800",
+  //   "Meubles": "bg-yellow-100 text-yellow-800",
+  //   "Voitures": "bg-red-100 text-red-800",
+  //   "Vêtements": "bg-purple-100 text-purple-800",
+  //   "Électronique": "bg-blue-100 text-blue-800",
+  // };
+
 
   useEffect(() => {
     fetchCategories();
@@ -59,6 +80,20 @@ const HomePage = () => {
   const handleSearch = () => {
     fetchAnnonces();
   };
+
+  const handleResetFilters = () => {
+  setFilters({
+    categorie: '',
+    ville: '',
+    min_prix: '',
+    max_prix: '',
+    recherche: ''
+  });
+  // Optionnel : réinitialise aussi le filtre par boutons si besoin
+  setCategoryFilter && setCategoryFilter(null); 
+  fetchAnnonces();
+};
+
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('fr-MA', {
@@ -127,13 +162,40 @@ const HomePage = () => {
             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           
-          <button
-            onClick={handleSearch}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-          >
-            Filtrer
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleSearch}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+            >
+              Filtrer
+            </button>
+            <button
+              onClick={handleResetFilters}
+              className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
+            >
+              Réinitialiser
+            </button>
+          </div>
         </div>
+      </div>
+      
+      <div className="flex gap-4 my-6">
+        {categoryNames.map(cat => {
+          const color = categoryColors[cat] || { bg: "bg-gray-100", text: "text-gray-800" };
+          const isSelected = categoryFilter === cat;
+          return (
+            <button
+              key={cat}
+              onClick={() => setCategoryFilter(isSelected ? null : cat)}
+              className={`flex items-center px-4 py-2 rounded-lg font-semibold border transition 
+                ${color.bg} ${color.text} 
+                ${isSelected ? 'ring-2 ring-blue-500' : 'hover:scale-105'}
+              `}
+            >
+              {cat}
+            </button>
+          );
+        })}
       </div>
 
       {/* Liste des annonces */}
@@ -143,7 +205,8 @@ const HomePage = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {annonces.map((annonce) => (
+          {annoncesFiltrees.map((annonce) => (
+            
             <div
               key={annonce._id}
               onClick={() => navigate(`/annonce/${annonce._id}`)}
@@ -170,9 +233,19 @@ const HomePage = () => {
                 <p className="text-2xl font-bold text-blue-600 mb-2">{formatPrice(annonce.prix)}</p>
                 
                 <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
-                  <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                  <span
+                    className={
+                      [
+                        categoryColors[annonce.categorie_id?.nom]?.bg || "bg-gray-100",
+                        categoryColors[annonce.categorie_id?.nom]?.text || "text-gray-800",
+                        "px-2 py-1 rounded"
+                      ].join(" ")
+                    }
+                  >
                     {annonce.categorie_id?.nom || 'Sans catégorie'}
                   </span>
+
+
                   <span className="flex items-center">
                     <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />

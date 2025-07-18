@@ -84,7 +84,7 @@ const AnnonceDetail = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Bouton de modification si propriétaire */}
-      {(isOwner || user.role === "admin") && (
+      {(isOwner || (user && user.role === "admin")) && (
         <div className="mb-4 flex justify-end">
           <button
             onClick={() => navigate(`/modifier-annonce/${id}`)}

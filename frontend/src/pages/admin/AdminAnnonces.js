@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { confirmDialog } from "../../utils/confirmDialog";
 
 const AdminAnnonces = () => {
   const [annonces, setAnnonces] = useState([]);
@@ -49,7 +50,11 @@ const AdminAnnonces = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette annonce ?')) {
+    const confirmed = await confirmDialog({
+      text: "Êtes-vous sûr de vouloir supprimer cette annonce ?",
+      confirmText: "Oui, supprimer",
+    });
+    if (confirmed) {
       try {
         await axios.delete(`http://localhost:5000/api/admin/annonces/${id}`, {
           headers: {
@@ -133,7 +138,19 @@ const AdminAnnonces = () => {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {currentAnnonces.map((annonce) => (
-              <tr key={annonce._id}>
+              <tr 
+                key={annonce._id}
+                className="hover:bg-gray-50 cursor-pointer"
+                    onClick={(e) => {
+                      // Ne pas naviguer si on clique sur un bouton, checkbox ou 
+                      if ( 
+                        e.target.closest('button') 
+                      ) {
+                        return;
+                      }
+                      navigate(`/annonce/${annonce._id}`);
+                    }}
+              >
                 <td className="px-6 py-4">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-10 w-10">
@@ -173,14 +190,15 @@ const AdminAnnonces = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <button
-                    onClick={() => handleToggleStatus(annonce._id)}
-                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full cursor-pointer ${
-                      annonce.is_active !== false
-                        ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                        : 'bg-red-100 text-red-800 hover:bg-red-200'
-                    }`}
+                    onClick={() => handleToggleStatus(annonce._id, annonce.is_active)}
+                    className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    style={{ backgroundColor: annonce.is_active !== false ? '#10b981' : '#ef4444' }}
                   >
-                    {annonce.is_active !== false ? 'Active' : 'Inactive'}
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      annonce.is_active !== false ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
                   </button>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

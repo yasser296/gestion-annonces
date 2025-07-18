@@ -15,6 +15,9 @@ import AdminRoute from './components/AdminRoute';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminAnnonces from './pages/admin/AdminAnnonces';
+import DemandeVendeur from './pages/DemandeVendeur';
+import AdminDemandesVendeur from './pages/admin/AdminDemandesVendeur';
+
 
 function App() {
   return (
@@ -73,6 +76,22 @@ function App() {
               element={
                 <AdminRoute>
                   <AdminAnnonces />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/demande-vendeur"
+              element={
+                <PrivateRoute>
+                  <DemandeVendeur />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/admin/demandes-vendeur"
+              element={
+                <AdminRoute>
+                  <AdminDemandesVendeur />
                 </AdminRoute>
               }
             />

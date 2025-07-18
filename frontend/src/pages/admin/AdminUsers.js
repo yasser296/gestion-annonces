@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { confirmDialog } from "../../utils/confirmDialog";
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
@@ -12,6 +13,13 @@ const AdminUsers = () => {
     telephone: ''
   });
   const navigate = useNavigate();
+  const roleStyles = {
+    admin:    { bg: "bg-purple-100", text: "text-purple-800", label: "Admin" },
+    vendeur:  { bg: "bg-orange-100",   text: "text-orange-800",   label: "Vendeur" },
+    user:     { bg: "bg-green-100",  text: "text-green-800",  label: "Utilisateur" }
+  };
+  
+
 
   useEffect(() => {
     fetchUsers();
@@ -69,7 +77,11 @@ const AdminUsers = () => {
   };
 
   const handleDelete = async (userId) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur et toutes ses annonces ?')) {
+    const confirmed = await confirmDialog({
+      text: "Êtes-vous sûr de vouloir supprimer cet utilisateur et toutes ses annonces ?",
+      confirmText: "Oui, supprimer",
+    });
+    if (confirmed) {
       try {
         await axios.delete(`http://localhost:5000/api/admin/users/${userId}`, {
           headers: {
@@ -84,6 +96,7 @@ const AdminUsers = () => {
     }
   };
 
+
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString('fr-FR');
   };
@@ -95,6 +108,24 @@ const AdminUsers = () => {
       </div>
     );
   }
+
+  const handleToggleBloquerDemande = async (userId, bloquer) => {
+  try {
+    await axios.patch(
+      `http://localhost:5000/api/demandes-vendeur/admin/user/${userId}/bloquer`,
+      { bloquer },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      }
+    );
+    fetchUsers();
+  } catch (error) {
+    console.error('Erreur:', error);
+    alert('Erreur lors de la modification');
+  }
+};
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -126,6 +157,9 @@ const AdminUsers = () => {
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Rôle
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Demandes vendeur
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
@@ -187,14 +221,31 @@ const AdminUsers = () => {
                   {user.nombre_annonces || 0}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    user.role === 'admin' 
-                      ? 'bg-purple-100 text-purple-800' 
-                      : 'bg-green-100 text-green-800'
-                  }`}>
-                    {user.role === 'admin' ? 'Admin' : 'Utilisateur'}
+                  <span
+                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                      ${roleStyles[user.role]?.bg || roleStyles.user.bg}
+                      ${roleStyles[user.role]?.text || roleStyles.user.text}
+                    `}
+                  >
+                    {roleStyles[user.role]?.label || roleStyles.user.label}
                   </span>
                 </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  {user && user.role === "user" && (
+                  <button
+                    onClick={() => handleToggleBloquerDemande(user._id, !user.bloque_demande_vendeur)}
+                    className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    style={{ backgroundColor: user.bloque_demande_vendeur === false ? '#10b981' : '#ef4444' }}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      user.bloque_demande_vendeur === false ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                  )}
+                </td>
+
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                 
                   {editingUser === user._id ? (

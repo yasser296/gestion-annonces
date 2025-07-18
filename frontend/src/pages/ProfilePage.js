@@ -155,7 +155,7 @@ const ProfilePage = () => {
                   <p className="font-medium">{profileData.telephone}</p>
                 </div>
                 
-                {(isOwnProfile || currentUser.role === "admin") && (
+                {(isOwnProfile || (currentUser && currentUser.role === "admin")) && (
                   <button
                     onClick={() => setEditMode(true)}
                     className="w-full mt-4 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"

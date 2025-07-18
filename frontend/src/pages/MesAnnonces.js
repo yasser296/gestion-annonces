@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 
 const MesAnnonces = () => {
   const [annonces, setAnnonces] = useState([]);
@@ -59,17 +60,29 @@ const MesAnnonces = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Voulez-vous vraiment supprimer cette annonce ?')) {
+    const result = await Swal.fire({
+      title: 'Supprimer cette annonce ?',
+      text: "Cette action est irréversible.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Oui, supprimer',
+      cancelButtonText: 'Annuler',
+    });
+
+    if (result.isConfirmed) {
       try {
         await axios.delete(`http://localhost:5000/api/annonces/${id}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
         });
+        Swal.fire('Supprimé !', 'L\'annonce a été supprimée.', 'success');
         fetchMesAnnonces();
       } catch (error) {
         console.error('Erreur lors de la suppression:', error);
-        alert('Erreur lors de la suppression');
+        Swal.fire('Erreur', 'Erreur lors de la suppression', 'error');
       }
     }
   };
