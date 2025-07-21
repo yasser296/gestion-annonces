@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import WishlistButton from '../components/WishlistButton';
+
 
 const AnnonceDetail = () => {
   const { id } = useParams();
@@ -11,6 +13,7 @@ const AnnonceDetail = () => {
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [isOwner, setIsOwner] = useState(false);
+
 
   const incrementViews = async () => {
     try {
@@ -168,7 +171,16 @@ const AnnonceDetail = () => {
         {/* Informations et contact */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
-            <h1 className="text-2xl font-bold mb-4">{annonce.titre}</h1>
+            <div className="flex justify-between items-start mb-4">
+              <h1 className="text-2xl font-bold">{annonce.titre}</h1>
+              <WishlistButton 
+                annonceId={annonce._id} 
+                isOwner={isOwner}
+                className="ml-2"
+                
+                
+              />
+            </div>
             <p className="text-3xl font-bold text-blue-600 mb-4">{formatPrice(annonce.prix)}</p>
             
             <div className="space-y-3 mb-6">

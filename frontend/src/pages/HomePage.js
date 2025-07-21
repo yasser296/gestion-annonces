@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { categoryColors } from "../components/colorMap";
+import WishlistButton from '../components/WishlistButton';
+import { useAuth } from '../contexts/AuthContext';
+
+
 
 const HomePage = () => {
   const [annonces, setAnnonces] = useState([]);
@@ -20,9 +24,14 @@ const HomePage = () => {
   ];
 
   const [categoryFilter, setCategoryFilter] = useState(null);
-  const annoncesFiltrees = categoryFilter
-  ? annonces.filter(a => a.categorie_id?.nom === categoryFilter)
-  : annonces;
+  
+
+  const { user } = useAuth();
+  
+  const annoncesFiltrees = annonces
+  .filter(a => !user || (a.user_id !== user.id && a.user_id?._id !== user.id))
+  .filter(a => !categoryFilter || a.categorie_id?.nom === categoryFilter);
+  
 
   // categoryColors.js (ou en haut du composant)
   
@@ -210,7 +219,7 @@ const HomePage = () => {
             <div
               key={annonce._id}
               onClick={() => navigate(`/annonce/${annonce._id}`)}
-              className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-xl transition-shadow"
+              className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-xl transition-shadow relative group"
             >
               <div className="h-48 bg-gray-200">
                 {annonce.images && annonce.images[0] ? (
@@ -226,6 +235,14 @@ const HomePage = () => {
                     </svg>
                   </div>
                 )}
+                {/* Bouton Wishlist */}
+                <div className="absolute top-2 right-2 ">
+                  <WishlistButton 
+                    annonceId={annonce._id} 
+                    isOwner={user && (annonce.user_id === user.id || annonce.user_id?._id === user.id)}
+                    className="shadow-lg"
+                  />
+                </div>
               </div>
               
               <div className="p-4">

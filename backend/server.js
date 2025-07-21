@@ -7,6 +7,7 @@ const categoriesRoutes = require('./routes/categories');
 const usersRoutes = require('./routes/users');
 const adminRoutes = require('./routes/admin'); 
 const demandesVendeurRoutes = require('./routes/demandesVendeur');
+const wishlistRoutes = require('./routes/wishlist');
 const path = require('path');
 
 dotenv.config();
@@ -30,6 +31,8 @@ app.use('/api/categories', categoriesRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/demandes-vendeur', demandesVendeurRoutes);
+app.use('/api/wishlist', wishlistRoutes);
+
 
 const PORT = process.env.PORT || 5000;
 

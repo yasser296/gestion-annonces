@@ -17,10 +17,13 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminAnnonces from './pages/admin/AdminAnnonces';
 import DemandeVendeur from './pages/DemandeVendeur';
 import AdminDemandesVendeur from './pages/admin/AdminDemandesVendeur';
+import WishlistPage from './pages/WishlistPage';
+import { WishlistProvider } from './contexts/WishlistContext';
 
 
 function App() {
   return (
+    
     <AuthProvider>
       <Router>
         <div className="min-h-screen bg-gray-50">
@@ -95,6 +98,11 @@ function App() {
                 </AdminRoute>
               }
             />
+            <Route path="/wishlist" element={
+              <PrivateRoute>
+                <WishlistPage />
+              </PrivateRoute>
+            } />
           </Routes>
         </div>
       </Router>

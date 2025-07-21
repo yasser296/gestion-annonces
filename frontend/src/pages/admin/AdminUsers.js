@@ -7,19 +7,20 @@ const AdminUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingUser, setEditingUser] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [formData, setFormData] = useState({
     nom: '',
     email: '',
-    telephone: ''
+    telephone: '',
+    role: ''
   });
   const navigate = useNavigate();
+  
   const roleStyles = {
     admin:    { bg: "bg-purple-100", text: "text-purple-800", label: "Admin" },
-    vendeur:  { bg: "bg-orange-100",   text: "text-orange-800",   label: "Vendeur" },
+    vendeur:  { bg: "bg-orange-100", text: "text-orange-800", label: "Vendeur" },
     user:     { bg: "bg-green-100",  text: "text-green-800",  label: "Utilisateur" }
   };
-  
-
 
   useEffect(() => {
     fetchUsers();
@@ -44,24 +45,66 @@ const AdminUsers = () => {
   };
 
   const handleEdit = (user) => {
-    setEditingUser(user._id);
+    setEditingUser(user);
     setFormData({
       nom: user.nom,
       email: user.email,
-      telephone: user.telephone
+      telephone: user.telephone,
+      role: user.role
     });
+    setShowEditModal(true);
   };
 
-  const handleCancelEdit = () => {
+  const handleCloseModal = () => {
+    setShowEditModal(false);
     setEditingUser(null);
-    setFormData({ nom: '', email: '', telephone: '' });
+    setFormData({ nom: '', email: '', telephone: '', role: '' });
   };
 
-  const handleSave = async (userId) => {
+  const handleSave = async (e) => {
+    e.preventDefault();
     try {
+      // Mettre à jour les informations de base
       await axios.put(
-        `http://localhost:5000/api/admin/users/${userId}`,
-        formData,
+        `http://localhost:5000/api/admin/users/${editingUser._id}`,
+        {
+          nom: formData.nom,
+          email: formData.email,
+          telephone: formData.telephone
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
+
+      // Si le rôle a changé, mettre à jour le rôle
+      if (formData.role !== editingUser.role) {
+        await axios.patch(
+          `http://localhost:5000/api/admin/users/${editingUser._id}/role`,
+          { role: formData.role },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`
+            }
+          }
+        );
+      }
+
+      fetchUsers();
+      handleCloseModal();
+    } catch (error) {
+      console.error('Erreur lors de la modification:', error);
+      alert(error.response?.data?.message || 'Erreur lors de la modification');
+    }
+  };
+
+  const handleQuickRoleChange = async (userId, newRole) => {
+    try {
+      await axios.patch(
+        `http://localhost:5000/api/admin/users/${userId}/role`,
+        { role: newRole },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -69,10 +112,9 @@ const AdminUsers = () => {
         }
       );
       fetchUsers();
-      handleCancelEdit();
     } catch (error) {
-      console.error('Erreur lors de la modification:', error);
-      alert('Erreur lors de la modification');
+      console.error('Erreur:', error);
+      alert(error.response?.data?.message || 'Erreur lors du changement de rôle');
     }
   };
 
@@ -96,6 +138,23 @@ const AdminUsers = () => {
     }
   };
 
+  const handleToggleBloquerDemande = async (userId, bloquer) => {
+    try {
+      await axios.patch(
+        `http://localhost:5000/api/demandes-vendeur/admin/user/${userId}/bloquer`,
+        { bloquer },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
+      fetchUsers();
+    } catch (error) {
+      console.error('Erreur:', error);
+      alert('Erreur lors de la modification');
+    }
+  };
 
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString('fr-FR');
@@ -108,24 +167,6 @@ const AdminUsers = () => {
       </div>
     );
   }
-
-  const handleToggleBloquerDemande = async (userId, bloquer) => {
-  try {
-    await axios.patch(
-      `http://localhost:5000/api/demandes-vendeur/admin/user/${userId}/bloquer`,
-      { bloquer },
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      }
-    );
-    fetchUsers();
-  } catch (error) {
-    console.error('Erreur:', error);
-    alert('Erreur lors de la modification');
-  }
-};
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -170,49 +211,18 @@ const AdminUsers = () => {
             {users.map((user) => (
               <tr key={user._id} 
                 className="hover:bg-gray-50 cursor-pointer"
-                    onClick={(e) => {
-                      // Ne pas naviguer si on clique sur un bouton, checkbox ou 
-                      if ( 
-                        e.target.closest('button')                       
-                      ) {
-                        return;
-                      }
-                      navigate(`/profil/${user._id}`);
-                    }}>
+                onClick={(e) => {
+                  if (e.target.closest('button') || e.target.closest('select')) return;
+                  navigate(`/profil/${user._id}`);
+                }}>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  {editingUser === user._id ? (
-                    <input
-                      type="text"
-                      value={formData.nom}
-                      onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
-                      className="px-2 py-1 border rounded"
-                    />
-                  ) : (
-                    <div className="text-sm font-medium text-gray-900">{user.nom}</div>
-                  )}
+                  <div className="text-sm font-medium text-gray-900">{user.nom}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  {editingUser === user._id ? (
-                    <div className="space-y-2">
-                      <input
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="px-2 py-1 border rounded w-full"
-                      />
-                      <input
-                        type="tel"
-                        value={formData.telephone}
-                        onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
-                        className="px-2 py-1 border rounded w-full"
-                      />
-                    </div>
-                  ) : (
-                    <div>
-                      <div className="text-sm text-gray-900">{user.email}</div>
-                      <div className="text-sm text-gray-500">{user.telephone}</div>
-                    </div>
-                  )}
+                  <div>
+                    <div className="text-sm text-gray-900">{user.email}</div>
+                    <div className="text-sm text-gray-500">{user.telephone}</div>
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {formatDate(user.date_inscription)}
@@ -221,68 +231,67 @@ const AdminUsers = () => {
                   {user.nombre_annonces || 0}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span
-                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                      ${roleStyles[user.role]?.bg || roleStyles.user.bg}
-                      ${roleStyles[user.role]?.text || roleStyles.user.text}
-                    `}
-                  >
-                    {roleStyles[user.role]?.label || roleStyles.user.label}
-                  </span>
+                  {user.role === 'admin' ? (
+                    <span
+                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${roleStyles.admin.bg} ${roleStyles.admin.text}`}
+                    >
+                      {roleStyles.admin.label}
+                    </span>
+                  ) : (
+                    <select
+                      value={user.role}
+                      onChange={(e) => handleQuickRoleChange(user._id, e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      className={`text-xs font-semibold rounded-full px-3 py-1 border-0 cursor-pointer
+                        ${roleStyles[user.role]?.bg || roleStyles.user.bg}
+                        ${roleStyles[user.role]?.text || roleStyles.user.text}
+                        hover:opacity-80 transition-opacity`}
+                    >
+                      <option value="user">Utilisateur</option>
+                      <option value="vendeur">Vendeur</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   {user && user.role === "user" && (
-                  <button
-                    onClick={() => handleToggleBloquerDemande(user._id, !user.bloque_demande_vendeur)}
-                    className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    style={{ backgroundColor: user.bloque_demande_vendeur === false ? '#10b981' : '#ef4444' }}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      user.bloque_demande_vendeur === false ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleBloquerDemande(user._id, !user.bloque_demande_vendeur);
+                      }}
+                      className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                      style={{ backgroundColor: user.bloque_demande_vendeur === false ? '#10b981' : '#ef4444' }}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          user.bloque_demande_vendeur === false ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
                   )}
                 </td>
-
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                
-                  {editingUser === user._id ? (
+                  {user.role !== 'admin' && (
                     <>
-                        
                       <button
-                        onClick={() => handleSave(user._id)}
-                        className="text-green-600 hover:text-green-900 mr-3"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(user);
+                        }}
+                        className="text-blue-600 hover:text-blue-900 mr-3"
                       >
-                        Enregistrer
+                        Modifier
                       </button>
                       <button
-                        onClick={handleCancelEdit}
-                        className="text-gray-600 hover:text-gray-900"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(user._id);
+                        }}
+                        className="text-red-600 hover:text-red-900"
                       >
-                        Annuler
+                        Supprimer
                       </button>
-                      
-                    </>
-                  ) : (
-                    <>
-                      {user.role !== 'admin' && (
-                        <>
-                        <button
-                            onClick={() => handleEdit(user)}
-                            className="text-blue-600 hover:text-blue-900 mr-3"
-                        >
-                            Modifier
-                        </button>
-                        <button
-                            onClick={() => handleDelete(user._id)}
-                            className="text-red-600 hover:text-red-900"
-                        >
-                            Supprimer
-                        </button>
-                        </>
-                    )}
                     </>
                   )}
                 </td>
@@ -291,6 +300,93 @@ const AdminUsers = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Modal de modification */}
+      {showEditModal && editingUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h2 className="text-xl font-bold mb-4">Modifier l'utilisateur</h2>
+            
+            <form onSubmit={handleSave} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nom
+                </label>
+                <input
+                  type="text"
+                  value={formData.nom}
+                  onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Téléphone
+                </label>
+                <input
+                  type="tel"
+                  value={formData.telephone}
+                  onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Rôle
+                </label>
+                <select
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={editingUser.role === 'admin'}
+                >
+                  <option value="user">Utilisateur</option>
+                  <option value="vendeur">Vendeur</option>
+                  <option value="admin">Admin</option>
+                </select>
+                {editingUser.role === 'admin' && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    Le rôle admin ne peut pas être modifié
+                  </p>
+                )}
+              </div>
+
+              <div className="flex space-x-3 pt-4">
+                <button
+                  type="submit"
+                  className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+                >
+                  Enregistrer
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 transition"
+                >
+                  Annuler
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -59,6 +59,39 @@ router.put('/users/:id', async (req, res) => {
   }
 });
 
+// Changer le rôle d'un utilisateur
+router.patch('/users/:id/role', async (req, res) => {
+  const { role } = req.body;
+  const validRoles = ['user', 'vendeur', 'admin'];
+
+  try {
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({ message: 'Rôle invalide' });
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    }
+
+    // Empêcher de retirer le dernier admin
+    if (user.role === 'admin' && role !== 'admin') {
+      const adminCount = await User.countDocuments({ role: 'admin' });
+      if (adminCount <= 1) {
+        return res.status(400).json({ message: 'Impossible de retirer le dernier administrateur' });
+      }
+    }
+
+    user.role = role;
+    await user.save();
+
+    res.json({ message: 'Rôle mis à jour avec succès', user: user.toObject() });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
 // Supprimer un utilisateur et ses annonces
 router.delete('/users/:id', async (req, res) => {
   try {

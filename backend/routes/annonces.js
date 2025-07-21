@@ -176,7 +176,7 @@ router.get('/user/:userId', async (req, res) => {
 router.patch('/:id/toggle-status', authenticateToken, async (req, res) => {
   try {
     const annonce = await Annonce.findOne({ _id: req.params.id, user_id: req.user.id });
-    if (!annonce) return res.status(403).json({ message: 'Accès refusé' });
+    if (!annonce) return res.status(403).json({ message: '' });
 
     annonce.is_active = !annonce.is_active;
     await annonce.save();
