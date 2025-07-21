@@ -3,6 +3,7 @@ const authenticateToken = require('../middleware/auth');
 const adminAuth = require('../middleware/adminAuth');
 const User = require('../models/User');
 const Annonce = require('../models/Annonce');
+const Role = require('../models/Role');
 
 const router = express.Router();
 
@@ -61,12 +62,12 @@ router.put('/users/:id', async (req, res) => {
 
 // Changer le rôle d'un utilisateur
 router.patch('/users/:id/role', async (req, res) => {
-  const { role } = req.body;
-  const validRoles = ['user', 'vendeur', 'admin'];
+  const { role_id } = req.body; // Maintenant on reçoit role_id au lieu de role
+  const validRoleIds = [1, 2, 3]; // admin, user, vendeur
 
   try {
-    if (!validRoles.includes(role)) {
-      return res.status(400).json({ message: 'Rôle invalide' });
+    if (!validRoleIds.includes(role_id)) {
+      return res.status(400).json({ message: 'ID de rôle invalide' });
     }
 
     const user = await User.findById(req.params.id);
@@ -75,17 +76,59 @@ router.patch('/users/:id/role', async (req, res) => {
     }
 
     // Empêcher de retirer le dernier admin
-    if (user.role === 'admin' && role !== 'admin') {
-      const adminCount = await User.countDocuments({ role: 'admin' });
+    if (user.role_id === 1 && role_id !== 1) {
+      const adminCount = await User.countDocuments({ role_id: 1 });
       if (adminCount <= 1) {
         return res.status(400).json({ message: 'Impossible de retirer le dernier administrateur' });
       }
     }
 
-    user.role = role;
+    const oldRoleId = user.role_id;
+    user.role_id = role_id;
     await user.save();
 
-    res.json({ message: 'Rôle mis à jour avec succès', user: user.toObject() });
+    // Gérer les demandes vendeur lors du changement de rôle
+    const DemandeVendeur = require('../models/DemandeVendeur');
+    
+    // Si on passe de user (2) à vendeur (3) directement
+    if (oldRoleId === 2 && role_id === 3) {
+      // Supprimer toutes les demandes en attente de cet utilisateur
+      await DemandeVendeur.deleteMany({ 
+        user_id: req.params.id, 
+        statut: 'en_attente' 
+      });
+      
+      // Créer une demande acceptée automatiquement pour garder une trace
+      await DemandeVendeur.create({
+        user_id: req.params.id,
+        statut: 'acceptee',
+        message_demande: 'Promotion directe par administrateur',
+        message_admin: `Rôle vendeur attribué directement par l'administrateur`,
+        date_traitement: new Date(),
+        traite_par: req.user.id
+      });
+    }
+    
+    // Si on retire le rôle vendeur (3 -> 2)
+    else if (oldRoleId === 3 && role_id === 2) {
+      // Supprimer toutes les demandes en attente
+      await DemandeVendeur.deleteMany({ 
+        user_id: req.params.id, 
+        statut: 'en_attente' 
+      });
+    }
+
+    // Récupérer le rôle pour la réponse
+    const role = await Role.findOne({ id: role_id });
+
+    res.json({ 
+      message: 'Rôle mis à jour avec succès', 
+      user: {
+        ...user.toObject(),
+        role: role ? role.titre : null
+      },
+      roleChanged: oldRoleId !== role_id 
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Erreur serveur' });

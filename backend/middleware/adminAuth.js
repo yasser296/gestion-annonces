@@ -1,12 +1,9 @@
+// backend/middleware/adminAuth.js
 const adminAuth = (req, res, next) => {
-  if (!req.user) {
-    return res.status(401).json({ message: 'Non authentifié' });
-  }
-
-  if (req.user.role !== 'admin') {
+  // Vérifier que l'utilisateur a le rôle admin (id = 1)
+  if (!req.user || req.user.role_id !== 1) {
     return res.status(403).json({ message: 'Accès réservé aux administrateurs' });
   }
-
   next();
 };
 

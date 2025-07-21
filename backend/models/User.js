@@ -1,3 +1,4 @@
+// backend/models/User.js
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
@@ -19,20 +20,31 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  role: {
-    type: String,
-    enum: ['user', 'vendeur', 'admin'],
-    default: 'user'
+  role_id: {
+    type: Number,
+    default: 2, // Par défaut : user (id = 2)
+    ref: 'Role'
   },
   date_inscription: {
     type: Date,
     default: Date.now
   },
   bloque_demande_vendeur: {
-  type: Boolean,
-  default: false,
-}
-
+    type: Boolean,
+    default: false,
+  }
 });
+
+// Méthode virtuelle pour récupérer facilement le titre du rôle
+userSchema.virtual('role', {
+  ref: 'Role',
+  localField: 'role_id',
+  foreignField: 'id',
+  justOne: true
+});
+
+// Activer les virtuals dans toJSON
+userSchema.set('toJSON', { virtuals: true });
+userSchema.set('toObject', { virtuals: true });
 
 module.exports = mongoose.model('User', userSchema);

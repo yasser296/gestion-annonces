@@ -11,6 +11,7 @@ const HomePage = () => {
   const [annonces, setAnnonces] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [categoryCounts, setCategoryCounts] = useState({});
   const [filters, setFilters] = useState({
     categorie: '',
     ville: '',
@@ -49,6 +50,21 @@ const HomePage = () => {
     fetchCategories();
     fetchAnnonces();
   }, []);
+
+  useEffect(() => {
+  calculateCategoryCounts(annonces);
+}, [annonces, user]);
+
+  const calculateCategoryCounts = (annoncesList) => {
+  const counts = {};
+  categoryNames.forEach(cat => {
+    counts[cat] = annoncesList.filter(a => 
+      a.categorie_id?.nom === cat && 
+      (!user || (a.user_id !== user.id && a.user_id?._id !== user.id))
+    ).length;
+  });
+  setCategoryCounts(counts);
+};
 
   const fetchCategories = async () => {
     try {
@@ -192,6 +208,7 @@ const HomePage = () => {
         {categoryNames.map(cat => {
           const color = categoryColors[cat] || { bg: "bg-gray-100", text: "text-gray-800" };
           const isSelected = categoryFilter === cat;
+          const count = categoryCounts[cat] || 0;
           return (
             <button
               key={cat}
@@ -201,7 +218,7 @@ const HomePage = () => {
                 ${isSelected ? 'ring-2 ring-blue-500' : 'hover:scale-105'}
               `}
             >
-              {cat}
+              {cat} ({count})
             </button>
           );
         })}

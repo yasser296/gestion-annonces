@@ -13,7 +13,6 @@ router.get('/can-create-annonce', authenticateToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
 
-    
     if (!user) {
       return res.status(401).json({ 
         canCreate: false, 
@@ -24,19 +23,19 @@ router.get('/can-create-annonce', authenticateToken, async (req, res) => {
 
     // Vérifier si l'utilisateur est bloqué
     if (user.bloque_demande_vendeur) {
-        console.log("Utilisateur bloqué pour créer des annonces");
-        return res.json({ 
+      return res.json({ 
         canCreate: false, 
         reason: 'bloque',
         message: 'Vous êtes actuellement bloqué pour créer des annonces'
       });
     }
     
-    if (user.role === 'vendeur' || user.role === 'admin') {
+    // Si l'utilisateur est vendeur (3) ou admin (1), il peut créer des annonces
+    if (user.role_id === 3 || user.role_id === 1) {
       return res.json({ canCreate: true });
     }
 
-    // Vérifier s'il y a une demande en cours
+    // Pour les utilisateurs simples (2), vérifier les demandes
     const demandeEnCours = await DemandeVendeur.findOne({
       user_id: req.user.id,
       statut: 'en_attente'
@@ -47,19 +46,6 @@ router.get('/can-create-annonce', authenticateToken, async (req, res) => {
         canCreate: false, 
         reason: 'demande_en_cours',
         message: 'Votre demande pour devenir vendeur est en cours de traitement'
-      });
-    }
-
-    const demanderefusee = await DemandeVendeur.findOne({
-      user_id: req.user.id,
-      statut: 'refusee'
-    });
-
-    if (demanderefusee) {
-      return res.json({ 
-        canCreate: false, 
-        reason: 'demande_refusee',
-        message: 'Votre demande pour devenir vendeur a ete refusee'
       });
     }
 
@@ -80,9 +66,10 @@ router.post('/demande', authenticateToken, async (req, res) => {
     const { message_demande } = req.body;
     const userId = req.user.id;
 
-    // Vérifier si l'utilisateur est déjà vendeur
     const user = await User.findById(userId);
-    if (user.role === 'vendeur' || user.role === 'admin') {
+    
+    // Vérifier si l'utilisateur est déjà vendeur (3) ou admin (1)
+    if (user.role_id === 3 || user.role_id === 1) {
       return res.status(400).json({ message: 'Vous êtes déjà vendeur' });
     }
 
@@ -105,17 +92,7 @@ router.post('/demande', authenticateToken, async (req, res) => {
       });
     }
 
-    // Vérifier s'il y a une demande refusée et la supprimer si elle existe
-    const demandeRefusee = await DemandeVendeur.findOne({
-    user_id: userId,
-    statut: 'refusee'
-    });
-
-    if (demandeRefusee) {
-    await DemandeVendeur.deleteOne({ _id: demandeRefusee._id });
-    }
-
-    // Créer la nouvelle demande
+    // Créer la nouvelle demande (sans supprimer les anciennes)
     const nouvelleDemande = new DemandeVendeur({
       user_id: userId,
       message_demande
@@ -133,14 +110,35 @@ router.post('/demande', authenticateToken, async (req, res) => {
   }
 });
 
-// Obtenir le statut de la demande de l'utilisateur
+// Obtenir le statut de la demande de l'utilisateur (modifié)
 router.get('/ma-demande', authenticateToken, async (req, res) => {
   try {
+    // Récupérer la dernière demande de l'utilisateur
     const demande = await DemandeVendeur.findOne({
       user_id: req.user.id
     }).sort({ date_demande: -1 });
 
+    // Si l'utilisateur est déjà vendeur, ne pas afficher les anciennes demandes
+    const user = await User.findById(req.user.id);
+    if (user.role === 'vendeur' || user.role === 'admin') {
+      return res.json(null);
+    }
+
     res.json(demande);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// Nouvelle route pour obtenir l'historique complet des demandes
+router.get('/mon-historique', authenticateToken, async (req, res) => {
+  try {
+    const demandes = await DemandeVendeur.find({
+      user_id: req.user.id
+    }).sort({ date_demande: -1 });
+
+    res.json(demandes);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Erreur serveur' });
@@ -200,7 +198,7 @@ router.put('/admin/:id/traiter', authenticateToken, adminAuth, async (req, res) 
     // Si acceptée, mettre à jour le rôle de l'utilisateur
     if (statut === 'acceptee') {
       await User.findByIdAndUpdate(demande.user_id, {
-        role: 'vendeur'
+        role_id: 3 // Rôle vendeur
       });
     }
 
