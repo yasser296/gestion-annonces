@@ -83,13 +83,7 @@ const HomePage = () => {
   };
 
   const handleResetFilters = () => {
-    setFilters({
-      categorie: '',
-      ville: '',
-      min_prix: '',
-      max_prix: '',
-      recherche: ''
-    });
+    handleCategoryFilter('')
     fetchAnnonces();
   };
 
@@ -214,7 +208,7 @@ const HomePage = () => {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-800">Catégories</h2>
-          {filters.categorie && (
+          {/* {filters.categorie && (
             <button
               onClick={() => {
                 setFilters({ ...filters, categorie: '' });
@@ -227,7 +221,7 @@ const HomePage = () => {
               </svg>
               <span>Afficher toutes les catégories</span>
             </button>
-          )}
+          )} */}
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-12">

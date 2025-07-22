@@ -249,7 +249,7 @@ router.patch('/annonces/:id/toggle-status', async (req, res) => {
 // Obtenir les statistiques du dashboard
 router.get('/stats', async (req, res) => {
   try {
-    const totalUsers = await User.countDocuments({ role: 'user' });
+    const totalUsers = await User.countDocuments({ role_id: { $in: [1, 2, 3] } });
     const totalAnnonces = await Annonce.countDocuments();
     const activeAnnonces = await Annonce.countDocuments({ is_active: true });
     const totalViews = await Annonce.aggregate([
