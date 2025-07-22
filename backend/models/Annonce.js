@@ -15,4 +15,30 @@ const annonceSchema = new mongoose.Schema({
   is_active: { type: Boolean, default: true }
 });
 
+// Middleware pour supprimer les wishlists quand une annonce est supprimée
+annonceSchema.pre('deleteOne', { document: false, query: true }, async function() {
+  const doc = await this.model.findOne(this.getFilter());
+  if (doc) {
+    const Wishlist = require('./Wishlist');
+    await Wishlist.deleteMany({ annonce_id: doc._id });
+  }
+});
+
+annonceSchema.pre('findOneAndDelete', async function() {
+  const doc = await this.model.findOne(this.getFilter());
+  if (doc) {
+    const Wishlist = require('./Wishlist');
+    await Wishlist.deleteMany({ annonce_id: doc._id });
+  }
+});
+
+annonceSchema.pre('deleteMany', async function() {
+  const docs = await this.model.find(this.getFilter());
+  if (docs.length > 0) {
+    const Wishlist = require('./Wishlist');
+    const annonceIds = docs.map(doc => doc._id);
+    await Wishlist.deleteMany({ annonce_id: { $in: annonceIds } });
+  }
+});
+
 module.exports = mongoose.model('Annonce', annonceSchema);

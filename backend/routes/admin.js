@@ -4,6 +4,7 @@ const adminAuth = require('../middleware/adminAuth');
 const User = require('../models/User');
 const Annonce = require('../models/Annonce');
 const Role = require('../models/Role');
+const Wishlist = require('../models/Wishlist');
 
 const router = express.Router();
 
@@ -148,6 +149,16 @@ router.delete('/users/:id', async (req, res) => {
       return res.status(403).json({ message: 'Impossible de supprimer un administrateur' });
     }
 
+    // Récupérer toutes les annonces de l'utilisateur
+    const userAnnonces = await Annonce.find({ user_id: req.params.id });
+    const annonceIds = userAnnonces.map(a => a._id);
+
+    // Supprimer toutes les entrées wishlist pour ces annonces
+    await Wishlist.deleteMany({ annonce_id: { $in: annonceIds } });
+
+    // Supprimer toutes les wishlists de l'utilisateur
+    await Wishlist.deleteMany({ user_id: req.params.id });
+
     // Supprimer toutes les annonces de l'utilisateur
     await Annonce.deleteMany({ user_id: req.params.id });
 
@@ -201,6 +212,7 @@ router.put('/annonces/:id', async (req, res) => {
 // Supprimer une annonce (admin)
 router.delete('/annonces/:id', async (req, res) => {
   try {
+    await Wishlist.deleteMany({ annonce_id: req.params.id });
     const annonce = await Annonce.findByIdAndDelete(req.params.id);
 
     if (!annonce) {

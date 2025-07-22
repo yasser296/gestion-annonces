@@ -88,6 +88,7 @@ const MesAnnonces = () => {
         });
         Swal.fire('Supprimé !', 'L\'annonce a été supprimée.', 'success');
         fetchMesAnnonces();
+        window.dispatchEvent(new Event('wishlistUpdated'));
       } catch (error) {
         console.error('Erreur lors de la suppression:', error);
         Swal.fire('Erreur', 'Erreur lors de la suppression', 'error');
@@ -118,42 +119,53 @@ const MesAnnonces = () => {
   // Actions groupées
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) {
-      // alert('Veuillez sélectionner au moins une annonce');
       showPopup({
-        type: 'info', // ou 'success', 'error', 'warning', 'confirm'
-        title: 'aucune annonce sélectionnée',
-        message: 'Veuillez sélectionner au moins une annonce',
-        // onConfirm: () => { /* action optionnelle */ }
+        type: 'warning',
+        title: 'Aucune sélection',
+        message: 'Veuillez sélectionner au moins une annonce'
       });
       return;
     }
 
-    if (window.confirm(`Voulez-vous vraiment supprimer ${selectedIds.length} annonce(s) ?`)) {
-      try {
-        // Supprimer chaque annonce sélectionnée
-        await Promise.all(
-          selectedIds.map(id =>
-            axios.delete(`http://localhost:5000/api/annonces/${id}`, {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem('token')}`
-              }
-            })
-          )
-        );
-        
-        setSelectedIds([]);
-        setSelectAll(false);
-        fetchMesAnnonces();
-      } catch (error) {
-        console.error('Erreur lors de la suppression groupée:', error);
-        // alert('Erreur lors de la suppression de certaines annonces');
-        showPopup({
-          type: 'error',
-          title: 'Erreur',
-          message: error.response?.data?.message || 'Erreur lors de la suppression de certaines annonces'
-        });
+    showPopup({
+      type: 'confirm',
+      title: 'Confirmation',
+      message: `Voulez-vous vraiment supprimer ${selectedIds.length} annonce(s) ?`,
+      showCancel: true,
+      onConfirm: async () => {
+        try {
+          await Promise.all(
+            selectedIds.map(id =>
+              axios.delete(`http://localhost:5000/api/annonces/${id}`, {
+                headers: {
+                  Authorization: `Bearer ${localStorage.getItem('token')}`
+                }
+              })
+            )
+          );
+          
+          setSelectedIds([]);
+          setSelectAll(false);
+          fetchMesAnnonces();
+          
+          // Forcer le rafraîchissement du compteur wishlist
+          window.dispatchEvent(new Event('wishlistUpdated'));
+          
+          showPopup({
+            type: 'success',
+            title: 'Succès',
+            message: 'Les annonces ont été supprimées'
+          });
+        } catch (error) {
+          console.error('Erreur lors de la suppression groupée:', error);
+          showPopup({
+            type: 'error',
+            title: 'Erreur',
+            message: 'Erreur lors de la suppression de certaines annonces'
+          });
+        }
       }
-    }
+    });
   };
 
   const handleBulkToggleStatus = async (activate) => {

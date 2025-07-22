@@ -109,6 +109,34 @@ const Navbar = () => {
     }
   };
 
+  useEffect(() => {
+    if (user) {
+      // Rafraîchir le compteur toutes les 2 minutes
+      const wishlistInterval = setInterval(() => {
+        fetchWishlistCount();
+      }, 120000); // 2 minutes
+
+      return () => clearInterval(wishlistInterval);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    const handleFocus = () => {
+      if (user) {
+        fetchWishlistCount();
+        if (user.role === 'admin' || user.role_id === 1) {
+          fetchNotificationCount();
+        }
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [user])
+
   const handleCreateAnnonceClick = () => {
     if (canCreateAnnonce) {
       navigate('/nouvelle-annonce');

@@ -4,6 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const Annonce = require('../models/Annonce');
 const User = require('../models/User');
+const Wishlist = require('../models/Wishlist');
 
 const router = express.Router();
 
@@ -128,6 +129,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
       annonce.user_id.toString() === user._id.toString() ||
       user.role_id === 1
     ) {
+      await Wishlist.deleteMany({ annonce_id: req.params.id });
       await annonce.deleteOne();
       return res.json({ message: 'Annonce supprimée avec succès' });
     } else {

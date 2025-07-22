@@ -44,7 +44,7 @@ const Login = () => {
           onConfirm: () => navigate('/demande-vendeur')
         });
       } else {
-        navigate(`/${redirectTo}`);
+        navigate(`${redirectTo}`);
       }
     } else {
       setError(result.error);
