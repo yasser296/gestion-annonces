@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation  } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import usePopUp from '../hooks/usePopUp';
@@ -12,6 +12,7 @@ const MesAnnonces = () => {
   const [selectedIds, setSelectedIds] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { showPopup, PopUpComponent } = usePopUp();
 
   useEffect(() => {
@@ -218,7 +219,7 @@ const MesAnnonces = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
       </div>
     );
   }
@@ -231,7 +232,7 @@ const MesAnnonces = () => {
           <h1 className="text-3xl font-bold">Mes annonces</h1>
           <button
             onClick={() => navigate('/nouvelle-annonce')}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+            className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition"
           >
             + Nouvelle annonce
           </button>
@@ -239,7 +240,7 @@ const MesAnnonces = () => {
 
         {/* Actions groupées */}
         {selectedIds.length > 0 && (
-          <div className="mb-4 p-4 bg-blue-50 rounded-lg flex items-center justify-between">
+          <div className="mb-4 p-4 bg-orange-50 rounded-lg flex items-center justify-between">
             <span className="text-sm text-gray-700">
               {selectedIds.length} annonce{selectedIds.length > 1 ? 's' : ''} sélectionnée{selectedIds.length > 1 ? 's' : ''}
             </span>
@@ -283,7 +284,7 @@ const MesAnnonces = () => {
             <p className="text-gray-500 text-lg mb-4">Vous n'avez pas encore d'annonces</p>
             <button
               onClick={() => navigate('/nouvelle-annonce')}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
+              className="bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition"
             >
               Créer votre première annonce
             </button>
@@ -336,7 +337,7 @@ const MesAnnonces = () => {
                         ) {
                           return;
                         }
-                        navigate(`/annonce/${annonce._id}`);
+                        navigate(`/annonce/${annonce._id}`, { state: { from: location.pathname } });
                       }}
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -387,7 +388,7 @@ const MesAnnonces = () => {
                         >
                           <button
                             onClick={() => handleToggleStatus(annonce._id, annonce.is_active)}
-                            className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-orange-300 focus:ring-offset-2"
                             style={{ backgroundColor: annonce.is_active !== false ? '#10b981' : '#ef4444' }}
                           >
                             <span
@@ -412,7 +413,7 @@ const MesAnnonces = () => {
                             e.stopPropagation();
                             navigate(`/modifier-annonce/${annonce._id}`);
                           }}
-                          className="text-blue-600 hover:text-blue-900 mr-3"
+                          className="text-orange-500 hover:text-orange-900 mr-3"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -490,7 +491,7 @@ const MesAnnonces = () => {
                         onClick={() => paginate(pageNumber)}
                         className={`px-3 py-1 rounded ${
                           currentPage === pageNumber
-                            ? 'bg-blue-600 text-white'
+                            ? 'bg-orange-500 text-white'
                             : 'hover:bg-gray-100'
                         }`}
                       >

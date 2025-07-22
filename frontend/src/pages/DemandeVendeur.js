@@ -115,7 +115,7 @@ const DemandeVendeur = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
       </div>
     );
   }
@@ -183,9 +183,9 @@ const DemandeVendeur = () => {
             </div>
           )}
           
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <h3 className="font-semibold text-blue-900 mb-2">Pourquoi devenir vendeur ?</h3>
-            <ul className="list-disc list-inside text-blue-800 space-y-1">
+          <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+            <h3 className="font-semibold text-orange-900 mb-2">Pourquoi devenir vendeur ?</h3>
+            <ul className="list-disc list-inside text-orange-800 space-y-1">
               <li>Publiez vos annonces sur notre plateforme</li>
               <li>Gérez facilement vos produits</li>
               <li>Accédez aux statistiques de vos annonces</li>
@@ -204,7 +204,7 @@ const DemandeVendeur = () => {
                 rows={6}
                 required
                 placeholder="Décrivez votre activité, les types de produits que vous souhaitez vendre, votre expérience..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
               />
               <p className="mt-1 text-sm text-gray-500">
                 Maximum 500 caractères ({message.length}/500)
@@ -214,7 +214,7 @@ const DemandeVendeur = () => {
             <button
               type="submit"
               disabled={message.length > 500}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Envoyer ma demande
             </button>

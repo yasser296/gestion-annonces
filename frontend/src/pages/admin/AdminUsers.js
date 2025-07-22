@@ -192,7 +192,7 @@ const AdminUsers = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
       </div>
     );
   }
@@ -291,7 +291,7 @@ const AdminUsers = () => {
                           e.stopPropagation();
                           handleToggleBloquerDemande(user._id, !user.bloque_demande_vendeur);
                         }}
-                        className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-orange-300 focus:ring-offset-2"
                         style={{ backgroundColor: user.bloque_demande_vendeur === false ? '#10b981' : '#ef4444' }}
                       >
                         <span
@@ -310,9 +310,9 @@ const AdminUsers = () => {
                             e.stopPropagation();
                             handleEdit(user);
                           }}
-                          className="text-blue-600 hover:text-blue-900 mr-3"
+                          className="text-orange-500 hover:text-orange-900 mr-3"
                         >
-                          Modifier
+                          <FontAwesomeIcon icon={faEdit} />
                         </button>
                         <button
                           onClick={(e) => {
@@ -321,7 +321,7 @@ const AdminUsers = () => {
                           }}
                           className="text-red-600 hover:text-red-900"
                         >
-                          Supprimer
+                          <FontAwesomeIcon icon={faTrash} />
                         </button>
                       </>
                     )}
@@ -347,7 +347,7 @@ const AdminUsers = () => {
                     type="text"
                     value={formData.nom}
                     onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
                     required
                   />
                 </div>
@@ -360,7 +360,7 @@ const AdminUsers = () => {
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
                     required
                   />
                 </div>
@@ -373,7 +373,7 @@ const AdminUsers = () => {
                     type="tel"
                     value={formData.telephone}
                     onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
                     required
                   />
                 </div>
@@ -385,7 +385,7 @@ const AdminUsers = () => {
                   <select
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
                     disabled={editingUser.role === 'admin'}
                   >
                     <option value="user">Utilisateur</option>
@@ -402,7 +402,7 @@ const AdminUsers = () => {
                 <div className="flex space-x-3 pt-4">
                   <button
                     type="submit"
-                    className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+                    className="flex-1 bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-700 transition"
                   >
                     Enregistrer
                   </button>

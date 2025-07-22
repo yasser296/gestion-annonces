@@ -8,56 +8,61 @@ const usePopUp = () => {
     title: '',
     message: '',
     type: 'info',
-    onConfirm: null,
     confirmText: 'OK',
     cancelText: 'Annuler',
-    showCancel: false
+    showCancel: false,
+    resolve: null // Ajouté
   });
 
   const showPopup = ({
     title = '',
     message,
     type = 'info',
-    onConfirm = null,
     confirmText = 'OK',
     cancelText = 'Annuler',
     showCancel = false
   }) => {
-    setPopupState({
-      isOpen: true,
-      title,
-      message,
-      type,
-      onConfirm,
-      confirmText,
-      cancelText,
-      showCancel
+    return new Promise((resolve) => {
+      setPopupState({
+        isOpen: true,
+        title,
+        message,
+        type,
+        confirmText,
+        cancelText,
+        showCancel,
+        resolve // On stocke la fonction à appeler
+      });
     });
   };
 
-  const closePopup = () => {
+  const handleConfirm = () => {
+    if (popupState.resolve) popupState.resolve(true);
+    setPopupState(prev => ({ ...prev, isOpen: false }));
+  };
+
+  const handleCancel = () => {
+    if (popupState.resolve) popupState.resolve(false);
     setPopupState(prev => ({ ...prev, isOpen: false }));
   };
 
   const PopUpComponent = () => (
     <PopUp
       isOpen={popupState.isOpen}
-      onClose={closePopup}
+      onClose={handleCancel}
       title={popupState.title}
       message={popupState.message}
       type={popupState.type}
-      onConfirm={popupState.onConfirm}
+      onConfirm={handleConfirm}
+      onCancel={handleCancel}
       confirmText={popupState.confirmText}
       cancelText={popupState.cancelText}
       showCancel={popupState.showCancel}
     />
   );
 
-  return {
-    showPopup,
-    closePopup,
-    PopUpComponent
-  };
+  return { showPopup, closePopup: handleCancel, PopUpComponent };
 };
+
 
 export default usePopUp;

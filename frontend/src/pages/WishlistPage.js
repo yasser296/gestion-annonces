@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
 
 const WishlistPage = () => {
   const [wishlistItems, setWishlistItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -60,7 +63,7 @@ const WishlistPage = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
       </div>
     );
   }
@@ -77,7 +80,7 @@ const WishlistPage = () => {
           <p className="text-gray-500 text-lg mb-4">Vous n'avez pas encore de favoris</p>
           <button
             onClick={() => navigate('/')}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
+            className="bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition"
           >
             Découvrir des annonces
           </button>
@@ -94,7 +97,7 @@ const WishlistPage = () => {
                 className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow relative"
               >
                 <div 
-                  onClick={() => navigate(`/annonce/${annonce._id}`)}
+                  onClick={() => navigate(`/annonce/${annonce._id}`, { state: { from: location.pathname } })}
                   className="cursor-pointer"
                 >
                   <div className="h-48 bg-gray-200 relative">
@@ -122,7 +125,7 @@ const WishlistPage = () => {
                   
                   <div className="p-4">
                     <h3 className="font-semibold text-lg mb-2 truncate">{annonce.titre}</h3>
-                    <p className="text-2xl font-bold text-blue-600 mb-2">{formatPrice(annonce.prix)}</p>
+                    <p className="text-2xl font-bold text-orange-500 mb-2">{formatPrice(annonce.prix)}</p>
                     
                     <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
                       <span>{annonce.categorie_id?.nom || 'Sans catégorie'}</span>
@@ -144,7 +147,7 @@ const WishlistPage = () => {
                         }}
                         className="text-red-500 hover:text-red-700 font-medium"
                       >
-                        Retirer
+                        <FontAwesomeIcon icon={faTrash} />
                       </button>
                     </div>
                   </div>

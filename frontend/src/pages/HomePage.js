@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { categoryColors } from "../components/colorMap";
 import WishlistButton from '../components/WishlistButton';
@@ -12,6 +12,7 @@ const HomePage = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [categoryCounts, setCategoryCounts] = useState({});
+  const location = useLocation();
   const [filters, setFilters] = useState({
     categorie: '',
     ville: '',
@@ -42,7 +43,7 @@ const HomePage = () => {
   //   "Meubles": "bg-yellow-100 text-yellow-800",
   //   "Voitures": "bg-red-100 text-red-800",
   //   "Vêtements": "bg-purple-100 text-purple-800",
-  //   "Électronique": "bg-blue-100 text-blue-800",
+  //   "Électronique": "bg-orange-100 text-orange-800",
   // };
 
 
@@ -52,19 +53,19 @@ const HomePage = () => {
   }, []);
 
   useEffect(() => {
-  calculateCategoryCounts(annonces);
-}, [annonces, user]);
+    calculateCategoryCounts(annonces);
+  }, [annonces, user]);
 
   const calculateCategoryCounts = (annoncesList) => {
-  const counts = {};
-  categoryNames.forEach(cat => {
-    counts[cat] = annoncesList.filter(a => 
-      a.categorie_id?.nom === cat && 
-      (!user || (a.user_id !== user.id && a.user_id?._id !== user.id))
-    ).length;
-  });
-  setCategoryCounts(counts);
-};
+    const counts = {};
+    categoryNames.forEach(cat => {
+      counts[cat] = annoncesList.filter(a => 
+        a.categorie_id?.nom === cat && 
+        (!user || (a.user_id !== user.id && a.user_id?._id !== user.id))
+      ).length;
+    });
+    setCategoryCounts(counts);
+  };
 
   const fetchCategories = async () => {
     try {
@@ -143,14 +144,14 @@ const HomePage = () => {
             placeholder="Recherche..."
             value={filters.recherche}
             onChange={handleFilterChange}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
           />
           
           <select
             name="categorie"
             value={filters.categorie}
             onChange={handleFilterChange}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
           >
             <option value="">Toutes catégories</option>
             {categories.map((cat) => (
@@ -166,7 +167,7 @@ const HomePage = () => {
             placeholder="Ville"
             value={filters.ville}
             onChange={handleFilterChange}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
           />
           
           <input
@@ -175,7 +176,7 @@ const HomePage = () => {
             placeholder="Prix min"
             value={filters.min_prix}
             onChange={handleFilterChange}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
           />
           
           <input
@@ -184,13 +185,13 @@ const HomePage = () => {
             placeholder="Prix max"
             value={filters.max_prix}
             onChange={handleFilterChange}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
           />
           
           <div className="flex gap-2">
             <button
               onClick={handleSearch}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+              className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition"
             >
               Filtrer
             </button>
@@ -215,7 +216,7 @@ const HomePage = () => {
               onClick={() => setCategoryFilter(isSelected ? null : cat)}
               className={`flex items-center px-4 py-2 rounded-lg font-semibold border transition 
                 ${color.bg} ${color.text} 
-                ${isSelected ? 'ring-2 ring-blue-500' : 'hover:scale-105'}
+                ${isSelected ? 'ring-2 ring-orange-300' : 'hover:scale-105'}
               `}
             >
               {cat} ({count})
@@ -227,7 +228,7 @@ const HomePage = () => {
       {/* Liste des annonces */}
       {loading ? (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -235,7 +236,7 @@ const HomePage = () => {
             
             <div
               key={annonce._id}
-              onClick={() => navigate(`/annonce/${annonce._id}`)}
+              onClick={() => navigate(`/annonce/${annonce._id}`, { state: { from: location.pathname } })}
               className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-xl transition-shadow relative group"
             >
               <div className="h-48 bg-gray-200">
@@ -264,7 +265,7 @@ const HomePage = () => {
               
               <div className="p-4">
                 <h3 className="font-semibold text-lg mb-2 truncate">{annonce.titre}</h3>
-                <p className="text-2xl font-bold text-blue-600 mb-2">{formatPrice(annonce.prix)}</p>
+                <p className="text-2xl font-bold text-orange-500 mb-2">{formatPrice(annonce.prix)}</p>
                 
                 <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
                   <span

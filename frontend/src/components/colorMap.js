@@ -1,6 +1,6 @@
 // Exemple : colorMap.js
 export const categoryColors = {
-  "Appartements": { bg: "bg-blue-100", text: "text-blue-800" },
+  "Appartements": { bg: "bg-blue-100", text: "text-orange-800" },
   "Meubles": { bg: "bg-green-100", text: "text-green-800" },
   "Voitures": { bg: "bg-red-100", text: "text-red-800" },
   "Vêtements": { bg: "bg-yellow-100", text: "text-yellow-800" },

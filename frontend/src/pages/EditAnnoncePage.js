@@ -30,8 +30,20 @@ const EditAnnoncePage = () => {
     try {
       const res = await axios.get(`http://localhost:5000/api/annonces/${id}`);
       const { titre, description, prix, ville, marque, etat, categorie_id, images } = res.data;
-      setFormData({ titre, description, prix, ville, marque, etat, categorie_id });
+      setFormData({
+      titre,
+      description,
+      prix,
+      ville,
+      marque,
+      etat,
+      categorie_id:
+        typeof categorie_id === 'object' && categorie_id !== null
+          ? categorie_id._id   // on récupère juste l'ID
+          : categorie_id       // sinon on laisse tel quel
+    });
       setExistingImages(images || []);
+      console.log("Categorie reçue :", categorie_id);
     } catch (err) {
       console.error(err);
       setError('Erreur lors du chargement de l\'annonce');
@@ -44,6 +56,8 @@ const EditAnnoncePage = () => {
     try {
       const res = await axios.get('http://localhost:5000/api/categories');
       setCategories(res.data);
+      console.log("Categories chargées :", res.data);
+
     } catch (err) {
       console.error(err);
     }
@@ -130,7 +144,7 @@ const EditAnnoncePage = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
       </div>
     );
   }
@@ -157,7 +171,7 @@ const EditAnnoncePage = () => {
               required
               value={formData.titre}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
             />
           </div>
           
@@ -171,7 +185,7 @@ const EditAnnoncePage = () => {
               rows={5}
               value={formData.description}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
             />
           </div>
           
@@ -205,9 +219,9 @@ const EditAnnoncePage = () => {
               <select
                 name="categorie_id"
                 required
-                value={formData.categorie_id}
+                value={formData.categorie_id || ''}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
               >
                 <option value="">Sélectionner une catégorie</option>
                 {categories.map((cat) => (
@@ -230,7 +244,7 @@ const EditAnnoncePage = () => {
                 required
                 value={formData.ville}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
               />
             </div>
             
@@ -243,7 +257,7 @@ const EditAnnoncePage = () => {
                 name="marque"
                 value={formData.marque}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
               />
             </div>
           </div>
@@ -256,7 +270,7 @@ const EditAnnoncePage = () => {
               name="etat"
               value={formData.etat}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
             >
               <option value="">Sélectionner l'état</option>
               <option value="Neuf">Neuf</option>
@@ -298,7 +312,7 @@ const EditAnnoncePage = () => {
             
             {/* Bouton d'ajout d'images */}
             <div className="flex items-center space-x-4">
-              <label className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+              <label className="cursor-pointer bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-700 transition">
                 <input
                   type="file"
                   multiple
@@ -343,7 +357,7 @@ const EditAnnoncePage = () => {
           <div className="flex space-x-4">
             <button
               type="submit"
-              className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition"
+              className="flex-1 bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-700 transition"
             >
               Enregistrer les modifications
             </button>

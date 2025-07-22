@@ -3,6 +3,7 @@ const authenticateToken = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const Annonce = require('../models/Annonce');
+const User = require('../models/User');
 
 const router = express.Router();
 
@@ -106,58 +107,87 @@ router.get('/user/mes-annonces', authenticateToken, async (req, res) => {
   }
 });
 
+// annonces.js
+
 router.delete('/:id', authenticateToken, async (req, res) => {
   try {
-    const annonce = await Annonce.findOneAndDelete({ _id: req.params.id, user_id: req.user.id });
+    // Récupérer l'utilisateur connecté
+    const user = await User.findById(req.user.id);
+
+    // Récupérer l'annonce à supprimer
+    const annonce = await Annonce.findById(req.params.id);
 
     if (!annonce) {
-      return res.status(403).json({ message: 'Accès refusé ou annonce inexistante' });
+      return res.status(404).json({ message: 'Annonce inexistante' });
     }
 
-    res.json({ message: 'Annonce supprimée avec succès' });
+    // Autoriser la suppression si :
+    // - L'utilisateur est l'auteur de l'annonce
+    // - OU l'utilisateur est admin (role_id === 1)
+    if (
+      annonce.user_id.toString() === user._id.toString() ||
+      user.role_id === 1
+    ) {
+      await annonce.deleteOne();
+      return res.json({ message: 'Annonce supprimée avec succès' });
+    } else {
+      return res.status(403).json({ message: 'Accès refusé' });
+    }
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
+
 
 router.put('/:id', authenticateToken, upload.array('images', 5), async (req, res) => {
   const { titre, description, prix, ville, marque, etat, categorie_id, existingImages } = req.body;
 
   try {
-    const annonce = await Annonce.findOne({ _id: req.params.id, user_id: req.user.id });
+    const user = await User.findById(req.user.id);
+    const annonce = await Annonce.findById(req.params.id);
+
     if (!annonce) {
+      return res.status(404).json({ message: 'Annonce non trouvée' });
+    }
+
+    // Autoriser la modification si propriétaire ou admin
+    if (
+      annonce.user_id.toString() === user._id.toString() ||
+      user.role_id === 1
+    ) {
+      let finalImages = [];
+
+      if (existingImages) {
+        finalImages = JSON.parse(existingImages);
+      }
+
+      if (req.files && req.files.length > 0) {
+        const newImages = req.files.map(file => `/uploads/${file.filename}`);
+        finalImages = finalImages.concat(newImages);
+      }
+
+      annonce.titre = titre;
+      annonce.description = description;
+      annonce.prix = prix;
+      annonce.ville = ville;
+      annonce.marque = marque;
+      annonce.etat = etat;
+      annonce.categorie_id = categorie_id;
+      annonce.images = finalImages;
+
+      await annonce.save();
+
+      return res.json({ message: 'Annonce mise à jour avec succès', annonce });
+    } else {
       return res.status(403).json({ message: 'Accès refusé' });
     }
-
-    let finalImages = [];
-
-    if (existingImages) {
-      finalImages = JSON.parse(existingImages);
-    }
-
-    if (req.files && req.files.length > 0) {
-      const newImages = req.files.map(file => `/uploads/${file.filename}`);
-      finalImages = finalImages.concat(newImages);
-    }
-
-    annonce.titre = titre;
-    annonce.description = description;
-    annonce.prix = prix;
-    annonce.ville = ville;
-    annonce.marque = marque;
-    annonce.etat = etat;
-    annonce.categorie_id = categorie_id;
-    annonce.images = finalImages;
-
-    await annonce.save();
-
-    res.json({ message: 'Annonce mise à jour avec succès', annonce });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
+
 
 router.get('/user/:userId', async (req, res) => {
   try {

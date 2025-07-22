@@ -90,7 +90,7 @@ const AdminDemandesVendeur = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
       </div>
     );
   }
@@ -115,7 +115,7 @@ const AdminDemandesVendeur = () => {
             onClick={() => setFilter('en_attente')}
             className={`px-4 py-2 rounded ${
               filter === 'en_attente' 
-                ? 'bg-blue-600 text-white' 
+                ? 'bg-orange-500 text-white' 
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
             }`}
           >
@@ -202,7 +202,7 @@ const AdminDemandesVendeur = () => {
                       {demande.statut === 'en_attente' ? (
                         <button
                           onClick={() => setSelectedDemande(demande)}
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-orange-500 hover:text-orange-900"
                         >
                           Traiter
                         </button>
@@ -251,7 +251,7 @@ const AdminDemandesVendeur = () => {
                       value={messageAdmin}
                       onChange={(e) => setMessageAdmin(e.target.value)}
                       rows={4}
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
                       placeholder="Expliquez votre décision..."
                     />
                   </div>

@@ -119,7 +119,7 @@ const CreateAnnonce = () => {
               required
               value={formData.titre}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
             />
           </div>
           
@@ -133,7 +133,7 @@ const CreateAnnonce = () => {
               rows={5}
               value={formData.description}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
             />
           </div>
           
@@ -169,7 +169,7 @@ const CreateAnnonce = () => {
                 required
                 value={formData.categorie_id}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
               >
                 <option value="">Sélectionner une catégorie</option>
                 {categories.map((cat) => (
@@ -192,7 +192,7 @@ const CreateAnnonce = () => {
                 required
                 value={formData.ville}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
               />
             </div>
             
@@ -205,7 +205,7 @@ const CreateAnnonce = () => {
                 name="marque"
                 value={formData.marque}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
               />
             </div>
           </div>
@@ -218,7 +218,7 @@ const CreateAnnonce = () => {
               name="etat"
               value={formData.etat}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
             >
               <option value="">Sélectionner l'état</option>
               <option value="Neuf">Neuf</option>
@@ -233,7 +233,7 @@ const CreateAnnonce = () => {
               Images (max 5)
             </label>
             <div className="flex items-center space-x-4">
-              <label className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+              <label className="cursor-pointer bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-700 transition">
                 <input
                   type="file"
                   multiple
@@ -274,7 +274,7 @@ const CreateAnnonce = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+            className="w-full bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-700 transition disabled:opacity-50"
           >
             {loading ? 'Publication...' : 'Publier l\'annonce'}
           </button>

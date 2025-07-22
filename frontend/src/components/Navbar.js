@@ -147,7 +147,7 @@ const Navbar = () => {
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex justify-between h-16">
               <div className="flex items-center">
-                <Link to="/" className="text-2xl font-bold text-blue-600">
+                <Link to="/" className="text-2xl font-bold text-orange-500 hover:text-orange-600 transition">
                   Annonces.ma
                 </Link>
               </div>
@@ -159,7 +159,7 @@ const Navbar = () => {
                     {user.role === 'admin' && (
                       <Link
                         to="/admin/demandes-vendeur"
-                        className="relative p-2 text-gray-700 hover:text-blue-600 transition"
+                        className="relative p-2 text-gray-700 hover:text-orange-500 transition"
                         title="Demandes vendeur en attente"
                       >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -175,7 +175,7 @@ const Navbar = () => {
 
                     <Link
                       to="/wishlist"
-                      className="relative p-2 text-gray-700 hover:text-blue-600 transition"
+                      className="relative p-2 text-gray-700 hover:text-orange-500 transition"
                       title="Mes favoris"
                     >
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -190,7 +190,7 @@ const Navbar = () => {
 
                     <button
                       onClick={handleCreateAnnonceClick}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+                      className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg  transition"
                     >
                       + Déposer une annonce
                     </button>
@@ -198,7 +198,7 @@ const Navbar = () => {
                 ) : (
                   <Link
                     to="/login?redirect=nouvelle-annonce"
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+                    className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg  transition"
                   >
                     + Déposer une annonce
                   </Link>

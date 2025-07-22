@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 
@@ -11,6 +11,7 @@ const ProfilePage = () => {
   const [userAnnonces, setUserAnnonces] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
+  const location = useLocation();
   const [formData, setFormData] = useState({
     nom: '',
     email: '',
@@ -103,7 +104,7 @@ const ProfilePage = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
       </div>
     );
   }
@@ -123,8 +124,8 @@ const ProfilePage = () => {
         <div className="lg:col-span-1">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-center mb-6">
-              <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-24 h-24 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-12 h-12 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
@@ -158,7 +159,7 @@ const ProfilePage = () => {
                 {(isOwnProfile || (currentUser && currentUser.role === "admin")) && (
                   <button
                     onClick={() => setEditMode(true)}
-                    className="w-full mt-4 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+                    className="w-full mt-4 bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-700 transition"
                   >
                     Modifier le profil
                   </button>
@@ -176,7 +177,7 @@ const ProfilePage = () => {
                     value={formData.nom}
                     onChange={handleChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
                   />
                 </div>
                 <div>
@@ -189,7 +190,7 @@ const ProfilePage = () => {
                     value={formData.email}
                     onChange={handleChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
                   />
                 </div>
                 <div>
@@ -202,14 +203,14 @@ const ProfilePage = () => {
                     value={formData.telephone}
                     onChange={handleChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
                   />
                 </div>
                 
                 <div className="flex space-x-2">
                   <button
                     type="submit"
-                    className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+                    className="flex-1 bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-700 transition"
                   >
                     Enregistrer
                   </button>
@@ -252,7 +253,7 @@ const ProfilePage = () => {
               {isOwnProfile && (
                 <button
                   onClick={() => navigate('/nouvelle-annonce')}
-                  className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
+                  className="mt-4 bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-700 transition"
                 >
                   Créer une annonce
                 </button>
@@ -263,7 +264,7 @@ const ProfilePage = () => {
               {userAnnonces.map((annonce) => (
                 <div
                   key={annonce._id}
-                  onClick={() => navigate(`/annonce/${annonce._id}`)}
+                  onClick={() => navigate(`/annonce/${annonce._id}`, { state: { from: location.pathname } })}
                   className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-xl transition-shadow"
                 >
                   <div className="h-48 bg-gray-200">
@@ -284,7 +285,7 @@ const ProfilePage = () => {
                   
                   <div className="p-4">
                     <h3 className="font-semibold text-lg mb-2 truncate">{annonce.titre}</h3>
-                    <p className="text-xl font-bold text-blue-600 mb-2">{formatPrice(annonce.prix)}</p>
+                    <p className="text-xl font-bold text-orange-500 mb-2">{formatPrice(annonce.prix)}</p>
                     
                     <div className="flex items-center justify-between text-sm text-gray-600">
                       <span className="flex items-center">

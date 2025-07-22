@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation  } from 'react-router-dom';
 import axios from 'axios';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { confirmDialog } from "../../utils/confirmDialog";
 
 const AdminAnnonces = () => {
@@ -8,6 +10,7 @@ const AdminAnnonces = () => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(20);
+  const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -89,7 +92,7 @@ const AdminAnnonces = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
       </div>
     );
   }
@@ -148,7 +151,7 @@ const AdminAnnonces = () => {
                       ) {
                         return;
                       }
-                      navigate(`/annonce/${annonce._id}`);
+                      navigate(`/annonce/${annonce._id}`, { state: { from: location.pathname } });
                     }}
               >
                 <td className="px-6 py-4">
@@ -191,7 +194,7 @@ const AdminAnnonces = () => {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <button
                     onClick={() => handleToggleStatus(annonce._id, annonce.is_active)}
-                    className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-orange-300 focus:ring-offset-2"
                     style={{ backgroundColor: annonce.is_active !== false ? '#10b981' : '#ef4444' }}
                   >
                     <span
@@ -209,8 +212,8 @@ const AdminAnnonces = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button
-                    onClick={() => navigate(`/annonce/${annonce._id}`)}
-                    className="text-blue-600 hover:text-blue-900 mr-3"
+                    onClick={() => navigate(`/annonce/${annonce._id}`, { state: { from: location.pathname } })}
+                    className="text-orange-500 hover:text-orange-900 mr-3"
                   >
                     Voir
                   </button>
@@ -218,7 +221,7 @@ const AdminAnnonces = () => {
                     onClick={() => handleDelete(annonce._id)}
                     className="text-red-600 hover:text-red-900"
                   >
-                    Supprimer
+                    <FontAwesomeIcon icon={faTrash} />
                   </button>
                 </td>
               </tr>
@@ -244,7 +247,7 @@ const AdminAnnonces = () => {
                 onClick={() => setCurrentPage(index + 1)}
                 className={`px-3 py-1 rounded ${
                   currentPage === index + 1
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-orange-500 text-white'
                     : 'bg-gray-200 hover:bg-gray-300'
                 }`}
               >
