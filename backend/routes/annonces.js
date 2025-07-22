@@ -6,6 +6,7 @@ const Annonce = require('../models/Annonce');
 const User = require('../models/User');
 const Wishlist = require('../models/Wishlist');
 
+
 const router = express.Router();
 
 // Multer pour upload d'images
@@ -60,19 +61,30 @@ router.get('/:id', async (req, res) => {
 });
 
 // Incrémenter les vues d'une annonce
-router.patch('/:id/vues', async (req, res) => {
+router.patch('/:id/vues', authenticateToken, async (req, res) => {
   try {
-    const annonce = await Annonce.findByIdAndUpdate(
-      req.params.id,
-      { $inc: { nombre_vues: 1 } },
-      { new: true }
-    );
+    const annonce = await Annonce.findById(req.params.id);
 
     if (!annonce) {
       return res.status(404).json({ message: 'Annonce non trouvée' });
     }
 
-    res.json({ message: 'Nombre de vues incrémenté', nombre_vues: annonce.nombre_vues });
+    // Si utilisateur connecté ET c'est le propriétaire
+    if (req.user && String(annonce.user_id) === String(req.user.id)) {
+      return res.json({
+        message: "Vous êtes le propriétaire, la vue n'est pas comptabilisée",
+        nombre_vues: annonce.nombre_vues,
+      });
+    }
+
+    // Sinon, incrémente
+    annonce.nombre_vues = (annonce.nombre_vues || 0) + 1;
+    await annonce.save();
+
+    res.json({
+      message: 'Nombre de vues incrémenté',
+      nombre_vues: annonce.nombre_vues,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Erreur serveur' });

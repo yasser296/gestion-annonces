@@ -99,12 +99,14 @@ const AnnonceDetail = () => {
   };
 
   const formatPrice = (price) => {
-    return new Intl.NumberFormat('fr-MA', {
-      style: 'currency',
-      currency: 'MAD',
-      minimumFractionDigits: 0
-    }).format(price);
+    // Format fr-FR pour forcer l'espace insécable, puis remplace par un espace normal
+    return (
+      new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(price)
+        .replace(/\u202f/g, ' ') // remplace espace insécable fine par espace classique
+      + ' DH'
+    );
   };
+
 
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString('fr-FR', {

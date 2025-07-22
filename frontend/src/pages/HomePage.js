@@ -1,18 +1,14 @@
+// frontend/src/pages/HomePage.js
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { categoryColors } from "../components/colorMap";
-import WishlistButton from '../components/WishlistButton';
+import CategoryCarousel from '../components/CategoryCarousel';
 import { useAuth } from '../contexts/AuthContext';
-
-
 
 const HomePage = () => {
   const [annonces, setAnnonces] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [categoryCounts, setCategoryCounts] = useState({});
-  const location = useLocation();
   const [filters, setFilters] = useState({
     categorie: '',
     ville: '',
@@ -20,52 +16,14 @@ const HomePage = () => {
     max_prix: '',
     recherche: ''
   });
+  const [showFilters, setShowFilters] = useState(false);
   const navigate = useNavigate();
-  const categoryNames = [
-    "Appartements", "Meubles", "Voitures", "Vêtements", "Électronique"
-  ];
-
-  const [categoryFilter, setCategoryFilter] = useState(null);
-  
-
   const { user } = useAuth();
-  
-  const annoncesFiltrees = annonces
-  .filter(a => !user || (a.user_id !== user.id && a.user_id?._id !== user.id))
-  .filter(a => !categoryFilter || a.categorie_id?.nom === categoryFilter);
-  
-
-  // categoryColors.js (ou en haut du composant)
-  
-  
-  // const categoryColors = {
-  //   "Appartements": "bg-green-100 text-green-800",
-  //   "Meubles": "bg-yellow-100 text-yellow-800",
-  //   "Voitures": "bg-red-100 text-red-800",
-  //   "Vêtements": "bg-purple-100 text-purple-800",
-  //   "Électronique": "bg-orange-100 text-orange-800",
-  // };
-
 
   useEffect(() => {
     fetchCategories();
     fetchAnnonces();
   }, []);
-
-  useEffect(() => {
-    calculateCategoryCounts(annonces);
-  }, [annonces, user]);
-
-  const calculateCategoryCounts = (annoncesList) => {
-    const counts = {};
-    categoryNames.forEach(cat => {
-      counts[cat] = annoncesList.filter(a => 
-        a.categorie_id?.nom === cat && 
-        (!user || (a.user_id !== user.id && a.user_id?._id !== user.id))
-      ).length;
-    });
-    setCategoryCounts(counts);
-  };
 
   const fetchCategories = async () => {
     try {
@@ -108,209 +66,192 @@ const HomePage = () => {
   };
 
   const handleResetFilters = () => {
-  setFilters({
-    categorie: '',
-    ville: '',
-    min_prix: '',
-    max_prix: '',
-    recherche: ''
-  });
-  // Optionnel : réinitialise aussi le filtre par boutons si besoin
-  setCategoryFilter && setCategoryFilter(null); 
-  fetchAnnonces();
-};
-
-
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('fr-MA', {
-      style: 'currency',
-      currency: 'MAD',
-      minimumFractionDigits: 0
-    }).format(price);
+    setFilters({
+      categorie: '',
+      ville: '',
+      min_prix: '',
+      max_prix: '',
+      recherche: ''
+    });
+    fetchAnnonces();
   };
 
-  const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('fr-FR');
-  };
+  // Grouper les annonces par catégorie
+  const annoncesByCategory = categories.reduce((acc, category) => {
+    const categoryAnnonces = annonces
+      .filter(a => a.categorie_id?._id === category._id || a.categorie_id === category._id)
+      .filter(a => !user || (a.user_id !== user.id && a.user_id?._id !== user.id));
+    
+    if (categoryAnnonces.length > 0) {
+      acc[category._id] = {
+        category,
+        annonces: categoryAnnonces
+      };
+    }
+    return acc;
+  }, {});
+
+  // Annonces récentes toutes catégories confondues
+  const recentAnnonces = annonces
+    .filter(a => !user || (a.user_id !== user.id && a.user_id?._id !== user.id))
+    .sort((a, b) => new Date(b.date_publication) - new Date(a.date_publication))
+    .slice(0, 20);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-orange-500"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Filtres */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <input
-            type="text"
-            name="recherche"
-            placeholder="Recherche..."
-            value={filters.recherche}
-            onChange={handleFilterChange}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
-          />
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Section */}
+      <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4">
+          <h1 className="text-4xl font-bold mb-4">Trouvez ce que vous cherchez</h1>
+          <p className="text-xl mb-8">Des milliers d'annonces dans toutes les catégories</p>
           
-          <select
-            name="categorie"
-            value={filters.categorie}
-            onChange={handleFilterChange}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
-          >
-            <option value="">Toutes catégories</option>
-            {categories.map((cat) => (
-              <option key={cat._id} value={cat._id}>
-                {cat.nom}
-              </option>
-            ))}
-          </select>
-          
-          <input
-            type="text"
-            name="ville"
-            placeholder="Ville"
-            value={filters.ville}
-            onChange={handleFilterChange}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
-          />
-          
-          <input
-            type="number"
-            name="min_prix"
-            placeholder="Prix min"
-            value={filters.min_prix}
-            onChange={handleFilterChange}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
-          />
-          
-          <input
-            type="number"
-            name="max_prix"
-            placeholder="Prix max"
-            value={filters.max_prix}
-            onChange={handleFilterChange}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
-          />
-          
-          <div className="flex gap-2">
-            <button
-              onClick={handleSearch}
-              className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition"
-            >
-              Filtrer
-            </button>
-            <button
-              onClick={handleResetFilters}
-              className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
-            >
-              Réinitialiser
-            </button>
+          {/* Barre de recherche principale */}
+          <div className="bg-white rounded-lg shadow-lg p-4">
+            <div className="flex flex-col md:flex-row gap-4">
+              <input
+                type="text"
+                name="recherche"
+                placeholder="Que recherchez-vous ?"
+                value={filters.recherche}
+                onChange={handleFilterChange}
+                className="flex-1 px-4 py-3 text-gray-700 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
+              />
+              <select
+                name="categorie"
+                value={filters.categorie}
+                onChange={handleFilterChange}
+                className="px-4 py-3 text-gray-700 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
+              >
+                <option value="">Toutes catégories</option>
+                {categories.map((cat) => (
+                  <option key={cat._id} value={cat._id}>
+                    {cat.icone} {cat.nom}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="text"
+                name="ville"
+                placeholder="Ville"
+                value={filters.ville}
+                onChange={handleFilterChange}
+                className="px-4 py-3 text-gray-700 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
+              />
+              <button
+                onClick={handleSearch}
+                className="bg-orange-500 text-white px-8 py-3 rounded-lg hover:bg-orange-600 transition"
+              >
+                Rechercher
+              </button>
+            </div>
+            
+            {/* Filtres avancés */}
+            <div className="mt-4">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="text-orange-500 hover:text-orange-600 text-sm font-medium"
+              >
+                {showFilters ? 'Masquer' : 'Afficher'} les filtres avancés
+              </button>
+              
+              {showFilters && (
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <input
+                    type="number"
+                    name="min_prix"
+                    placeholder="Prix minimum"
+                    value={filters.min_prix}
+                    onChange={handleFilterChange}
+                    className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
+                  />
+                  <input
+                    type="number"
+                    name="max_prix"
+                    placeholder="Prix maximum"
+                    value={filters.max_prix}
+                    onChange={handleFilterChange}
+                    className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
+                  />
+                  <button
+                    onClick={handleResetFilters}
+                    className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
+                  >
+                    Réinitialiser les filtres
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
-      
-      <div className="flex gap-4 my-6">
-        {categoryNames.map(cat => {
-          const color = categoryColors[cat] || { bg: "bg-gray-100", text: "text-gray-800" };
-          const isSelected = categoryFilter === cat;
-          const count = categoryCounts[cat] || 0;
-          return (
+
+      {/* Catégories principales */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-12">
+          {categories.map((category) => (
             <button
-              key={cat}
-              onClick={() => setCategoryFilter(isSelected ? null : cat)}
-              className={`flex items-center px-4 py-2 rounded-lg font-semibold border transition 
-                ${color.bg} ${color.text} 
-                ${isSelected ? 'ring-2 ring-orange-300' : 'hover:scale-105'}
-              `}
+              key={category._id}
+              onClick={() => {
+                setFilters({ ...filters, categorie: category._id });
+                handleSearch();
+              }}
+              className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow hover:scale-105 transform duration-200"
             >
-              {cat} ({count})
+              <div className="text-3xl mb-2 text-center">{category.icone}</div>
+              <p className="text-sm font-medium text-gray-700 text-center">{category.nom}</p>
             </button>
-          );
-        })}
-      </div>
-
-      {/* Liste des annonces */}
-      {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {annoncesFiltrees.map((annonce) => (
-            
-            <div
-              key={annonce._id}
-              onClick={() => navigate(`/annonce/${annonce._id}`, { state: { from: location.pathname } })}
-              className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-xl transition-shadow relative group"
-            >
-              <div className="h-48 bg-gray-200">
-                {annonce.images && annonce.images[0] ? (
-                  <img
-                    src={`http://localhost:5000${annonce.images[0]}`}
-                    alt={annonce.titre}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400">
-                    <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                )}
-                {/* Bouton Wishlist */}
-                <div className="absolute top-2 right-2 ">
-                  <WishlistButton 
-                    annonceId={annonce._id} 
-                    isOwner={user && (annonce.user_id === user.id || annonce.user_id?._id === user.id)}
-                    className="shadow-lg"
-                  />
-                </div>
-              </div>
-              
-              <div className="p-4">
-                <h3 className="font-semibold text-lg mb-2 truncate">{annonce.titre}</h3>
-                <p className="text-2xl font-bold text-orange-500 mb-2">{formatPrice(annonce.prix)}</p>
-                
-                <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
-                  <span
-                    className={
-                      [
-                        categoryColors[annonce.categorie_id?.nom]?.bg || "bg-gray-100",
-                        categoryColors[annonce.categorie_id?.nom]?.text || "text-gray-800",
-                        "px-2 py-1 rounded"
-                      ].join(" ")
-                    }
-                  >
-                    {annonce.categorie_id?.nom || 'Sans catégorie'}
-                  </span>
-
-
-                  <span className="flex items-center">
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    {annonce.ville}
-                  </span>
-                </div>
-                
-                <div className="flex items-center justify-between text-xs text-gray-500">
-                  <span>{formatDate(annonce.date_publication)}</span>
-                  <span className="flex items-center">
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    {annonce.nombre_vues} vues
-                  </span>
-                </div>
-              </div>
-            </div>
           ))}
         </div>
-      )}
-      
-      {!loading && annonces.length === 0 && (
-        <div className="text-center py-16">
-          <p className="text-gray-500 text-lg">Aucune annonce trouvée</p>
-        </div>
-      )}
+
+        {/* Annonces récentes */}
+        {recentAnnonces.length > 0 && (
+          <CategoryCarousel
+            title="Annonces récentes"
+            annonces={recentAnnonces}
+            icon="🆕"
+          />
+        )}
+
+        {/* Annonces par catégorie */}
+        {Object.values(annoncesByCategory).map(({ category, annonces }) => (
+          <CategoryCarousel
+            key={category._id}
+            title={`${category.nom} populaires`}
+            annonces={annonces}
+            icon={category.icone}
+            categoryId={category._id}
+            onViewAll={() => {
+              setFilters({ ...filters, categorie: category._id });
+              handleSearch();
+              window.scrollTo(0, 0);
+            }}
+          />
+        ))}
+
+        {/* Message si aucune annonce */}
+        {annonces.length === 0 && (
+          <div className="text-center py-16 bg-white rounded-lg shadow-md">
+            <svg className="w-24 h-24 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-gray-500 text-lg">Aucune annonce trouvée</p>
+            <button
+              onClick={handleResetFilters}
+              className="mt-4 bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition"
+            >
+              Réinitialiser les filtres
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

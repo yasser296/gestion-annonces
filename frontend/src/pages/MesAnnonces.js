@@ -32,12 +32,14 @@ const MesAnnonces = () => {
   };
 
   const formatPrice = (price) => {
-    return new Intl.NumberFormat('fr-MA', {
-      style: 'currency',
-      currency: 'MAD',
-      minimumFractionDigits: 0
-    }).format(price);
-  };
+  // Format fr-FR pour forcer l'espace insécable, puis remplace par un espace normal
+  return (
+    new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(price)
+      .replace(/\u202f/g, ' ') // remplace espace insécable fine par espace classique
+    + ' DH'
+  );
+};
+
 
   const handleToggleStatus = async (id, currentStatus) => {
     try {
@@ -433,7 +435,7 @@ const MesAnnonces = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                           </svg>
                         </button>
-                        
+
                         <button
                           onClick={(e) => {
                             e.stopPropagation();

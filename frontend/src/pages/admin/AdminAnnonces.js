@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation  } from 'react-router-dom';
 import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faEye } from '@fortawesome/free-solid-svg-icons';
 import { confirmDialog } from "../../utils/confirmDialog";
 
 const AdminAnnonces = () => {
@@ -72,12 +72,14 @@ const AdminAnnonces = () => {
   };
 
   const formatPrice = (price) => {
-    return new Intl.NumberFormat('fr-MA', {
-      style: 'currency',
-      currency: 'MAD',
-      minimumFractionDigits: 0
-    }).format(price);
-  };
+  // Format fr-FR pour forcer l'espace insécable, puis remplace par un espace normal
+  return (
+    new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(price)
+      .replace(/\u202f/g, ' ') // remplace espace insécable fine par espace classique
+    + ' DH'
+  );
+};
+
 
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString('fr-FR');
@@ -215,7 +217,7 @@ const AdminAnnonces = () => {
                     onClick={() => navigate(`/annonce/${annonce._id}`, { state: { from: location.pathname } })}
                     className="text-orange-500 hover:text-orange-900 mr-3"
                   >
-                    Voir
+                    <FontAwesomeIcon icon={faEye} />
                   </button>
                   <button
                     onClick={() => handleDelete(annonce._id)}
