@@ -96,11 +96,13 @@ const DemandeVendeur = () => {
         }
       );
       
+      // Rediriger vers l'accueil au lieu de popup + navigation
+      navigate('/');
+      
       showPopup({
         type: 'success',
         title: 'Demande envoyée',
-        message: 'Votre demande a été envoyée avec succès !',
-        onConfirm: () => navigate('/')
+        message: 'Votre demande a été envoyée avec succès !'
       });
       
     } catch (error) {

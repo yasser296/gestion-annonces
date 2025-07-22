@@ -19,7 +19,7 @@ const Login = () => {
   // Récupérer la destination de redirection depuis l'URL
   const searchParams = new URLSearchParams(location.search);
   const redirectTo = searchParams.get('redirect') || '/';
-
+    const targetPath = redirectTo.startsWith('/') ? redirectTo : `/${redirectTo}`;
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -27,6 +27,7 @@ const Login = () => {
     });
   };
 
+  // Fonction pour gérer la soumission du formulaire
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -35,8 +36,11 @@ const Login = () => {
     const result = await login(formData.email, formData.mot_de_passe);
     
     if (result.success) {
+      // Ajouter un slash si nécessaire
+      const targetPath = redirectTo.startsWith('/') ? redirectTo : `/${redirectTo}`;
+      
       // Vérifier si l'utilisateur doit créer une demande vendeur
-      if (redirectTo === 'nouvelle-annonce' && result.user.role_id === 2) {
+      if (targetPath === '/nouvelle-annonce' && result.user && result.user.role_id === 2) {
         showPopup({
           type: 'info',
           title: 'Devenir vendeur',
@@ -44,7 +48,7 @@ const Login = () => {
           onConfirm: () => navigate('/demande-vendeur')
         });
       } else {
-        navigate(`${redirectTo}`);
+        navigate(targetPath);
       }
     } else {
       setError(result.error);

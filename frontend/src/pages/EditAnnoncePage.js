@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 
 const EditAnnoncePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from || '/mes-annonces';
   const [formData, setFormData] = useState({
     titre: '',
     description: '',
@@ -134,7 +136,7 @@ const EditAnnoncePage = () => {
         }
       });
       
-      navigate('/mes-annonces');
+      navigate(from);
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.message || 'Erreur lors de la modification');
@@ -363,7 +365,7 @@ const EditAnnoncePage = () => {
             </button>
             <button
               type="button"
-              onClick={() => navigate('/mes-annonces')}
+              onClick={() => navigate(from)}
               className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition"
             >
               Annuler

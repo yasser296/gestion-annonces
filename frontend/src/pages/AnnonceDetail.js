@@ -32,7 +32,7 @@ const AnnonceDetail = () => {
 
   
 
-  const handleDelete = async (id) => {
+  const handleDelete = async () => {
     const confirmed = await showPopup({
       type: "warning",
       title: "Suppression",
@@ -50,25 +50,23 @@ const AnnonceDetail = () => {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       });
+      
+      // Navigation directe après suppression réussie
+      navigate(from || '/');
+      
       showPopup({
         type: "success",
         title: "Succès",
         message: "Annonce supprimée avec succès.",
-        confirmText: "OK",
-        showCancel: false,
-        onConfirm: () => navigate(from)  // <--- on retourne à la page précédente
       });
-      // OU, directement : navigate(from);
     } catch (error) {
       showPopup({
         type: 'error',
         title: 'Erreur',
         message: error.response?.data?.message || 'Erreur lors de la suppression de l\'annonce',
-        confirmText: "OK",
-        showCancel: false
       });
     }
-    };
+  };
 
 
   useEffect(() => {
@@ -139,7 +137,9 @@ const AnnonceDetail = () => {
           {(isOwner || isAdmin) && (
             <div className="mb-4 flex justify-end gap-3">
               <button
-                onClick={() => navigate(`/modifier-annonce/${id}`)}
+                onClick={() => navigate(`/modifier-annonce/${id}`, { 
+                  state: { from: location.pathname } 
+                })}
                 className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition flex items-center"
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

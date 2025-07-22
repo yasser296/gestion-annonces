@@ -44,11 +44,13 @@ const Register = () => {
     const result = await register(userData);
     
     if (result.success) {
+      // Navigation directe vers login avec le même paramètre redirect
+      navigate(`/login${location.search}`);
+      
       showPopup({
         type: 'success',
         title: 'Inscription réussie',
-        message: 'Votre compte a été créé avec succès. Veuillez vous connecter.',
-        onConfirm: () => navigate(`/login?redirect=${redirectTo}`)
+        message: 'Votre compte a été créé avec succès. Veuillez vous connecter.'
       });
     } else {
       setError(result.error);

@@ -225,8 +225,8 @@ const Navbar = () => {
                   </>
                 ) : (
                   <Link
-                    to="/login?redirect=nouvelle-annonce"
-                    className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg  transition"
+                    to="/login?redirect=/nouvelle-annonce"  // Ajouter le slash
+                    className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition"
                   >
                     + Déposer une annonce
                   </Link>
