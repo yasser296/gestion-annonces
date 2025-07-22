@@ -10,12 +10,13 @@ const AnnonceCard = ({ annonce, variant = 'default' }) => {
   const { user } = useAuth();
 
   const formatPrice = (price) => {
-    return new Intl.NumberFormat('fr-MA', {
-      style: 'currency',
-      currency: 'MAD',
-      minimumFractionDigits: 0
-    }).format(price);
-  };
+  // Espace classique + "DH"
+  return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 })
+    .format(price)
+    .replace(/\u202f/g, ' ')
+    + ' DH';
+};
+
 
   const formatDate = (date) => {
     const now = new Date();
