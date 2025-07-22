@@ -41,12 +41,16 @@ const Login = () => {
       
       // Vérifier si l'utilisateur doit créer une demande vendeur
       if (targetPath === '/nouvelle-annonce' && result.user && result.user.role_id === 2) {
-        showPopup({
+        const confirmed = await showPopup({
           type: 'info',
           title: 'Devenir vendeur',
-          message: 'Vous devez d\'abord devenir vendeur pour déposer une annonce',
-          onConfirm: () => navigate('/demande-vendeur')
+          message: "Vous devez d'abord devenir vendeur pour déposer une annonce",
+          confirmText: 'OK',
+          showCancel: false
         });
+        if (confirmed) {
+          navigate('/demande-vendeur');
+        }
       } else {
         navigate(targetPath);
       }

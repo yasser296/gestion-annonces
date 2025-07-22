@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import CategoryCarousel from '../components/CategoryCarousel';
+import SearchResultsGrid from '../components/SearchResultsGrid';
 import { useAuth } from '../contexts/AuthContext';
 
 const HomePage = () => {
@@ -17,6 +18,7 @@ const HomePage = () => {
     recherche: ''
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [isFiltered, setIsFiltered] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -24,6 +26,12 @@ const HomePage = () => {
     fetchCategories();
     fetchAnnonces();
   }, []);
+
+  useEffect(() => {
+    // Vérifier si des filtres sont appliqués
+    const hasActiveFilters = Object.values(filters).some(value => value !== '');
+    setIsFiltered(hasActiveFilters);
+  }, [filters]);
 
   const fetchCategories = async () => {
     try {
@@ -59,6 +67,15 @@ const HomePage = () => {
       ...filters,
       [e.target.name]: e.target.value
     });
+  };
+
+  const handleCategoryFilter = (categoryId) => {
+    setFilters({
+      ...filters,
+      categorie: categoryId === filters.categorie ? '' : categoryId
+    });
+    // Déclencher automatiquement la recherche après avoir sélectionné une catégorie
+    setTimeout(() => fetchAnnonces(), 0);
   };
 
   const handleSearch = () => {
@@ -193,48 +210,99 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* Catégories principales */}
+      {/* Catégories principales avec indication de sélection */}
       <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-800">Catégories</h2>
+          {filters.categorie && (
+            <button
+              onClick={() => {
+                setFilters({ ...filters, categorie: '' });
+                fetchAnnonces();
+              }}
+              className="text-sm text-orange-500 hover:text-orange-600 flex items-center space-x-1"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              <span>Afficher toutes les catégories</span>
+            </button>
+          )}
+        </div>
+        
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-12">
+          {/* Bouton "Toutes" */}
+          <button
+            onClick={() => handleCategoryFilter('')}
+            className={`rounded-lg shadow-md p-4 transition-all duration-200 ${
+              !filters.categorie 
+                ? 'bg-orange-500 text-white shadow-lg transform scale-105' 
+                : 'bg-white hover:shadow-lg hover:scale-105'
+            }`}
+          >
+            <div className="text-3xl mb-2 text-center">🏠</div>
+            <p className="text-sm font-medium text-center">Toutes</p>
+          </button>
+          
+          {/* Boutons de catégories */}
           {categories.map((category) => (
             <button
               key={category._id}
-              onClick={() => {
-                setFilters({ ...filters, categorie: category._id });
-                handleSearch();
-              }}
-              className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow hover:scale-105 transform duration-200"
+              onClick={() => handleCategoryFilter(category._id)}
+              className={`rounded-lg shadow-md p-4 transition-all duration-200 ${
+                filters.categorie === category._id 
+                  ? 'bg-orange-500 text-white shadow-lg transform scale-105' 
+                  : 'bg-white hover:shadow-lg hover:scale-105'
+              }`}
             >
               <div className="text-3xl mb-2 text-center">{category.icone}</div>
-              <p className="text-sm font-medium text-gray-700 text-center">{category.nom}</p>
+              <p className={`text-sm font-medium text-center ${
+                filters.categorie === category._id ? 'text-white' : 'text-gray-700'
+              }`}>
+                {category.nom}
+              </p>
             </button>
           ))}
         </div>
 
-        {/* Annonces récentes */}
-        {recentAnnonces.length > 0 && (
-          <CategoryCarousel
-            title="Annonces récentes"
-            annonces={recentAnnonces}
-            icon="🆕"
+        {/* Si des filtres sont appliqués, afficher les résultats de recherche */}
+        {isFiltered ? (
+          <SearchResultsGrid 
+            annonces={annonces.filter(a => !user || (a.user_id !== user.id && a.user_id?._id !== user.id))}
+            title={
+              filters.categorie 
+                ? `Résultats dans "${categories.find(c => c._id === filters.categorie)?.nom || 'Catégorie'}"`
+                : "Résultats de recherche"
+            }
+            loading={loading}
           />
-        )}
+        ) : (
+          <>
+            {/* Annonces récentes */}
+            {recentAnnonces.length > 0 && (
+              <CategoryCarousel
+                title="Annonces récentes"
+                annonces={recentAnnonces}
+                icon="🆕"
+              />
+            )}
 
-        {/* Annonces par catégorie */}
-        {Object.values(annoncesByCategory).map(({ category, annonces }) => (
-          <CategoryCarousel
-            key={category._id}
-            title={`${category.nom} populaires`}
-            annonces={annonces}
-            icon={category.icone}
-            categoryId={category._id}
-            onViewAll={() => {
-              setFilters({ ...filters, categorie: category._id });
-              handleSearch();
-              window.scrollTo(0, 0);
-            }}
-          />
-        ))}
+            {/* Annonces par catégorie */}
+            {Object.values(annoncesByCategory).map(({ category, annonces }) => (
+              <CategoryCarousel
+                key={category._id}
+                title={`${category.nom} populaires`}
+                annonces={annonces}
+                icon={category.icone}
+                categoryId={category._id}
+                onViewAll={() => {
+                  handleCategoryFilter(category._id);
+                  window.scrollTo(0, 0);
+                }}
+              />
+            ))}
+          </>
+        )}
 
         {/* Message si aucune annonce */}
         {annonces.length === 0 && (
