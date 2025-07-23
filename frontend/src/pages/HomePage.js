@@ -193,54 +193,21 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* Catégories principales avec indication de sélection */}
+      {/* Catégories principales */}
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-800">Catégories</h2>
-          {filters.categorie && (
-            <button
-              onClick={() => {
-                setFilters({ ...filters, categorie: '' });
-              }}
-              className="text-sm text-orange-500 hover:text-orange-600 flex items-center space-x-1"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-              <span>Afficher toutes les catégories</span>
-            </button>
-          )}
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-800">Explorez par catégorie</h2>
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-12">
-          {/* Bouton "Toutes" */}
-          <button
-            onClick={() => handleCategoryFilter('')}
-            className={`rounded-lg shadow-md p-4 transition-all duration-200 ${
-              !filters.categorie 
-                ? 'bg-orange-500 text-white shadow-lg transform scale-105' 
-                : 'bg-white hover:shadow-lg hover:scale-105'
-            }`}
-          >
-            <div className="text-3xl mb-2 text-center">🏠</div>
-            <p className="text-sm font-medium text-center">Toutes</p>
-          </button>
-          
-          {/* Boutons de catégories */}
           {categories.map((category) => (
             <button
               key={category._id}
-              onClick={() => handleCategoryFilter(category._id)}
-              className={`rounded-lg shadow-md p-4 transition-all duration-200 ${
-                filters.categorie === category._id 
-                  ? 'bg-orange-500 text-white shadow-lg transform scale-105' 
-                  : 'bg-white hover:shadow-lg hover:scale-105'
-              }`}
+              onClick={() => navigate(`/categorie/${category._id}`)}
+              className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg hover:scale-105 transition-all duration-200"
             >
               <div className="text-3xl mb-2 text-center">{category.icone}</div>
-              <p className={`text-sm font-medium text-center ${
-                filters.categorie === category._id ? 'text-white' : 'text-gray-700'
-              }`}>
+              <p className="text-sm font-medium text-gray-700 text-center">
                 {category.nom}
               </p>
             </button>
