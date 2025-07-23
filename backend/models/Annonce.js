@@ -5,6 +5,7 @@ const annonceSchema = new mongoose.Schema({
   description: String,
   prix: Number,
   categorie_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Categorie' },
+  sous_categorie_id: { type: mongoose.Schema.Types.ObjectId, ref: 'SousCategorie' },
   user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   ville: String,
   marque: String,

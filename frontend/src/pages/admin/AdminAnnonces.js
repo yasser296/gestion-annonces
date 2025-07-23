@@ -187,8 +187,17 @@ const AdminAnnonces = () => {
                   <div className="text-sm text-gray-900">{annonce.user_id?.nom || 'Utilisateur supprimé'}</div>
                   <div className="text-sm text-gray-500">{annonce.user_id?.email}</div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {annonce.categorie_id?.nom || 'Sans catégorie'}
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div>
+                    <div className="text-sm text-gray-900">
+                      {annonce.categorie_id?.nom || 'Sans catégorie'}
+                    </div>
+                    {annonce.sous_categorie_id && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        {annonce.sous_categorie_id.icone} {annonce.sous_categorie_id.nom}
+                      </div>
+                    )}
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   {formatPrice(annonce.prix)}

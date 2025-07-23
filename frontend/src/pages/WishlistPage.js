@@ -188,7 +188,21 @@ const WishlistPage = () => {
                       <p className="text-2xl font-bold text-orange-500 mb-2">{formatPrice(annonce.prix)}</p>
                       
                       <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
-                        <span>{annonce.categorie_id?.nom || 'Sans catégorie'}</span>
+                        <div className="flex flex-wrap gap-1">
+                          {annonce.categorie_id && (
+                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
+                              {annonce.categorie_id.icone} {annonce.categorie_id.nom}
+                            </span>
+                          )}
+                          {annonce.sous_categorie_id && (
+                            <span className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full font-medium">
+                              {annonce.sous_categorie_id.icone} {annonce.sous_categorie_id.nom}
+                            </span>
+                          )}
+                          {!annonce.categorie_id && !annonce.sous_categorie_id && (
+                            <span>Sans catégorie</span>
+                          )}
+                        </div>
                         <span className="flex items-center">
                           <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />

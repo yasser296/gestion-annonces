@@ -3,6 +3,8 @@ const authenticateToken = require('../middleware/auth');
 const adminAuth = require('../middleware/adminAuth');
 const User = require('../models/User');
 const Annonce = require('../models/Annonce');
+const Categorie = require('../models/Categorie');
+const SousCategorie = require('../models/SousCategorie'); // NOUVEAU
 const Role = require('../models/Role');
 const Wishlist = require('../models/Wishlist');
 
@@ -63,7 +65,7 @@ router.put('/users/:id', async (req, res) => {
 
 // Changer le rôle d'un utilisateur
 router.patch('/users/:id/role', async (req, res) => {
-  const { role_id } = req.body; // Maintenant on reçoit role_id au lieu de role
+  const { role_id } = req.body;
   const validRoleIds = [1, 2, 3]; // admin, user, vendeur
 
   try {
@@ -174,12 +176,13 @@ router.delete('/users/:id', async (req, res) => {
 
 // === GESTION DES ANNONCES ===
 
-// Obtenir toutes les annonces (admin)
+// Obtenir toutes les annonces (admin) - MISE À JOUR
 router.get('/annonces', async (req, res) => {
   try {
     const annonces = await Annonce.find()
       .populate('user_id', 'nom email')
       .populate('categorie_id')
+      .populate('sous_categorie_id') // NOUVEAU
       .sort({ date_publication: -1 });
 
     res.json(annonces);
@@ -192,13 +195,9 @@ router.get('/annonces', async (req, res) => {
 // Modifier une annonce (admin)
 router.put('/annonces/:id', async (req, res) => {
   try {
-    const updateData = {
-      ...req.body,
-      sous_categorie_id: req.body.sous_categorie_id || null
-    };
     const annonce = await Annonce.findByIdAndUpdate(
       req.params.id,
-      updateData,
+      req.body,
       { new: true }
     );
 
@@ -248,6 +247,149 @@ router.patch('/annonces/:id/toggle-status', async (req, res) => {
   }
 });
 
+// === GESTION DES CATÉGORIES - NOUVEAU ===
+
+// Obtenir toutes les catégories
+router.get('/categories', async (req, res) => {
+  try {
+    const categories = await Categorie.find()
+      .populate('sousCategories')
+      .sort({ ordre: 1, nom: 1 });
+    res.json(categories);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// Créer une catégorie
+router.post('/categories', async (req, res) => {
+  try {
+    const categorie = new Categorie(req.body);
+    await categorie.save();
+    res.status(201).json({ message: 'Catégorie créée', categorie });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// Modifier une catégorie
+router.put('/categories/:id', async (req, res) => {
+  try {
+    const categorie = await Categorie.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+    if (!categorie) {
+      return res.status(404).json({ message: 'Catégorie non trouvée' });
+    }
+    res.json({ message: 'Catégorie mise à jour', categorie });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// Supprimer une catégorie
+router.delete('/categories/:id', async (req, res) => {
+  try {
+    // Vérifier s'il y a des annonces dans cette catégorie
+    const annonceCount = await Annonce.countDocuments({ categorie_id: req.params.id });
+    if (annonceCount > 0) {
+      return res.status(400).json({ 
+        message: `Impossible de supprimer cette catégorie car elle contient ${annonceCount} annonce(s)` 
+      });
+    }
+
+    // Supprimer toutes les sous-catégories de cette catégorie
+    await SousCategorie.deleteMany({ categorie_id: req.params.id });
+
+    // Supprimer la catégorie
+    const categorie = await Categorie.findByIdAndDelete(req.params.id);
+    if (!categorie) {
+      return res.status(404).json({ message: 'Catégorie non trouvée' });
+    }
+
+    res.json({ message: 'Catégorie et ses sous-catégories supprimées' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// === GESTION DES SOUS-CATÉGORIES - NOUVEAU ===
+
+// Obtenir toutes les sous-catégories
+router.get('/sous-categories', async (req, res) => {
+  try {
+    const sousCategories = await SousCategorie.find()
+      .populate('categorie_id')
+      .sort({ categorie_id: 1, ordre: 1, nom: 1 });
+    res.json(sousCategories);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// Créer une sous-catégorie
+router.post('/sous-categories', async (req, res) => {
+  try {
+    const sousCategorie = new SousCategorie(req.body);
+    await sousCategorie.save();
+    await sousCategorie.populate('categorie_id');
+    res.status(201).json({ message: 'Sous-catégorie créée', sousCategorie });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// Modifier une sous-catégorie
+router.put('/sous-categories/:id', async (req, res) => {
+  try {
+    const sousCategorie = await SousCategorie.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    ).populate('categorie_id');
+    
+    if (!sousCategorie) {
+      return res.status(404).json({ message: 'Sous-catégorie non trouvée' });
+    }
+    
+    res.json({ message: 'Sous-catégorie mise à jour', sousCategorie });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// Supprimer une sous-catégorie
+router.delete('/sous-categories/:id', async (req, res) => {
+  try {
+    // Vérifier s'il y a des annonces dans cette sous-catégorie
+    const annonceCount = await Annonce.countDocuments({ sous_categorie_id: req.params.id });
+    if (annonceCount > 0) {
+      return res.status(400).json({ 
+        message: `Impossible de supprimer cette sous-catégorie car elle contient ${annonceCount} annonce(s)` 
+      });
+    }
+
+    const sousCategorie = await SousCategorie.findByIdAndDelete(req.params.id);
+    if (!sousCategorie) {
+      return res.status(404).json({ message: 'Sous-catégorie non trouvée' });
+    }
+
+    res.json({ message: 'Sous-catégorie supprimée' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
 // === STATISTIQUES ===
 
 // Obtenir les statistiques du dashboard
@@ -256,6 +398,8 @@ router.get('/stats', async (req, res) => {
     const totalUsers = await User.countDocuments({ role_id: { $in: [1, 2, 3] } });
     const totalAnnonces = await Annonce.countDocuments();
     const activeAnnonces = await Annonce.countDocuments({ is_active: true });
+    const totalCategories = await Categorie.countDocuments({ isActive: true }); // NOUVEAU
+    const totalSousCategories = await SousCategorie.countDocuments({ isActive: true }); // NOUVEAU
     const totalViews = await Annonce.aggregate([
       { $group: { _id: null, total: { $sum: '$nombre_vues' } } }
     ]);
@@ -264,6 +408,8 @@ router.get('/stats', async (req, res) => {
       totalUsers,
       totalAnnonces,
       activeAnnonces,
+      totalCategories, // NOUVEAU
+      totalSousCategories, // NOUVEAU
       totalViews: totalViews[0]?.total || 0
     });
   } catch (error) {

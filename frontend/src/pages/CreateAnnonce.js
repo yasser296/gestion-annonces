@@ -14,6 +14,7 @@ const CreateAnnonce = () => {
     etat: ''
   });
   const [categories, setCategories] = useState([]);
+  const [sousCategories, setSousCategories] = useState([]);
   const [images, setImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [error, setError] = useState('');
@@ -24,12 +25,32 @@ const CreateAnnonce = () => {
     fetchCategories();
   }, []);
 
+  // Charger les sous-catégories quand une catégorie est sélectionnée
+  useEffect(() => {
+    if (formData.categorie_id) {
+      fetchSousCategoriesByCategory(formData.categorie_id);
+    } else {
+      setSousCategories([]);
+      setFormData(prev => ({ ...prev, sous_categorie_id: '' }));
+    }
+  }, [formData.categorie_id]);
+
   const fetchCategories = async () => {
     try {
       const response = await axios.get('http://localhost:5000/api/categories');
       setCategories(response.data);
     } catch (error) {
       console.error('Erreur lors du chargement des catégories:', error);
+    }
+  };
+
+  const fetchSousCategoriesByCategory = async (categorieId) => {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/sous-categories/by-category/${categorieId}`);
+      setSousCategories(response.data);
+    } catch (error) {
+      console.error('Erreur lors du chargement des sous-catégories:', error);
+      setSousCategories([]);
     }
   };
 
@@ -77,7 +98,9 @@ const CreateAnnonce = () => {
 
     const formDataToSend = new FormData();
     Object.keys(formData).forEach(key => {
-      formDataToSend.append(key, formData[key]);
+      if (formData[key]) { // Ne pas envoyer les champs vides
+        formDataToSend.append(key, formData[key]);
+      }
     });
     
     images.forEach(image => {
@@ -157,8 +180,8 @@ const CreateAnnonce = () => {
                 className="w-full p-2 border rounded"
                 min="0"
                 step="1"
+                required
               />
-
             </div>
             
             <div>
@@ -175,12 +198,34 @@ const CreateAnnonce = () => {
                 <option value="">Sélectionner une catégorie</option>
                 {categories.map((cat) => (
                   <option key={cat._id} value={cat._id}>
-                    {cat.nom}
+                    {cat.icone} {cat.nom}
                   </option>
                 ))}
               </select>
             </div>
           </div>
+
+          {/* Sous-catégorie - affiché seulement si une catégorie est sélectionnée */}
+          {formData.categorie_id && sousCategories.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Sous-catégorie (optionnel)
+              </label>
+              <select
+                name="sous_categorie_id"
+                value={formData.sous_categorie_id}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
+              >
+                <option value="">Sélectionner une sous-catégorie</option>
+                {sousCategories.map((sousCat) => (
+                  <option key={sousCat._id} value={sousCat._id}>
+                    {sousCat.icone} {sousCat.nom}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>

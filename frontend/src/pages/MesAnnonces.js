@@ -391,9 +391,16 @@ const MesAnnonces = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-900">
-                          {annonce.categorie_id?.nom || 'Sans catégorie'}
-                        </span>
+                        <div>
+                          <span className="text-sm text-gray-900">
+                            {annonce.categorie_id?.nom || 'Sans catégorie'}
+                          </span>
+                          {annonce.sous_categorie_id && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              {annonce.sous_categorie_id.icone} {annonce.sous_categorie_id.nom}
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div 

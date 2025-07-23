@@ -10,13 +10,11 @@ const AnnonceCard = ({ annonce, variant = 'default' }) => {
   const { user } = useAuth();
 
   const formatPrice = (price) => {
-  // Espace classique + "DH"
-  return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 })
-    .format(price)
-    .replace(/\u202f/g, ' ')
-    + ' DH';
-};
-
+    return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 })
+      .format(price)
+      .replace(/\u202f/g, ' ')
+      + ' DH';
+  };
 
   const formatDate = (date) => {
     const now = new Date();
@@ -106,15 +104,21 @@ const AnnonceCard = ({ annonce, variant = 'default' }) => {
           </div>
         )}
 
-        {/* Category Badge */}
-        {annonce.categorie_id && (
-          <div className="absolute bottom-2 left-2">
+        {/* Category and Subcategory Badges */}
+        <div className="absolute bottom-2 left-2 flex flex-wrap gap-1">
+          {annonce.categorie_id && (
             <span className="bg-white/90 backdrop-blur-sm text-gray-800 text-xs px-3 py-1 rounded-full font-medium flex items-center space-x-1">
               <span>{annonce.categorie_id.icone || '📁'}</span>
               <span>{annonce.categorie_id.nom}</span>
             </span>
-          </div>
-        )}
+          )}
+          {annonce.sous_categorie_id && (
+            <span className="bg-orange-100/90 backdrop-blur-sm text-orange-800 text-xs px-2 py-1 rounded-full font-medium flex items-center space-x-1">
+              <span>{annonce.sous_categorie_id.icone || '📂'}</span>
+              <span>{annonce.sous_categorie_id.nom}</span>
+            </span>
+          )}
+        </div>
       </div>
       
       {/* Content */}

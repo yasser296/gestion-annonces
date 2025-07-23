@@ -62,9 +62,9 @@ const CategoryCarousel = ({ title, annonces, icon, categoryId, onViewAll }) => {
             {annonces.length} annonces
           </span>
         </div>
-        {onViewAll && (
+        {(onViewAll || categoryId) && (
           <button
-            onClick={onViewAll}
+            onClick={onViewAll || (() => navigate(`/category/${categoryId}`))}
             className="text-orange-500 hover:text-orange-600 font-medium flex items-center space-x-1"
           >
             <span>Voir tout</span>

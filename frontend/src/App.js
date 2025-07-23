@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
+import CategoryPage from './pages/CategoryPage'; // NOUVEAU
 import AnnonceDetail from './pages/AnnonceDetail';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -18,8 +19,9 @@ import AdminAnnonces from './pages/admin/AdminAnnonces';
 import DemandeVendeur from './pages/DemandeVendeur';
 import AdminDemandesVendeur from './pages/admin/AdminDemandesVendeur';
 import WishlistPage from './pages/WishlistPage';
-import CategoryPage from './pages/CategoryPage';
-
+import SearchPage from './pages/SearchPage';
+import AdminCategories from './pages/admin/AdminCategories';
+import { WishlistProvider } from './contexts/WishlistContext';
 
 function App() {
   return (
@@ -29,11 +31,12 @@ function App() {
           <Navbar />
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/category/:categoryId" element={<CategoryPage />} /> {/* NOUVEAU */}
             <Route path="/annonce/:id" element={<AnnonceDetail />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/profil/:userId" element={<ProfilePage />} />
-            <Route path="/categorie/:categoryId" element={<CategoryPage />} />
+            <Route path="/search" element={<SearchPage />} />
             <Route
               path="/nouvelle-annonce"
               element={
@@ -83,6 +86,14 @@ function App() {
               }
             />
             <Route
+              path="/admin/categories"
+              element={
+                <AdminRoute>
+                  <AdminCategories />
+                </AdminRoute>
+              }
+            />
+            <Route
               path="/demande-vendeur"
               element={
                 <PrivateRoute>
@@ -98,14 +109,11 @@ function App() {
                 </AdminRoute>
               }
             />
-            <Route 
-              path="/wishlist" 
-              element={
-                <PrivateRoute>
-                  <WishlistPage />
-                </PrivateRoute>
-              } 
-            />
+            <Route path="/wishlist" element={
+              <PrivateRoute>
+                <WishlistPage />
+              </PrivateRoute>
+            } />
           </Routes>
         </div>
       </Router>

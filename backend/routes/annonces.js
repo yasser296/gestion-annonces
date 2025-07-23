@@ -23,13 +23,17 @@ const upload = multer({ storage });
 // Obtenir annonces avec filtres
 router.get('/', async (req, res) => {
   const filters = { is_active: req.query.show_inactive === 'true' ? { $in: [true, false] } : true };
+  
+  // Filtre par catégorie
   if (req.query.categorie) filters.categorie_id = req.query.categorie;
-  if (req.query.ville) filters.ville = new RegExp(req.query.ville, 'i');
-  if (req.query.min_prix) filters.prix = { ...filters.prix, $gte: Number(req.query.min_prix) };
-  if (req.query.max_prix) filters.prix = { ...filters.prix, $lte: Number(req.query.max_prix) };
-  if (req.query.etat) filters.etat = req.query.etat;
-  if (req.query.marque) filters.marque = new RegExp(req.query.marque, 'i');
+  
+  // Filtre par sous-catégorie
   if (req.query.sous_categorie) filters.sous_categorie_id = req.query.sous_categorie;
+  
+  // Autres filtres existants
+  if (req.query.ville) filters.ville = new RegExp(req.query.ville, 'i');
+  if (req.query.min_prix) filters.prix = { ...filters.prix, $gte: req.query.min_prix };
+  if (req.query.max_prix) filters.prix = { ...filters.prix, $lte: req.query.max_prix };
   if (req.query.recherche) {
     filters.$or = [
       { titre: new RegExp(req.query.recherche, 'i') },
@@ -40,8 +44,8 @@ router.get('/', async (req, res) => {
   try {
     const annonces = await Annonce.find(filters)
       .populate('categorie_id')
-      .populate('user_id')
       .populate('sous_categorie_id')
+      .populate('user_id')
       .sort({ date_publication: -1 });
     res.json(annonces);
   } catch (error) {
@@ -50,13 +54,13 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Obtenir annonce par ID
+// Obtenir annonce par ID - FONCTION MISE À JOUR
 router.get('/:id', async (req, res) => {
   try {
     const annonce = await Annonce.findById(req.params.id)
       .populate('categorie_id')
-      .populate('user_id')
-      .populate('sous_categorie_id');
+      .populate('sous_categorie_id')
+      .populate('user_id');
 
     if (!annonce) return res.status(404).json({ message: 'Annonce non trouvée' });
 
@@ -103,9 +107,22 @@ router.patch('/:id/vues', authenticateToken, async (req, res) => {
 router.post('/', authenticateToken, upload.array('images', 5), async (req, res) => {
   try {
     const images = req.files ? req.files.map(f => `/uploads/${f.filename}`) : [];
-    const annonce = new Annonce({ ...req.body, user_id: req.user.id, images });
+    
+    // Créer l'objet annonce avec les nouveaux champs
+    const annonceData = {
+      ...req.body,
+      user_id: req.user.id,
+      images
+    };
 
+    // Si sous_categorie_id est vide, le supprimer
+    if (!annonceData.sous_categorie_id || annonceData.sous_categorie_id === '') {
+      delete annonceData.sous_categorie_id;
+    }
+
+    const annonce = new Annonce(annonceData);
     await annonce.save();
+    
     res.status(201).json({ message: 'Annonce créée', annonce });
   } catch (error) {
     console.error(error);
@@ -118,6 +135,7 @@ router.get('/user/mes-annonces', authenticateToken, async (req, res) => {
   try {
     const annonces = await Annonce.find({ user_id: req.user.id })
       .populate('categorie_id')
+      .populate('sous_categorie_id')
       .sort({ date_publication: -1 });
 
     res.json(annonces);
@@ -162,7 +180,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 
 
 router.put('/:id', authenticateToken, upload.array('images', 5), async (req, res) => {
-  const { titre, description, prix, ville, marque, etat, categorie_id, existingImages } = req.body;
+  const { titre, description, prix, ville, marque, etat, categorie_id, sous_categorie_id, existingImages } = req.body;
 
   try {
     const user = await User.findById(req.user.id);
@@ -188,6 +206,7 @@ router.put('/:id', authenticateToken, upload.array('images', 5), async (req, res
         finalImages = finalImages.concat(newImages);
       }
 
+      // Mettre à jour les champs
       annonce.titre = titre;
       annonce.description = description;
       annonce.prix = prix;
@@ -196,6 +215,13 @@ router.put('/:id', authenticateToken, upload.array('images', 5), async (req, res
       annonce.etat = etat;
       annonce.categorie_id = categorie_id;
       annonce.images = finalImages;
+      
+      // Gérer sous_categorie_id (peut être vide)
+      if (sous_categorie_id && sous_categorie_id !== '') {
+        annonce.sous_categorie_id = sous_categorie_id;
+      } else {
+        annonce.sous_categorie_id = undefined; // Supprimer le champ s'il est vide
+      }
 
       await annonce.save();
 
@@ -214,6 +240,7 @@ router.get('/user/:userId', async (req, res) => {
   try {
     const annonces = await Annonce.find({ user_id: req.params.userId, is_active: true })
       .populate('categorie_id')
+      .populate('sous_categorie_id')
       .sort({ date_publication: -1 });
 
     res.json(annonces);
