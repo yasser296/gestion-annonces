@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import CategoryCarousel from '../components/CategoryCarousel';
-import SearchResultsGrid from '../components/SearchResultsGrid';
 import { useAuth } from '../contexts/AuthContext';
 
 const HomePage = () => {
@@ -18,28 +17,13 @@ const HomePage = () => {
     recherche: ''
   });
   const [showFilters, setShowFilters] = useState(false);
-  const [isFiltered, setIsFiltered] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
-
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
     fetchCategories();
     fetchAnnonces();
-    setIsInitialLoad(false);
   }, []);
-
-  useEffect(() => {
-    // Vérifier si des filtres sont appliqués
-    const hasActiveFilters = Object.values(filters).some(value => value !== '');
-    setIsFiltered(hasActiveFilters);
-    
-    // Refetch les annonces quand les filtres changent (mais pas au premier chargement)
-    if (!isInitialLoad) {
-      fetchAnnonces();
-    }
-  }, [filters]);
 
   const fetchCategories = async () => {
     try {
@@ -77,13 +61,6 @@ const HomePage = () => {
     });
   };
 
-  const handleCategoryFilter = (categoryId) => {
-    setFilters({
-      ...filters,
-      categorie: categoryId === filters.categorie ? '' : categoryId
-    });
-  };
-
   const handleSearch = () => {
     fetchAnnonces();
   };
@@ -96,6 +73,7 @@ const HomePage = () => {
       max_prix: '',
       recherche: ''
     });
+    fetchAnnonces();
   };
 
   // Grouper les annonces par catégorie
@@ -269,44 +247,28 @@ const HomePage = () => {
           ))}
         </div>
 
-        {/* Si des filtres sont appliqués, afficher les résultats de recherche */}
-        {isFiltered ? (
-          <SearchResultsGrid 
-            annonces={annonces.filter(a => !user || (a.user_id !== user.id && a.user_id?._id !== user.id))}
-            title={
-              filters.categorie 
-                ? `Résultats dans "${categories.find(c => c._id === filters.categorie)?.nom || 'Catégorie'}"`
-                : "Résultats de recherche"
-            }
-            loading={loading}
+        {/* Annonces récentes */}
+        {recentAnnonces.length > 0 && (
+          <CategoryCarousel
+            title="Annonces récentes"
+            annonces={recentAnnonces}
+            icon="🆕"
           />
-        ) : (
-          <>
-            {/* Annonces récentes */}
-            {recentAnnonces.length > 0 && (
-              <CategoryCarousel
-                title="Annonces récentes"
-                annonces={recentAnnonces}
-                icon="🆕"
-              />
-            )}
-
-            {/* Annonces par catégorie */}
-            {Object.values(annoncesByCategory).map(({ category, annonces }) => (
-              <CategoryCarousel
-                key={category._id}
-                title={`${category.nom} populaires`}
-                annonces={annonces}
-                icon={category.icone}
-                categoryId={category._id}
-                onViewAll={() => {
-                  handleCategoryFilter(category._id);
-                  window.scrollTo(0, 0);
-                }}
-              />
-            ))}
-          </>
         )}
+
+        {/* Annonces par catégorie */}
+        {Object.values(annoncesByCategory).map(({ category, annonces }) => (
+          <CategoryCarousel
+            key={category._id}
+            title={`${category.nom} populaires`}
+            annonces={annonces}
+            icon={category.icone}
+            categoryId={category._id}
+            onViewAll={() => {
+              navigate(`/categorie/${category._id}`);
+            }}
+          />
+        ))}
 
         {/* Message si aucune annonce */}
         {annonces.length === 0 && (

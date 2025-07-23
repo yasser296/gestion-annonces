@@ -192,9 +192,13 @@ router.get('/annonces', async (req, res) => {
 // Modifier une annonce (admin)
 router.put('/annonces/:id', async (req, res) => {
   try {
+    const updateData = {
+      ...req.body,
+      sous_categorie_id: req.body.sous_categorie_id || null
+    };
     const annonce = await Annonce.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       { new: true }
     );
 

@@ -5,6 +5,8 @@ const path = require('path');
 const Annonce = require('../models/Annonce');
 const User = require('../models/User');
 const Wishlist = require('../models/Wishlist');
+const SousCategorie = require('../models/SousCategorie');
+
 
 
 const router = express.Router();
@@ -23,8 +25,11 @@ router.get('/', async (req, res) => {
   const filters = { is_active: req.query.show_inactive === 'true' ? { $in: [true, false] } : true };
   if (req.query.categorie) filters.categorie_id = req.query.categorie;
   if (req.query.ville) filters.ville = new RegExp(req.query.ville, 'i');
-  if (req.query.min_prix) filters.prix = { ...filters.prix, $gte: req.query.min_prix };
-  if (req.query.max_prix) filters.prix = { ...filters.prix, $lte: req.query.max_prix };
+  if (req.query.min_prix) filters.prix = { ...filters.prix, $gte: Number(req.query.min_prix) };
+  if (req.query.max_prix) filters.prix = { ...filters.prix, $lte: Number(req.query.max_prix) };
+  if (req.query.etat) filters.etat = req.query.etat;
+  if (req.query.marque) filters.marque = new RegExp(req.query.marque, 'i');
+  if (req.query.sous_categorie) filters.sous_categorie_id = req.query.sous_categorie;
   if (req.query.recherche) {
     filters.$or = [
       { titre: new RegExp(req.query.recherche, 'i') },
@@ -36,6 +41,7 @@ router.get('/', async (req, res) => {
     const annonces = await Annonce.find(filters)
       .populate('categorie_id')
       .populate('user_id')
+      .populate('sous_categorie_id')
       .sort({ date_publication: -1 });
     res.json(annonces);
   } catch (error) {
@@ -49,7 +55,8 @@ router.get('/:id', async (req, res) => {
   try {
     const annonce = await Annonce.findById(req.params.id)
       .populate('categorie_id')
-      .populate('user_id');
+      .populate('user_id')
+      .populate('sous_categorie_id');
 
     if (!annonce) return res.status(404).json({ message: 'Annonce non trouvée' });
 

@@ -18,12 +18,11 @@ import AdminAnnonces from './pages/admin/AdminAnnonces';
 import DemandeVendeur from './pages/DemandeVendeur';
 import AdminDemandesVendeur from './pages/admin/AdminDemandesVendeur';
 import WishlistPage from './pages/WishlistPage';
-import { WishlistProvider } from './contexts/WishlistContext';
+import CategoryPage from './pages/CategoryPage';
 
 
 function App() {
   return (
-    
     <AuthProvider>
       <Router>
         <div className="min-h-screen bg-gray-50">
@@ -34,6 +33,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/profil/:userId" element={<ProfilePage />} />
+            <Route path="/categorie/:categoryId" element={<CategoryPage />} />
             <Route
               path="/nouvelle-annonce"
               element={
@@ -98,11 +98,14 @@ function App() {
                 </AdminRoute>
               }
             />
-            <Route path="/wishlist" element={
-              <PrivateRoute>
-                <WishlistPage />
-              </PrivateRoute>
-            } />
+            <Route 
+              path="/wishlist" 
+              element={
+                <PrivateRoute>
+                  <WishlistPage />
+                </PrivateRoute>
+              } 
+            />
           </Routes>
         </div>
       </Router>

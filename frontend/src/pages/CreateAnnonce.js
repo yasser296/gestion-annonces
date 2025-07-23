@@ -8,6 +8,7 @@ const CreateAnnonce = () => {
     description: '',
     prix: '',
     categorie_id: '',
+    sous_categorie_id: '',
     ville: '',
     marque: '',
     etat: ''

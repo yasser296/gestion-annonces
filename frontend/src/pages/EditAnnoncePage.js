@@ -11,10 +11,11 @@ const EditAnnoncePage = () => {
     titre: '',
     description: '',
     prix: '',
+    categorie_id: '',
+    sous_categorie_id: '',
     ville: '',
     marque: '',
-    etat: '',
-    categorie_id: '',
+    etat: ''
   });
   const [existingImages, setExistingImages] = useState([]);
   const [newImages, setNewImages] = useState([]);
