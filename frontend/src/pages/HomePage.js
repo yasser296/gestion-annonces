@@ -22,15 +22,23 @@ const HomePage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
   useEffect(() => {
     fetchCategories();
     fetchAnnonces();
+    setIsInitialLoad(false);
   }, []);
 
   useEffect(() => {
     // Vérifier si des filtres sont appliqués
     const hasActiveFilters = Object.values(filters).some(value => value !== '');
     setIsFiltered(hasActiveFilters);
+    
+    // Refetch les annonces quand les filtres changent (mais pas au premier chargement)
+    if (!isInitialLoad) {
+      fetchAnnonces();
+    }
   }, [filters]);
 
   const fetchCategories = async () => {
@@ -74,8 +82,6 @@ const HomePage = () => {
       ...filters,
       categorie: categoryId === filters.categorie ? '' : categoryId
     });
-    // Déclencher automatiquement la recherche après avoir sélectionné une catégorie
-    setTimeout(() => fetchAnnonces(), 0);
   };
 
   const handleSearch = () => {
@@ -83,8 +89,13 @@ const HomePage = () => {
   };
 
   const handleResetFilters = () => {
-    handleCategoryFilter('')
-    fetchAnnonces();
+    setFilters({
+      categorie: '',
+      ville: '',
+      min_prix: '',
+      max_prix: '',
+      recherche: ''
+    });
   };
 
   // Grouper les annonces par catégorie
@@ -208,11 +219,10 @@ const HomePage = () => {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-800">Catégories</h2>
-          {/* {filters.categorie && (
+          {filters.categorie && (
             <button
               onClick={() => {
                 setFilters({ ...filters, categorie: '' });
-                fetchAnnonces();
               }}
               className="text-sm text-orange-500 hover:text-orange-600 flex items-center space-x-1"
             >
@@ -221,7 +231,7 @@ const HomePage = () => {
               </svg>
               <span>Afficher toutes les catégories</span>
             </button>
-          )} */}
+          )}
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-12">
