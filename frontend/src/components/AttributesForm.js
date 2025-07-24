@@ -12,9 +12,12 @@ const AttributesForm = ({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    console.log('AttributesForm - categoryId changed:', categoryId);
     if (categoryId) {
+        console.log('Fetching attributes for category:', categoryId);
       fetchAttributes();
     } else {
+      console.log('No categoryId, clearing attributes');
       setAttributes([]);
       setAttributeValues({});
     }
@@ -29,7 +32,9 @@ const AttributesForm = ({
   const fetchAttributes = async () => {
     try {
       setLoading(true);
+      console.log('Fetching attributes for category:', categoryId);
       const response = await axios.get(`http://localhost:5000/api/attributes/by-category/${categoryId}`);
+      console.log('Attributes received:', response.data);
       setAttributes(response.data);
       
       // Réinitialiser les valeurs quand on change de catégorie
@@ -57,6 +62,19 @@ const AttributesForm = ({
       onAttributesChange(values);
     } catch (error) {
       console.error('Erreur lors du chargement des valeurs:', error);
+    }
+  };
+
+  const getDefaultValue = (attribute) => {
+    switch (attribute.type) {
+      case 'boolean':
+        return false;
+      case 'number':
+        return '';
+      case 'date':
+        return '';
+      default:
+        return '';
     }
   };
 
@@ -134,6 +152,63 @@ const AttributesForm = ({
             ))}
           </select>
         );
+
+        case 'date':
+        // Gestion spéciale pour les champs de date
+        const dateFormat = attribute.dateFormat || 'date';
+        let inputType = 'date';
+        let step = undefined;
+        
+        switch (dateFormat) {
+          case 'datetime-local':
+            inputType = 'datetime-local';
+            break;
+          case 'month':
+            inputType = 'month';
+            break;
+          case 'year':
+            inputType = 'number';
+            step = 1;
+            break;
+          default:
+            inputType = 'date';
+        }
+
+        if (dateFormat === 'year') {
+          // Champ spécial pour l'année
+          return (
+            <input
+              type="number"
+              value={value}
+              onChange={(e) => handleValueChange(attribute._id, e.target.value)}
+              placeholder={attribute.placeholder || 'YYYY'}
+              disabled={disabled}
+              className={`${baseInputClasses} ${disabledClasses}`}
+              min="1900"
+              max="2030"
+              step="1"
+            />
+          );
+        }
+
+        return (
+          <div className="space-y-1">
+            <input
+              type={inputType}
+              value={value}
+              onChange={(e) => handleValueChange(attribute._id, e.target.value)}
+              disabled={disabled}
+              className={`${baseInputClasses} ${disabledClasses}`}
+              min={attribute.minDate ? new Date(attribute.minDate).toISOString().split('T')[0] : undefined}
+              max={attribute.maxDate ? new Date(attribute.maxDate).toISOString().split('T')[0] : undefined}
+            />
+            {attribute.placeholder && (
+              <p className="text-xs text-gray-500">
+                {attribute.placeholder}
+              </p>
+            )}
+          </div>
+        );
         
       default:
         return (
@@ -147,6 +222,17 @@ const AttributesForm = ({
           />
         );
     }
+  };
+
+  const getAttributeIcon = (type) => {
+    const icons = {
+      string: '📝',
+      number: '🔢',
+      boolean: '☑️',
+      select: '📋',
+      date: '📅'  // NOUVEAU
+    };
+    return icons[type] || '📝';
   };
 
   if (loading) {
@@ -175,6 +261,7 @@ const AttributesForm = ({
           {attributes.map((attribute) => (
             <div key={attribute._id} className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">
+                <span>{getAttributeIcon(attribute.type)}</span>
                 {attribute.nom}
                 {attribute.required && (
                   <span className="text-red-500 ml-1">*</span>

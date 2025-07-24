@@ -305,7 +305,7 @@ const SearchPage = () => {
                 </div>
 
                 {/* État */}
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     État
                   </label>
@@ -321,10 +321,10 @@ const SearchPage = () => {
                     <option value="Bon état">Bon état</option>
                     <option value="État moyen">État moyen</option>
                   </select>
-                </div>
+                </div> */}
 
                 {/* Marque */}
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Marque
                   </label>
@@ -336,7 +336,7 @@ const SearchPage = () => {
                     onChange={handleFilterChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
                   />
-                </div>
+                </div> */}
               </div>
             </div>
           </div>

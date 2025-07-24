@@ -1,3 +1,4 @@
+// frontend/src/components/AttributesDisplay.js - Version mise à jour
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
@@ -64,18 +65,62 @@ const AttributesDisplay = ({
             {value ? '✓ Oui' : '✗ Non'}
           </span>
         );
+      
       case 'number':
         return (
           <span className="font-medium">
-            {typeof value === 'number' ? value.toLocaleString() : value}
+            {typeof value === 'number' ? value.toLocaleString('fr-FR') : value}
           </span>
         );
+      
       case 'select':
         return (
           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
             {value}
           </span>
         );
+      
+      case 'date':
+        try {
+          const date = new Date(value);
+          
+          // Vérifier si la date est valide
+          if (isNaN(date.getTime())) {
+            return <span className="font-medium">{value}</span>;
+          }
+          
+          // Formatage différent selon le type de date
+          let formattedDate;
+          
+          if (attribute.dateFormat === 'month') {
+            formattedDate = date.toLocaleDateString('fr-FR', { 
+              year: 'numeric', 
+              month: 'long' 
+            });
+          } else if (attribute.dateFormat === 'year') {
+            formattedDate = date.getFullYear().toString();
+          } else if (attribute.dateFormat === 'datetime-local') {
+            formattedDate = date.toLocaleDateString('fr-FR', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+          } else {
+            // Format date normale
+            formattedDate = date.toLocaleDateString('fr-FR');
+          }
+          
+          return (
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+              📅 {formattedDate}
+            </span>
+          );
+        } catch (error) {
+          return <span className="font-medium">{value}</span>;
+        }
+      
       default:
         return <span className="font-medium">{value}</span>;
     }
@@ -86,7 +131,8 @@ const AttributesDisplay = ({
       string: '📝',
       number: '🔢',
       boolean: '☑️',
-      select: '📋'
+      select: '📋',
+      date: '📅'  // NOUVEAU
     };
     return icons[type] || '📝';
   };
@@ -162,7 +208,10 @@ const AttributesDisplay = ({
   return (
     <div className={className}>
       {showTitle && (
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Spécifications</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+          <span>📋</span>
+          <span>Spécifications</span>
+        </h3>
       )}
       
       <div className="bg-gray-50 rounded-lg p-4">

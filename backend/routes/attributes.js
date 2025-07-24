@@ -1,4 +1,5 @@
-// backend/routes/attributes.js
+
+// backend/routes/attributes.js - Mise à jour pour les dates
 const express = require('express');
 const authenticateToken = require('../middleware/auth');
 const adminAuth = require('../middleware/adminAuth');
@@ -55,7 +56,7 @@ router.get('/values/:annonceId', async (req, res) => {
 // Sauvegarder les valeurs d'attributs pour une annonce
 router.post('/values/:annonceId', authenticateToken, async (req, res) => {
   try {
-    const { attributes } = req.body; // { attributeId: value, attributeId2: value2, ... }
+    const { attributes } = req.body;
     const annonceId = req.params.annonceId;
     
     // Vérifier que l'utilisateur est propriétaire de l'annonce ou admin
@@ -101,6 +102,30 @@ router.post('/values/:annonceId', authenticateToken, async (req, res) => {
                 message: `Valeur invalide pour l'attribut ${attribute.nom}: doit être une des options disponibles` 
               });
             }
+          } else if (attribute.type === 'date') {
+            // NOUVEAU: Validation des dates
+            const dateValue = new Date(value);
+            if (isNaN(dateValue.getTime())) {
+              return res.status(400).json({ 
+                message: `Valeur invalide pour l'attribut ${attribute.nom}: doit être une date valide` 
+              });
+            }
+            
+            // Vérifier les contraintes de date si définies
+            if (attribute.minDate && dateValue < attribute.minDate) {
+              return res.status(400).json({ 
+                message: `Date trop ancienne pour l'attribut ${attribute.nom}` 
+              });
+            }
+            
+            if (attribute.maxDate && dateValue > attribute.maxDate) {
+              return res.status(400).json({ 
+                message: `Date trop récente pour l'attribut ${attribute.nom}` 
+              });
+            }
+            
+            // Stocker la date au format ISO
+            processedValue = dateValue.toISOString();
           }
           
           // Vérifier les champs requis
@@ -149,7 +174,19 @@ router.get('/admin/all', authenticateToken, adminAuth, async (req, res) => {
 // Créer un attribut (admin)
 router.post('/admin', authenticateToken, adminAuth, async (req, res) => {
   try {
-    const { nom, categorie_id, type, options, required, ordre, placeholder, description } = req.body;
+    const { 
+      nom, 
+      categorie_id, 
+      type, 
+      options, 
+      required, 
+      ordre, 
+      placeholder, 
+      description,
+      dateFormat,     // NOUVEAU
+      minDate,        // NOUVEAU
+      maxDate         // NOUVEAU
+    } = req.body;
     
     // Vérifier que la catégorie existe
     const categorie = await Categorie.findById(categorie_id);
@@ -157,7 +194,8 @@ router.post('/admin', authenticateToken, adminAuth, async (req, res) => {
       return res.status(404).json({ message: 'Catégorie non trouvée' });
     }
     
-    const attribute = new Attribute({
+    // Validation spécifique pour les dates
+    const attributeData = {
       nom,
       categorie_id,
       type,
@@ -166,8 +204,22 @@ router.post('/admin', authenticateToken, adminAuth, async (req, res) => {
       ordre: ordre || 0,
       placeholder,
       description
-    });
+    };
+
+    // Ajouter les propriétés de date si c'est un attribut de type date
+    if (type === 'date') {
+      if (dateFormat) {
+        attributeData.dateFormat = dateFormat;
+      }
+      if (minDate) {
+        attributeData.minDate = new Date(minDate);
+      }
+      if (maxDate) {
+        attributeData.maxDate = new Date(maxDate);
+      }
+    }
     
+    const attribute = new Attribute(attributeData);
     await attribute.save();
     await attribute.populate('categorie_id', 'nom icone');
     
@@ -181,20 +233,47 @@ router.post('/admin', authenticateToken, adminAuth, async (req, res) => {
 // Modifier un attribut (admin)
 router.put('/admin/:id', authenticateToken, adminAuth, async (req, res) => {
   try {
-    const { nom, type, options, required, ordre, placeholder, description, isActive } = req.body;
+    const { 
+      nom, 
+      type, 
+      options, 
+      required, 
+      ordre, 
+      placeholder, 
+      description, 
+      isActive,
+      dateFormat,     // NOUVEAU
+      minDate,        // NOUVEAU
+      maxDate         // NOUVEAU
+    } = req.body;
+    
+    const updateData = {
+      nom,
+      type,
+      options: type === 'select' ? options : undefined,
+      required: required || false,
+      ordre: ordre || 0,
+      placeholder,
+      description,
+      isActive: isActive !== undefined ? isActive : true
+    };
+
+    // Ajouter les propriétés de date si c'est un attribut de type date
+    if (type === 'date') {
+      if (dateFormat) {
+        updateData.dateFormat = dateFormat;
+      }
+      if (minDate) {
+        updateData.minDate = new Date(minDate);
+      }
+      if (maxDate) {
+        updateData.maxDate = new Date(maxDate);
+      }
+    }
     
     const attribute = await Attribute.findByIdAndUpdate(
       req.params.id,
-      {
-        nom,
-        type,
-        options: type === 'select' ? options : undefined,
-        required: required || false,
-        ordre: ordre || 0,
-        placeholder,
-        description,
-        isActive: isActive !== undefined ? isActive : true
-      },
+      updateData,
       { new: true }
     ).populate('categorie_id', 'nom icone');
     
