@@ -9,13 +9,13 @@ const usersRoutes = require('./routes/users');
 const adminRoutes = require('./routes/admin'); 
 const demandesVendeurRoutes = require('./routes/demandesVendeur');
 const wishlistRoutes = require('./routes/wishlist');
+const attributesRoutes = require('./routes/attributes'); // NOUVEAU
 const path = require('path');
 
 dotenv.config();
 // server.js
 const connectDB = require('./db/config');
 connectDB(); // juste après dotenv.config()
-
 
 const app = express();
 
@@ -34,7 +34,7 @@ app.use('/api/users', usersRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/demandes-vendeur', demandesVendeurRoutes);
 app.use('/api/wishlist', wishlistRoutes);
-
+app.use('/api/attributes', attributesRoutes); // NOUVEAU
 
 const PORT = process.env.PORT || 5000;
 

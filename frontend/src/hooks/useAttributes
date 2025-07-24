@@ -1,0 +1,193 @@
+import { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
+
+// Hook pour gérer les attributs et leurs valeurs
+const useAttributes = () => {
+  const [attributes, setAttributes] = useState([]);
+  const [attributeValues, setAttributeValues] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Charger les attributs d'une catégorie
+  const fetchAttributesByCategory = useCallback(async (categoryId) => {
+    if (!categoryId) {
+      setAttributes([]);
+      setAttributeValues({});
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await axios.get(`http://localhost:5000/api/attributes/by-category/${categoryId}`);
+      setAttributes(response.data);
+
+      // Initialiser les valeurs vides
+      const initialValues = {};
+      response.data.forEach(attr => {
+        initialValues[attr._id] = attr.type === 'boolean' ? false : '';
+      });
+      setAttributeValues(initialValues);
+
+    } catch (err) {
+      setError('Erreur lors du chargement des attributs');
+      console.error('Erreur fetchAttributesByCategory:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Charger les valeurs d'attributs d'une annonce
+  const fetchAttributeValues = useCallback(async (annonceId) => {
+    if (!annonceId) return;
+
+    try {
+      setLoading(true);
+      const response = await axios.get(`http://localhost:5000/api/attributes/values/${annonceId}`);
+      
+      const values = {};
+      Object.keys(response.data).forEach(attributeId => {
+        values[attributeId] = response.data[attributeId].value;
+      });
+      
+      setAttributeValues(prev => ({ ...prev, ...values }));
+    } catch (err) {
+      setError('Erreur lors du chargement des valeurs');
+      console.error('Erreur fetchAttributeValues:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Sauvegarder les valeurs d'attributs
+  const saveAttributeValues = useCallback(async (annonceId, values = attributeValues) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      await axios.post(`http://localhost:5000/api/attributes/values/${annonceId}`, {
+        attributes: values
+      }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      return { success: true };
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Erreur lors de la sauvegarde';
+      setError(errorMessage);
+      console.error('Erreur saveAttributeValues:', err);
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  }, [attributeValues]);
+
+  // Mettre à jour une valeur d'attribut
+  const updateAttributeValue = useCallback((attributeId, value) => {
+    setAttributeValues(prev => ({
+      ...prev,
+      [attributeId]: value
+    }));
+  }, []);
+
+  // Valider les attributs requis
+  const validateRequiredAttributes = useCallback(() => {
+    const errors = [];
+    
+    attributes.forEach(attr => {
+      if (attr.required) {
+        const value = attributeValues[attr._id];
+        if (value === undefined || value === null || value === '') {
+          errors.push(`${attr.nom} est requis`);
+        }
+      }
+    });
+
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  }, [attributes, attributeValues]);
+
+  // Formater les valeurs d'attributs pour l'affichage
+  const formatAttributeValue = useCallback((attribute, value) => {
+    if (value === undefined || value === null || value === '') {
+      return '-';
+    }
+
+    switch (attribute.type) {
+      case 'boolean':
+        return value ? 'Oui' : 'Non';
+      case 'number':
+        return value.toLocaleString();
+      case 'select':
+        return value;
+      default:
+        return value;
+    }
+  }, []);
+
+  // Obtenir les attributs avec leurs valeurs formatées
+  const getAttributesWithValues = useCallback(() => {
+    return attributes.map(attr => ({
+      ...attr,
+      value: attributeValues[attr._id],
+      formattedValue: formatAttributeValue(attr, attributeValues[attr._id]),
+      hasValue: attributeValues[attr._id] !== undefined && 
+                attributeValues[attr._id] !== null && 
+                attributeValues[attr._id] !== ''
+    }));
+  }, [attributes, attributeValues, formatAttributeValue]);
+
+  // Réinitialiser les valeurs
+  const resetValues = useCallback(() => {
+    const initialValues = {};
+    attributes.forEach(attr => {
+      initialValues[attr._id] = attr.type === 'boolean' ? false : '';
+    });
+    setAttributeValues(initialValues);
+  }, [attributes]);
+
+  // Nettoyer les valeurs vides avant sauvegarde
+  const cleanAttributeValues = useCallback((values = attributeValues) => {
+    const cleanedValues = {};
+    Object.keys(values).forEach(key => {
+      const value = values[key];
+      if (value !== undefined && value !== null && value !== '') {
+        cleanedValues[key] = value;
+      }
+    });
+    return cleanedValues;
+  }, [attributeValues]);
+
+  return {
+    // État
+    attributes,
+    attributeValues,
+    loading,
+    error,
+
+    // Actions
+    fetchAttributesByCategory,
+    fetchAttributeValues,
+    saveAttributeValues,
+    updateAttributeValue,
+    resetValues,
+
+    // Utilitaires
+    validateRequiredAttributes,
+    formatAttributeValue,
+    getAttributesWithValues,
+    cleanAttributeValues,
+
+    // Setters directs (pour cas spéciaux)
+    setAttributes,
+    setAttributeValues,
+    setError
+  };
+};
+
+export default useAttributes;

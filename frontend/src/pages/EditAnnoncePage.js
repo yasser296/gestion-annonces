@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import AttributesForm from '../components/AttributesForm'; // NOUVEAU
 
 const EditAnnoncePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from || '/mes-annonces';
+  
   const [formData, setFormData] = useState({
     titre: '',
     description: '',
@@ -17,6 +19,8 @@ const EditAnnoncePage = () => {
     categorie_id: '',
     sous_categorie_id: '',
   });
+  
+  const [attributeValues, setAttributeValues] = useState({}); // NOUVEAU
   const [existingImages, setExistingImages] = useState([]);
   const [newImages, setNewImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
@@ -153,12 +157,24 @@ const EditAnnoncePage = () => {
         formDataToSend.append('images', image);
       });
       
+      // 1. Mettre à jour l'annonce
       await axios.put(`http://localhost:5000/api/annonces/${id}`, formDataToSend, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'multipart/form-data'
         }
       });
+      
+      // 2. Sauvegarder les attributs si ils existent - NOUVEAU
+      if (Object.keys(attributeValues).length > 0) {
+        await axios.post(`http://localhost:5000/api/attributes/values/${id}`, {
+          attributes: attributeValues
+        }, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+      }
       
       navigate(from);
     } catch (err) {
@@ -327,6 +343,13 @@ const EditAnnoncePage = () => {
               <option value="État moyen">État moyen</option>
             </select>
           </div>
+
+          {/* NOUVEAU: Formulaire des attributs */}
+          <AttributesForm
+            categoryId={formData.categorie_id}
+            annonceId={id}
+            onAttributesChange={setAttributeValues}
+          />
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">

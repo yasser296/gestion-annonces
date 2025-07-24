@@ -20,8 +20,9 @@ import DemandeVendeur from './pages/DemandeVendeur';
 import AdminDemandesVendeur from './pages/admin/AdminDemandesVendeur';
 import WishlistPage from './pages/WishlistPage';
 import SearchPage from './pages/SearchPage';
+import AdminAttributes from './pages/admin/AdminAttributes'; // NOUVEAU
 import AdminCategories from './pages/admin/AdminCategories';
-import { WishlistProvider } from './contexts/WishlistContext';
+// import { WishlistProvider } from './contexts/WishlistContext';
 
 function App() {
   return (
@@ -114,6 +115,14 @@ function App() {
                 <WishlistPage />
               </PrivateRoute>
             } />
+            <Route
+              path="/admin/attributes"
+              element={
+                <AdminRoute>
+                  <AdminAttributes />
+                </AdminRoute>
+              }
+            />
           </Routes>
         </div>
       </Router>

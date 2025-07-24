@@ -81,7 +81,10 @@ router.patch('/:id/vues', authenticateToken, async (req, res) => {
     }
 
     // Si utilisateur connecté ET c'est le propriétaire
-    if (req.user && String(annonce.user_id) === String(req.user.id)) {
+    if (req.user && (
+        String(annonce.user_id) === String(req.user.id) ||
+        req.user.role === 'admin' || req.user.role_id === 1 // selon ta structure
+      )) {
       return res.json({
         message: "Vous êtes le propriétaire, la vue n'est pas comptabilisée",
         nombre_vues: annonce.nombre_vues,

@@ -7,7 +7,9 @@ const AdminDashboard = () => {
     totalUsers: 0,
     totalAnnonces: 0,
     activeAnnonces: 0,
-    totalViews: 0
+    totalViews: 0,
+    totalCategories: 0, // NOUVEAU
+    totalAttributes: 0  // NOUVEAU
   });
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -24,6 +26,15 @@ const AdminDashboard = () => {
         }
       });
       setStats(response.data);
+      
+      // NOUVEAU: Récupérer le nombre d'attributs
+      const attributesResponse = await axios.get('http://localhost:5000/api/attributes/admin/all', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      setStats(prev => ({ ...prev, totalAttributes: attributesResponse.data.length }));
+      
     } catch (error) {
       console.error('Erreur lors du chargement des statistiques:', error);
       if (error.response?.status === 403) {
@@ -98,8 +109,35 @@ const AdminDashboard = () => {
         </div>
       </div>
 
+      {/* NOUVEAU: Statistiques supplémentaires */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-500 text-sm">Catégories</p>
+              <p className="text-2xl font-bold">{stats.totalCategories || 0}</p>
+            </div>
+            <svg className="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+            </svg>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-500 text-sm">Attributs</p>
+              <p className="text-2xl font-bold">{stats.totalAttributes || 0}</p>
+            </div>
+            <svg className="w-12 h-12 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
       {/* Navigation */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <button
           onClick={() => navigate('/admin/users')}
           className="bg-white rounded-lg shadow p-8 hover:shadow-lg transition flex items-center justify-between"
@@ -127,24 +165,39 @@ const AdminDashboard = () => {
         </button>
 
         <button
-          onClick={() => navigate('/admin/demandes-vendeur')}
-          className="bg-white rounded-lg shadow p-8 hover:shadow-lg transition flex items-center justify-between"
-        >
-          <div className="text-left">
-            <h2 className="text-xl font-bold mb-2">Demandes vendeur</h2>
-            <p className="text-gray-600">Gérer les demandes pour devenir vendeur</p>
-          </div>
-          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-        <button
           onClick={() => navigate('/admin/categories')}
           className="bg-white rounded-lg shadow p-8 hover:shadow-lg transition flex items-center justify-between"
         >
           <div className="text-left">
             <h2 className="text-xl font-bold mb-2">Gestion des catégories</h2>
             <p className="text-gray-600">Voir et gérer les catégories</p>
+          </div>
+          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+
+        {/* NOUVEAU: Gestion des attributs */}
+        <button
+          onClick={() => navigate('/admin/attributes')}
+          className="bg-white rounded-lg shadow p-8 hover:shadow-lg transition flex items-center justify-between"
+        >
+          <div className="text-left">
+            <h2 className="text-xl font-bold mb-2">Gestion des attributs</h2>
+            <p className="text-gray-600">Configurer les spécifications par catégorie</p>
+          </div>
+          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+
+        <button
+          onClick={() => navigate('/admin/demandes-vendeur')}
+          className="bg-white rounded-lg shadow p-8 hover:shadow-lg transition flex items-center justify-between"
+        >
+          <div className="text-left">
+            <h2 className="text-xl font-bold mb-2">Demandes vendeur</h2>
+            <p className="text-gray-600">Gérer les demandes pour devenir vendeur</p>
           </div>
           <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import AttributesForm from '../components/AttributesForm'; // NOUVEAU
 
 const CreateAnnonce = () => {
   const [formData, setFormData] = useState({
@@ -13,6 +14,8 @@ const CreateAnnonce = () => {
     marque: '',
     etat: ''
   });
+  
+  const [attributeValues, setAttributeValues] = useState({}); // NOUVEAU
   const [categories, setCategories] = useState([]);
   const [sousCategories, setSousCategories] = useState([]);
   const [images, setImages] = useState([]);
@@ -108,11 +111,26 @@ const CreateAnnonce = () => {
     });
 
     try {
-      await axios.post('http://localhost:5000/api/annonces', formDataToSend, {
+      // 1. Créer l'annonce
+      const annonceResponse = await axios.post('http://localhost:5000/api/annonces', formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       });
+      
+      const annonceId = annonceResponse.data.annonce._id;
+
+      // 2. Sauvegarder les attributs si ils existent - NOUVEAU
+      if (Object.keys(attributeValues).length > 0) {
+        await axios.post(`http://localhost:5000/api/attributes/values/${annonceId}`, {
+          attributes: attributeValues
+        }, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+      }
+
       navigate('/mes-annonces');
     } catch (error) {
       setError(error.response?.data?.message || 'Erreur lors de la création de l\'annonce');
@@ -273,6 +291,12 @@ const CreateAnnonce = () => {
               <option value="État moyen">État moyen</option>
             </select>
           </div>
+
+          {/* NOUVEAU: Formulaire des attributs */}
+          <AttributesForm
+            categoryId={formData.categorie_id}
+            onAttributesChange={setAttributeValues}
+          />
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
