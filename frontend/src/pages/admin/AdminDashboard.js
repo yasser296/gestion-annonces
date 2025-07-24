@@ -1,4 +1,4 @@
-// frontend/src/pages/admin/AdminDashboard.js - Version améliorée
+// frontend/src/pages/admin/AdminDashboard.js - Version corrigée
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -11,7 +11,7 @@ import {
   faChartLine,
   faUserClock,
   faShoppingCart,
-  faTrendUp,
+  faArrowTrendUp, // ✅ Correction : faTrendUp → faArrowTrendUp
   faCalendarAlt,
   faMapMarkerAlt
 } from '@fortawesome/free-solid-svg-icons';
@@ -80,7 +80,7 @@ const AdminDashboard = () => {
           )}
           {trend && (
             <div className={`flex items-center mt-2 ${trend > 0 ? 'text-green-600' : 'text-red-600'}`}>
-              <FontAwesomeIcon icon={faTrendUp} className="mr-1" />
+              <FontAwesomeIcon icon={faArrowTrendUp} className="mr-1" /> {/* ✅ Correction appliquée */}
               <span className="text-sm font-secondary">
                 {trend > 0 ? '+' : ''}{trend}% ce mois
               </span>
@@ -129,262 +129,159 @@ const AdminDashboard = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-orange-500"></div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600 font-secondary">Chargement du tableau de bord...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Tableau de bord</h1>
-        <p className="text-gray-600 mt-2 font-secondary">
-          Vue d'ensemble de votre plateforme
-        </p>
-      </div>
-
-      {/* Statistiques principales */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard
-          title="Utilisateurs"
-          value={stats.totalUsers}
-          icon={faUsers}
-          color="bg-blue-500"
-          trend={12}
-          subtitle="Total des inscrits"
-          onClick={() => navigate('/admin/users')}
-        />
-        
-        <StatCard
-          title="Annonces"
-          value={stats.totalAnnonces}
-          icon={faClipboardList}
-          color="bg-green-500"
-          trend={8}
-          subtitle="Publications actives"
-          onClick={() => navigate('/admin/annonces')}
-        />
-        
-        <StatCard
-          title="Vues totales"
-          value={stats.totalViews}
-          icon={faEye}
-          color="bg-purple-500"
-          trend={15}
-          subtitle="Toutes annonces"
-        />
-        
-        <StatCard
-          title="Catégories"
-          value={stats.totalCategories}
-          icon={faTags}
-          color="bg-orange-500"
-          subtitle="Avec attributs"
-          onClick={() => navigate('/admin/categories')}
-        />
-      </div>
-
-      {/* Statistiques secondaires */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <StatCard
-          title="Nouveaux utilisateurs"
-          value={stats.recentUsers || 5}
-          icon={faUserClock}
-          color="bg-indigo-500"
-          subtitle="Cette semaine"
-        />
-        
-        <StatCard
-          title="Annonces actives"
-          value={stats.activeAnnonces || Math.floor(stats.totalAnnonces * 0.85)}
-          icon={faShoppingCart}
-          color="bg-teal-500"
-          subtitle="En ligne actuellement"
-        />
-        
-        <StatCard
-          title="Attributs configurés"
-          value={stats.totalAttributes || 24}
-          icon={faChartLine}
-          color="bg-pink-500"
-          subtitle="Toutes catégories"
-          onClick={() => navigate('/admin/attributes')}
-        />
-      </div>
-
-      {/* Contenu en deux colonnes */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* Activité récente */}
-        <div className="lg:col-span-2 bg-white rounded-xl shadow-md p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900">Activité récente</h2>
-            <FontAwesomeIcon icon={faCalendarAlt} className="text-gray-400" />
-          </div>
-          
-          <div className="space-y-2 max-h-80 overflow-y-auto">
-            {recentActivity.length > 0 ? (
-              recentActivity.map((activity, index) => (
-                <ActivityItem key={index} {...activity} />
-              ))
-            ) : (
-              // Données d'exemple si pas d'API
-              <>
-                <ActivityItem
-                  type="user_registered"
-                  description="Nouvel utilisateur inscrit"
-                  user="Marie Dupont"
-                  time="Il y a 2h"
-                />
-                <ActivityItem
-                  type="annonce_created"
-                  description="Nouvelle annonce publiée"
-                  user="Jean Martin"
-                  time="Il y a 3h"
-                />
-                <ActivityItem
-                  type="annonce_viewed"
-                  description="Annonce consultée 15 fois"
-                  time="Il y a 1h"
-                />
-                <ActivityItem
-                  type="user_registered"
-                  description="Nouvel utilisateur inscrit"
-                  user="Sophie Bernard"
-                  time="Il y a 5h"
-                />
-                <ActivityItem
-                  type="annonce_created"
-                  description="Nouvelle annonce publiée"
-                  user="Pierre Durand"
-                  time="Il y a 6h"
-                />
-              </>
-            )}
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* En-tête */}
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-gray-900">Tableau de bord administrateur</h1>
+          <div className="text-sm text-gray-500 font-secondary">
+            Dernière mise à jour : {new Date().toLocaleString('fr-FR')}
           </div>
         </div>
 
-        {/* Top catégories */}
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900">Top catégories</h2>
-            <FontAwesomeIcon icon={faTags} className="text-gray-400" />
-          </div>
-          
-          <div className="space-y-4">
-            {topCategories.length > 0 ? (
-              topCategories.map((category, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-lg">{category.icone}</span>
-                    <span className="font-medium font-secondary">{category.nom}</span>
-                  </div>
-                  <span className="text-sm text-gray-500 font-secondary">
-                    {category.count} annonces
-                  </span>
-                </div>
-              ))
-            ) : (
-              // Données d'exemple
-              <>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-lg">🚗</span>
-                    <span className="font-medium font-secondary">Automobile</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-sm font-bold text-gray-900">15</span>
-                    <div className="w-16 bg-gray-200 rounded-full h-2 mt-1">
-                      <div className="bg-orange-500 h-2 rounded-full" style={{width: '75%'}}></div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-lg">🏠</span>
-                    <span className="font-medium font-secondary">Immobilier</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-sm font-bold text-gray-900">12</span>
-                    <div className="w-16 bg-gray-200 rounded-full h-2 mt-1">
-                      <div className="bg-orange-500 h-2 rounded-full" style={{width: '60%'}}></div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-lg">📱</span>
-                    <span className="font-medium font-secondary">Électronique</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-sm font-bold text-gray-900">8</span>
-                    <div className="w-16 bg-gray-200 rounded-full h-2 mt-1">
-                      <div className="bg-orange-500 h-2 rounded-full" style={{width: '40%'}}></div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-lg">👔</span>
-                    <span className="font-medium font-secondary">Vêtements</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-sm font-bold text-gray-900">6</span>
-                    <div className="w-16 bg-gray-200 rounded-full h-2 mt-1">
-                      <div className="bg-orange-500 h-2 rounded-full" style={{width: '30%'}}></div>
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Navigation rapide */}
-      <div className="bg-white rounded-xl shadow-md p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Accès rapide</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <button
+        {/* Statistiques principales */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatCard
+            title="Utilisateurs totaux"
+            value={stats.totalUsers}
+            icon={faUsers}
+            color="bg-blue-500"
+            trend={12}
             onClick={() => navigate('/admin/users')}
-            className="p-4 text-left rounded-lg border-2 border-gray-200 hover:border-orange-500 hover:bg-orange-50 transition-all group"
-          >
-            <FontAwesomeIcon icon={faUsers} className="text-2xl text-orange-500 mb-3 group-hover:scale-110 transition-transform" />
-            <h3 className="font-bold text-gray-900 font-secondary">Gestion des utilisateurs</h3>
-            <p className="text-sm text-gray-600 font-secondary">Créer, modifier, supprimer</p>
-          </button>
-
-          <button
+          />
+          
+          <StatCard
+            title="Annonces actives"
+            value={stats.totalAnnonces}
+            icon={faClipboardList}
+            color="bg-green-500"
+            trend={8}
             onClick={() => navigate('/admin/annonces')}
-            className="p-4 text-left rounded-lg border-2 border-gray-200 hover:border-green-500 hover:bg-green-50 transition-all group"
-          >
-            <FontAwesomeIcon icon={faClipboardList} className="text-2xl text-green-500 mb-3 group-hover:scale-110 transition-transform" />
-            <h3 className="font-bold text-gray-900 font-secondary">Gestion des annonces</h3>
-            <p className="text-sm text-gray-600 font-secondary">Modérer, valider, supprimer</p>
-          </button>
-
-          <button
+          />
+          
+          <StatCard
+            title="Vues totales"
+            value={stats.totalViews}
+            icon={faEye}
+            color="bg-purple-500"
+            trend={25}
+          />
+          
+          <StatCard
+            title="Catégories"
+            value={stats.totalCategories}
+            icon={faTags}
+            color="bg-orange-500"
             onClick={() => navigate('/admin/categories')}
-            className="p-4 text-left rounded-lg border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all group"
-          >
-            <FontAwesomeIcon icon={faTags} className="text-2xl text-blue-500 mb-3 group-hover:scale-110 transition-transform" />
-            <h3 className="font-bold text-gray-900 font-secondary">Gestion des catégories</h3>
-            <p className="text-sm text-gray-600 font-secondary">Organiser, structurer</p>
-          </button>
+          />
+        </div>
 
-          <button
-            onClick={() => navigate('/admin/attributes')}
-            className="p-4 text-left rounded-lg border-2 border-gray-200 hover:border-purple-500 hover:bg-purple-50 transition-all group"
-          >
-            <FontAwesomeIcon icon={faChartLine} className="text-2xl text-purple-500 mb-3 group-hover:scale-110 transition-transform" />
-            <h3 className="font-bold text-gray-900 font-secondary">Gestion des attributs</h3>
-            <p className="text-sm text-gray-600 font-secondary">Personnaliser les formulaires</p>
-          </button>
+        {/* Activité récente et statistiques */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Activité récente */}
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Activité récente</h2>
+            <div className="space-y-2">
+              {recentActivity.length > 0 ? (
+                recentActivity.slice(0, 5).map((activity, index) => (
+                  <ActivityItem
+                    key={index}
+                    type={activity.type}
+                    description={activity.description}
+                    time={activity.time}
+                    user={activity.user}
+                  />
+                ))
+              ) : (
+                <p className="text-gray-500 text-center py-4 font-secondary">
+                  Aucune activité récente
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Catégories populaires */}
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Catégories populaires</h2>
+            <div className="space-y-3">
+              {topCategories.length > 0 ? (
+                topCategories.slice(0, 5).map((category, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                      <span className="font-secondary">{category.nom}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-sm font-bold text-gray-900">{category.count}</span>
+                      <div className="w-16 bg-gray-200 rounded-full h-2 mt-1">
+                        <div 
+                          className="bg-orange-500 h-2 rounded-full" 
+                          style={{width: `${(category.count / topCategories[0]?.count * 100) || 0}%`}}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500 text-center py-4 font-secondary">
+                  Aucune donnée disponible
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation rapide */}
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-6">Accès rapide</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <button
+              onClick={() => navigate('/admin/users')}
+              className="p-4 text-left rounded-lg border-2 border-gray-200 hover:border-orange-500 hover:bg-orange-50 transition-all group"
+            >
+              <FontAwesomeIcon icon={faUsers} className="text-2xl text-orange-500 mb-3 group-hover:scale-110 transition-transform" />
+              <h3 className="font-bold text-gray-900 font-secondary">Gestion des utilisateurs</h3>
+              <p className="text-sm text-gray-600 font-secondary">Créer, modifier, supprimer</p>
+            </button>
+
+            <button
+              onClick={() => navigate('/admin/annonces')}
+              className="p-4 text-left rounded-lg border-2 border-gray-200 hover:border-green-500 hover:bg-green-50 transition-all group"
+            >
+              <FontAwesomeIcon icon={faClipboardList} className="text-2xl text-green-500 mb-3 group-hover:scale-110 transition-transform" />
+              <h3 className="font-bold text-gray-900 font-secondary">Gestion des annonces</h3>
+              <p className="text-sm text-gray-600 font-secondary">Modérer, valider, supprimer</p>
+            </button>
+
+            <button
+              onClick={() => navigate('/admin/categories')}
+              className="p-4 text-left rounded-lg border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all group"
+            >
+              <FontAwesomeIcon icon={faTags} className="text-2xl text-blue-500 mb-3 group-hover:scale-110 transition-transform" />
+              <h3 className="font-bold text-gray-900 font-secondary">Gestion des catégories</h3>
+              <p className="text-sm text-gray-600 font-secondary">Organiser, structurer</p>
+            </button>
+
+            <button
+              onClick={() => navigate('/admin/attributes')}
+              className="p-4 text-left rounded-lg border-2 border-gray-200 hover:border-purple-500 hover:bg-purple-50 transition-all group"
+            >
+              <FontAwesomeIcon icon={faChartLine} className="text-2xl text-purple-500 mb-3 group-hover:scale-110 transition-transform" />
+              <h3 className="font-bold text-gray-900 font-secondary">Gestion des attributs</h3>
+              <p className="text-sm text-gray-600 font-secondary">Personnaliser les formulaires</p>
+            </button>
+          </div>
         </div>
       </div>
     </div>

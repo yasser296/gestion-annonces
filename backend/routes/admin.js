@@ -1,12 +1,11 @@
-// backend/routes/admin.js - Version complète avec création d'utilisateur
 const express = require('express');
-const bcrypt = require('bcryptjs'); // NOUVEAU: pour hasher les mots de passe
+const bcrypt = require('bcryptjs');
 const authenticateToken = require('../middleware/auth');
 const adminAuth = require('../middleware/adminAuth');
 const User = require('../models/User');
 const Annonce = require('../models/Annonce');
 const Categorie = require('../models/Categorie');
-const SousCategorie = require('../models/SousCategorie');
+const SousCategorie = require('../models/SousCategorie'); // NOUVEAU
 const Role = require('../models/Role');
 const Wishlist = require('../models/Wishlist');
 
@@ -220,17 +219,45 @@ router.patch('/users/:id/role', async (req, res) => {
     user.role_id = role_id;
     await user.save();
 
-    // Obtenir le titre du rôle
-    const roleMap = { 1: 'admin', 2: 'user', 3: 'vendeur' };
+    // Gérer les demandes vendeur lors du changement de rôle
+    const DemandeVendeur = require('../models/DemandeVendeur');
     
+    // Si on passe de user (2) à vendeur (3) directement
+    if (oldRoleId === 2 && role_id === 3) {
+      // Supprimer toutes les demandes en attente de cet utilisateur
+      await DemandeVendeur.deleteMany({ 
+        user_id: req.params.id, 
+        statut: 'en_attente' 
+      });
+      
+      // Créer une demande acceptée automatiquement pour garder une trace
+      await DemandeVendeur.create({
+        user_id: req.params.id,
+        statut: 'acceptee',
+        message_demande: 'Promotion directe par administrateur',
+        message_admin: `Rôle vendeur attribué directement par l'administrateur`,
+        date_traitement: new Date(),
+        traite_par: req.user.id
+      });
+    }
+    
+    // Si on retire le rôle vendeur (3 -> 2)
+    else if (oldRoleId === 3 && role_id === 2) {
+      // Supprimer toutes les demandes en attente
+      await DemandeVendeur.deleteMany({ 
+        user_id: req.params.id, 
+        statut: 'en_attente' 
+      });
+    }
+
+    // Récupérer le rôle pour la réponse
+    const role = await Role.findOne({ id: role_id });
+
     res.json({ 
-      message: 'Rôle mis à jour', 
+      message: 'Rôle mis à jour avec succès', 
       user: {
         ...user.toObject(),
-        role: {
-          id: role_id,
-          titre: roleMap[role_id]
-        }
+        role: role ? role.titre : null
       },
       roleChanged: oldRoleId !== role_id 
     });
@@ -248,7 +275,7 @@ router.delete('/users/:id', async (req, res) => {
       return res.status(404).json({ message: 'Utilisateur non trouvé' });
     }
 
-    // Empêcher la suppression d'un admin si c'est le dernier
+     // Empêcher la suppression d'un admin si c'est le dernier
     if (user.role_id === 1) {
       const adminCount = await User.countDocuments({ role_id: 1 });
       if (adminCount <= 1) {
@@ -261,9 +288,7 @@ router.delete('/users/:id', async (req, res) => {
     const annonceIds = userAnnonces.map(a => a._id);
 
     // Supprimer toutes les entrées wishlist pour ces annonces
-    if (annonceIds.length > 0) {
-      await Wishlist.deleteMany({ annonce_id: { $in: annonceIds } });
-    }
+    await Wishlist.deleteMany({ annonce_id: { $in: annonceIds } });
 
     // Supprimer toutes les wishlists de l'utilisateur
     await Wishlist.deleteMany({ user_id: req.params.id });
@@ -274,13 +299,7 @@ router.delete('/users/:id', async (req, res) => {
     // Supprimer l'utilisateur
     await User.findByIdAndDelete(req.params.id);
 
-    res.json({ 
-      message: 'Utilisateur et ses données supprimés',
-      deleted: {
-        user: user.nom,
-        annonces: userAnnonces.length
-      }
-    });
+    res.json({ message: 'Utilisateur et ses annonces supprimés' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Erreur serveur' });
@@ -289,13 +308,13 @@ router.delete('/users/:id', async (req, res) => {
 
 // === GESTION DES ANNONCES ===
 
-// Obtenir toutes les annonces (admin)
+// Obtenir toutes les annonces (admin) - MISE À JOUR
 router.get('/annonces', async (req, res) => {
   try {
     const annonces = await Annonce.find()
       .populate('user_id', 'nom email')
       .populate('categorie_id')
-      .populate('sous_categorie_id')
+      .populate('sous_categorie_id') // NOUVEAU
       .sort({ date_publication: -1 });
 
     res.json(annonces);
@@ -328,12 +347,9 @@ router.put('/annonces/:id', async (req, res) => {
 // Supprimer une annonce (admin)
 router.delete('/annonces/:id', async (req, res) => {
   try {
-    // Supprimer les entrées wishlist pour cette annonce
     await Wishlist.deleteMany({ annonce_id: req.params.id });
-    
-    // Supprimer l'annonce
     const annonce = await Annonce.findByIdAndDelete(req.params.id);
-    
+
     if (!annonce) {
       return res.status(404).json({ message: 'Annonce non trouvée' });
     }
@@ -345,12 +361,32 @@ router.delete('/annonces/:id', async (req, res) => {
   }
 });
 
-// === GESTION DES CATÉGORIES ===
+// Activer/Désactiver une annonce (admin)
+router.patch('/annonces/:id/toggle-status', async (req, res) => {
+  try {
+    const annonce = await Annonce.findById(req.params.id);
+    if (!annonce) {
+      return res.status(404).json({ message: 'Annonce non trouvée' });
+    }
+
+    annonce.is_active = !annonce.is_active;
+    await annonce.save();
+
+    res.json({ message: 'Statut mis à jour', is_active: annonce.is_active });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// === GESTION DES CATÉGORIES - NOUVEAU ===
 
 // Obtenir toutes les catégories
 router.get('/categories', async (req, res) => {
   try {
-    const categories = await Categorie.find().sort({ ordre: 1, nom: 1 });
+    const categories = await Categorie.find()
+      .populate('sousCategories')
+      .sort({ ordre: 1, nom: 1 });
     res.json(categories);
   } catch (error) {
     console.error(error);
@@ -415,7 +451,76 @@ router.delete('/categories/:id', async (req, res) => {
   }
 });
 
-// === STATISTIQUES ===
+// === GESTION DES SOUS-CATÉGORIES - NOUVEAU ===
+
+// Obtenir toutes les sous-catégories
+router.get('/sous-categories', async (req, res) => {
+  try {
+    const sousCategories = await SousCategorie.find()
+      .populate('categorie_id')
+      .sort({ categorie_id: 1, ordre: 1, nom: 1 });
+    res.json(sousCategories);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// Créer une sous-catégorie
+router.post('/sous-categories', async (req, res) => {
+  try {
+    const sousCategorie = new SousCategorie(req.body);
+    await sousCategorie.save();
+    await sousCategorie.populate('categorie_id');
+    res.status(201).json({ message: 'Sous-catégorie créée', sousCategorie });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// Modifier une sous-catégorie
+router.put('/sous-categories/:id', async (req, res) => {
+  try {
+    const sousCategorie = await SousCategorie.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    ).populate('categorie_id');
+    
+    if (!sousCategorie) {
+      return res.status(404).json({ message: 'Sous-catégorie non trouvée' });
+    }
+    
+    res.json({ message: 'Sous-catégorie mise à jour', sousCategorie });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// Supprimer une sous-catégorie
+router.delete('/sous-categories/:id', async (req, res) => {
+  try {
+    // Vérifier s'il y a des annonces dans cette sous-catégorie
+    const annonceCount = await Annonce.countDocuments({ sous_categorie_id: req.params.id });
+    if (annonceCount > 0) {
+      return res.status(400).json({ 
+        message: `Impossible de supprimer cette sous-catégorie car elle contient ${annonceCount} annonce(s)` 
+      });
+    }
+
+    const sousCategorie = await SousCategorie.findByIdAndDelete(req.params.id);
+    if (!sousCategorie) {
+      return res.status(404).json({ message: 'Sous-catégorie non trouvée' });
+    }
+
+    res.json({ message: 'Sous-catégorie supprimée' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
 
 // Ajouts à backend/routes/admin.js - Nouvelles routes pour le dashboard
 
