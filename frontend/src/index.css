@@ -2,6 +2,76 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import des polices Google - NOUVEAU: Lora */
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* Variables CSS pour une cohérence globale */
+:root {
+  --primary-color: #f97316;
+  --primary-hover: #ea580c;
+  --secondary-color: #1f2937;
+  --success-color: #10b981;
+  --danger-color: #ef4444;
+  --warning-color: #f59e0b;
+  --info-color: #3b82f6;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  
+  /* NOUVEAU: Variables pour les polices */
+  --font-primary: 'Lora', Georgia, serif;
+  --font-secondary: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Base styles avec la nouvelle police */
+body {
+  font-family: var(--font-primary); /* Police principale: Lora */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+/* Titres avec Lora en gras */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-primary);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* Éléments d'interface avec Inter */
+.ui-text {
+  font-family: var(--font-secondary);
+}
+
+/* Boutons avec Inter */
+button, .btn {
+  font-family: var(--font-secondary);
+  font-weight: 500;
+}
+
+/* Inputs et forms avec Inter */
+input, select, textarea {
+  font-family: var(--font-secondary);
+}
+
+/* Navigation et menus avec Inter */
+nav, .navbar, .menu {
+  font-family: var(--font-secondary);
+}
+
+/* Tables avec Inter pour une meilleure lisibilité */
+table, .table {
+  font-family: var(--font-secondary);
+}
+
 /* Animation pour le toggle switch */
 .toggle-switch {
   transition: background-color 0.2s ease-in-out;
@@ -24,37 +94,6 @@ tbody tr:hover {
 .pagination-button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
-}
-
-/* frontend/src/index.css - Ajouts pour améliorer l'esthétique */
-
-/* Import des polices Google */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
-/* Variables CSS pour une cohérence globale */
-:root {
-  --primary-color: #f97316;
-  --primary-hover: #ea580c;
-  --secondary-color: #1f2937;
-  --success-color: #10b981;
-  --danger-color: #ef4444;
-  --warning-color: #f59e0b;
-  --info-color: #3b82f6;
-  --gray-50: #f9fafb;
-  --gray-100: #f3f4f6;
-  --gray-200: #e5e7eb;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-/* Base styles */
-body {
-  font-family: 'Inter', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Masquer la scrollbar */
@@ -89,66 +128,7 @@ body {
   overflow: hidden;
 }
 
-/* Animations personnalisées */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slideInLeft {
-  from { opacity: 0; transform: translateX(-20px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes slideInRight {
-  from { opacity: 0; transform: translateX(20px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.5s ease-out;
-}
-
-.animate-slideInLeft {
-  animation: slideInLeft 0.5s ease-out;
-}
-
-.animate-slideInRight {
-  animation: slideInRight 0.5s ease-out;
-}
-
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* Effets de survol améliorés */
-.hover-lift {
-  transition: all 0.3s ease;
-}
-
-.hover-lift:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-xl);
-}
-
-/* Skeleton loading */
-.skeleton {
-  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
-  background-size: 200% 100%;
-  animation: loading 1.5s infinite;
-}
-
-@keyframes loading {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-/* Cards améliorées */
+/* Cards avec ombres améliorées */
 .card {
   background: white;
   border-radius: 12px;
@@ -157,10 +137,11 @@ body {
 }
 
 .card:hover {
+  transform: translateY(-2px);
   box-shadow: var(--shadow-lg);
 }
 
-/* Badges personnalisés */
+/* Badges */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -169,6 +150,7 @@ body {
   font-weight: 500;
   border-radius: 9999px;
   transition: all 0.2s ease;
+  font-family: var(--font-secondary);
 }
 
 .badge-primary {
@@ -186,6 +168,16 @@ body {
   color: var(--danger-color);
 }
 
+.badge-warning {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: var(--warning-color);
+}
+
+.badge-info {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--info-color);
+}
+
 /* Boutons améliorés */
 .btn {
   display: inline-flex;
@@ -198,6 +190,7 @@ body {
   cursor: pointer;
   border: none;
   outline: none;
+  font-family: var(--font-secondary);
 }
 
 .btn:focus {
@@ -224,6 +217,28 @@ body {
   background-color: var(--gray-300);
 }
 
+.btn-success {
+  background-color: var(--success-color);
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #059669;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-danger {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
 /* Inputs améliorés */
 .input-group {
   position: relative;
@@ -238,6 +253,7 @@ body {
   border-radius: 8px;
   transition: all 0.2s ease;
   font-size: 0.95rem;
+  font-family: var(--font-secondary);
 }
 
 .input-group input:focus,
@@ -246,6 +262,11 @@ body {
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
   outline: none;
+}
+
+.input-group label {
+  font-family: var(--font-secondary);
+  font-weight: 500;
 }
 
 /* Tooltips */
@@ -269,6 +290,7 @@ body {
   pointer-events: none;
   transition: all 0.2s ease;
   margin-bottom: 0.5rem;
+  font-family: var(--font-secondary);
 }
 
 .tooltip:hover::after {
@@ -288,25 +310,42 @@ body {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
 }
 
-/* Overlay patterns */
-.pattern-dots {
-  background-image: radial-gradient(circle, #e5e7eb 1px, transparent 1px);
-  background-size: 20px 20px;
-}
-
-.pattern-grid {
-  background-image: 
-    linear-gradient(rgba(229, 231, 235, 0.3) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(229, 231, 235, 0.3) 1px, transparent 1px);
-  background-size: 20px 20px;
-}
-
 /* Glassmorphism effect */
 .glass {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Modal amélioré */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: var(--shadow-xl);
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  transform: scale(0.95);
+  transition: transform 0.2s ease;
+}
+
+.modal.show .modal-content {
+  transform: scale(1);
 }
 
 /* Dark mode support */
@@ -318,6 +357,7 @@ body {
     --gray-50: #1f2937;
     --gray-100: #374151;
     --gray-200: #4b5563;
+    --gray-300: #6b7280;
   }
   
   body {
@@ -340,6 +380,14 @@ body {
   .hide-mobile {
     display: none !important;
   }
+  
+  body {
+    font-size: 0.9rem;
+  }
+  
+  h1 { font-size: 1.75rem; }
+  h2 { font-size: 1.5rem; }
+  h3 { font-size: 1.25rem; }
 }
 
 @media (min-width: 769px) {
@@ -356,5 +404,6 @@ body {
   
   body {
     font-size: 12pt;
+    font-family: var(--font-primary);
   }
 }

@@ -1,11 +1,145 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Annonces.ma - Petites annonces gratuites</title>
+  <meta charset="utf-8" />
+  <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f97316" />
+  <meta name="description" content="Plateforme d'annonces en ligne - Achetez et vendez facilement" />
+  
+  <!-- NOUVEAU: Polices Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Favicon et icônes -->
+  <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+  <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+  
+  <!-- SEO et métadonnées -->
+  <meta name="keywords" content="annonces, marketplace, acheter, vendre, occasion, neuf" />
+  <meta name="author" content="Votre Plateforme d'Annonces" />
+  <meta property="og:title" content="Plateforme d'Annonces" />
+  <meta property="og:description" content="Achetez et vendez facilement sur notre plateforme" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="%PUBLIC_URL%/og-image.png" />
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Plateforme d'Annonces" />
+  <meta name="twitter:description" content="Achetez et vendez facilement sur notre plateforme" />
+  <meta name="twitter:image" content="%PUBLIC_URL%/twitter-image.png" />
+  
+  <title>Plateforme d'Annonces - Achetez et Vendez Facilement</title>
+  
+  <!-- Styles inline critiques pour éviter le FOUC (Flash of Unstyled Content) -->
+  <style>
+    /* Styles critiques pour le chargement initial */
+    html {
+      font-family: 'Lora', Georgia, serif;
+      line-height: 1.6;
+    }
+    
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f9fafb;
+      color: #1f2937;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    /* Spinner de chargement initial */
+    .initial-loader {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #f9fafb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    
+    .initial-loader .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid #e5e7eb;
+      border-top: 4px solid #f97316;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Masquer le loader quand React est chargé */
+    .loaded .initial-loader {
+      display: none;
+    }
+    
+    /* Polices de base pour éviter le FOIT (Flash of Invisible Text) */
+    .font-primary {
+      font-family: 'Lora', Georgia, serif;
+    }
+    
+    .font-secondary {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+    
+    /* Amélioration de la lisibilité */
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Lora', Georgia, serif;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+    
+    button, input, select, textarea {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+  </style>
 </head>
 <body>
+  <!-- Loader initial visible pendant le chargement de React -->
+  <div class="initial-loader">
+    <div class="spinner"></div>
+  </div>
+  
+  <!-- Message pour les navigateurs sans JavaScript -->
+  <noscript>
+    <div style="text-align: center; padding: 50px; font-family: 'Inter', sans-serif;">
+      <h1>JavaScript requis</h1>
+      <p>Cette application nécessite JavaScript pour fonctionner correctement.</p>
+      <p>Veuillez activer JavaScript dans votre navigateur.</p>
+    </div>
+  </noscript>
+  
+  <!-- Point d'entrée de l'application React -->
   <div id="root"></div>
+  
+  <!-- Script pour masquer le loader initial -->
+  <script>
+    // Masquer le loader quand la page est entièrement chargée
+    window.addEventListener('load', function() {
+      document.body.classList.add('loaded');
+    });
+    
+    // Fallback: masquer le loader après 3 secondes maximum
+    setTimeout(function() {
+      document.body.classList.add('loaded');
+    }, 3000);
+  </script>
+  
+  <!-- Performance et analytics (à ajouter si nécessaire) -->
+  <!-- 
+  <script>
+    // Google Analytics ou autres scripts de tracking
+  </script>
+  -->
 </body>
 </html>
