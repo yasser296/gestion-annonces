@@ -194,9 +194,10 @@ const AdminAttributes = () => {
   return (
     <>
       <PopUpComponent />
+      
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Gestion des attributs</h1>
+        <h1 className="text-3xl font-bold">Gestion des attributs</h1>
+        <div className="flex justify-end items-center mb-8 space-x-2">
           <div className="space-x-2">
             <button
               onClick={() => setShowModal(true)}
@@ -205,6 +206,8 @@ const AdminAttributes = () => {
               <FontAwesomeIcon icon={faPlus} />
               <span>Nouvel attribut</span>
             </button>
+          </div>
+          <div className="space-x-2">           
             <button
               onClick={() => navigate('/admin')}
               className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
@@ -213,6 +216,8 @@ const AdminAttributes = () => {
             </button>
           </div>
         </div>
+
+        
 
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <table className="min-w-full">
