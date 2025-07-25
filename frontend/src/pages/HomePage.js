@@ -59,7 +59,7 @@ const HomePage = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/categories');
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/categories`);
       setCategories(response.data);
     } catch (error) {
       console.error('Erreur lors du chargement des catégories:', error);
@@ -68,7 +68,7 @@ const HomePage = () => {
 
   const fetchSousCategories = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/sous-categories');
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/sous-categories`);
       setSousCategories(response.data);
     } catch (error) {
       console.error('Erreur lors du chargement des sous-catégories:', error);
@@ -77,7 +77,7 @@ const HomePage = () => {
 
   const fetchSousCategoriesByCategory = async (categorieId) => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/sous-categories/by-category/${categorieId}`);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/sous-categories/by-category/${categorieId}`);
       setSousCategories(response.data);
     } catch (error) {
       console.error('Erreur lors du chargement des sous-catégories:', error);
@@ -95,7 +95,7 @@ const HomePage = () => {
       
       params.append('show_inactive', 'false');
       
-      const response = await axios.get(`http://localhost:5000/api/annonces?${params}`);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/annonces?${params}`);
       setAnnonces(response.data);
     } catch (error) {
       console.error('Erreur lors du chargement des annonces:', error);

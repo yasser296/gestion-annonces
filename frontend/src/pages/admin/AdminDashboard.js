@@ -42,13 +42,13 @@ const AdminDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       const [statsRes, activityRes, categoriesRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/admin/stats', {
+        axios.get(`${process.env.REACT_APP_API_URL}/api/admin/stats`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         }),
-        axios.get('http://localhost:5000/api/admin/recent-activity', {
+        axios.get(`${process.env.REACT_APP_API_URL}/api/admin/recent-activity`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         }),
-        axios.get('http://localhost:5000/api/admin/top-categories', {
+        axios.get(`${process.env.REACT_APP_API_URL}/api/admin/top-categories`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         })
       ]);

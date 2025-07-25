@@ -38,7 +38,7 @@ const CategoryPage = () => {
 
   const fetchCategory = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/categories/${categoryId}`);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/categories/${categoryId}`);
       setCategory(response.data);
     } catch (error) {
       console.error('Erreur lors du chargement de la catégorie:', error);
@@ -47,7 +47,7 @@ const CategoryPage = () => {
 
   const fetchSousCategories = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/sous-categories/by-category/${categoryId}`);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/sous-categories/by-category/${categoryId}`);
       setSousCategories(response.data);
     } catch (error) {
       console.error('Erreur lors du chargement des sous-catégories:', error);
@@ -65,7 +65,7 @@ const CategoryPage = () => {
         if (filters[key]) params.append(key, filters[key]);
       });
       
-      const response = await axios.get(`http://localhost:5000/api/annonces?${params}`);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/annonces?${params}`);
       setAnnonces(response.data);
     } catch (error) {
       console.error('Erreur lors du chargement des annonces:', error);

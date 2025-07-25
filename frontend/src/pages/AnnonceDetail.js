@@ -23,7 +23,7 @@ const AnnonceDetail = () => {
 
   const incrementViews = async () => {
     try {
-      await axios.patch(`http://localhost:5000/api/annonces/${id}/vues`);
+      await axios.patch(`${process.env.REACT_APP_API_URL}/api/annonces/${id}/vues`);
     } catch (err) {
       console.error("Erreur lors de l'incrémentation des vues :", err);
     }
@@ -42,7 +42,7 @@ const AnnonceDetail = () => {
     if (!confirmed) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/annonces/${id}`, {
+      await axios.delete(`${process.env.REACT_APP_API_URL}/api/annonces/${id}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -85,7 +85,7 @@ const AnnonceDetail = () => {
   const fetchAnnonce = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:5000/api/annonces/${id}`);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/annonces/${id}`);
       setAnnonce(response.data);
     } catch (error) {
       console.error('Erreur lors du chargement de l\'annonce:', error);
@@ -162,7 +162,7 @@ const AnnonceDetail = () => {
               <div className="h-96 bg-gray-200">
                 {annonce.images && annonce.images[selectedImage] ? (
                   <img
-                    src={`http://localhost:5000${annonce.images[selectedImage]}`}
+                    src={`${process.env.REACT_APP_API_URL}${annonce.images[selectedImage]}`}
                     alt={annonce.titre}
                     className="w-full h-full object-contain"
                   />
@@ -187,7 +187,7 @@ const AnnonceDetail = () => {
                       }`}
                     >
                       <img
-                        src={`http://localhost:5000${image}`}
+                        src={`${process.env.REACT_APP_API_URL}${image}`}
                         alt={`${annonce.titre} ${index + 1}`}
                         className="w-full h-full object-cover"
                       />

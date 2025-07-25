@@ -22,7 +22,7 @@ const MesAnnonces = () => {
   const fetchMesAnnonces = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5000/api/annonces/user/mes-annonces');
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/annonces/user/mes-annonces`);
       setAnnonces(response.data);
     } catch (error) {
       console.error('Erreur lors du chargement des annonces:', error);
@@ -45,7 +45,7 @@ const MesAnnonces = () => {
     try {
       // console.log("working");
       await axios.patch(
-        `http://localhost:5000/api/annonces/${id}/toggle-status`,
+        `${process.env.REACT_APP_API_URL}/api/annonces/${id}/toggle-status`,
         {},
         {
           headers: {
@@ -83,7 +83,7 @@ const MesAnnonces = () => {
 
     if (result.isConfirmed) {
       try {
-        await axios.delete(`http://localhost:5000/api/annonces/${id}`, {
+        await axios.delete(`${process.env.REACT_APP_API_URL}/api/annonces/${id}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
@@ -138,7 +138,7 @@ const MesAnnonces = () => {
         try {
           await Promise.all(
             selectedIds.map(id =>
-              axios.delete(`http://localhost:5000/api/annonces/${id}`, {
+              axios.delete(`${process.env.REACT_APP_API_URL}/api/annonces/${id}`, {
                 headers: {
                   Authorization: `Bearer ${localStorage.getItem('token')}`
                 }
@@ -188,7 +188,7 @@ const MesAnnonces = () => {
           const annonce = annonces.find(a => a._id === id);
           if (annonce && annonce.is_active !== activate) {
             return axios.patch(
-              `http://localhost:5000/api/annonces/${id}/toggle-status`,
+              `${process.env.REACT_APP_API_URL}/api/annonces/${id}/toggle-status`,
               {},
               {
                 headers: {
@@ -369,7 +369,7 @@ const MesAnnonces = () => {
                             {annonce.images && annonce.images[0] ? (
                               <img
                                 className="h-10 w-10 rounded-lg object-cover"
-                                src={`http://localhost:5000${annonce.images[0]}`}
+                                src={`${process.env.REACT_APP_API_URL}${annonce.images[0]}`}
                                 alt={annonce.titre}
                               />
                             ) : (

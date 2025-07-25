@@ -118,7 +118,7 @@ const CategoryCarousel = ({ title, annonces, icon, categoryId, onViewAll }) => {
               <div className="relative h-48 overflow-hidden rounded-t-xl">
                 {annonce.images && annonce.images[0] ? (
                   <img
-                    src={`http://localhost:5000${annonce.images[0]}`}
+                    src={`${process.env.REACT_APP_API_URL}${annonce.images[0]}`}
                     alt={annonce.titre}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                   />

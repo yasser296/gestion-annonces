@@ -46,7 +46,7 @@ const ProfilePage = () => {
 
   const fetchProfileData = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/users/${userId}`);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/users/${userId}`);
       setProfileData(response.data);
       setFormData({
         nom: response.data.nom,
@@ -60,7 +60,7 @@ const ProfilePage = () => {
 
   const fetchUserAnnonces = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/annonces/user/${userId}`);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/annonces/user/${userId}`);
       setUserAnnonces(response.data);
     } catch (error) {
       console.error('Erreur lors du chargement des annonces:', error);
@@ -82,7 +82,7 @@ const ProfilePage = () => {
     setSuccess('');
 
     try {
-      await axios.put(`http://localhost:5000/api/users/${userId}`, formData, {
+      await axios.put(`${process.env.REACT_APP_API_URL}/api/users/${userId}`, formData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -336,7 +336,7 @@ const ProfilePage = () => {
                   <div className="h-48 bg-gray-200">
                     {annonce.images && annonce.images[0] ? (
                       <img
-                        src={`http://localhost:5000${annonce.images[0]}`}
+                        src={`${process.env.REACT_APP_API_URL}${annonce.images[0]}`}
                         alt={annonce.titre}
                         className="w-full h-full object-cover"
                         onError={(e) => {

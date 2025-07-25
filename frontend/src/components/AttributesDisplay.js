@@ -24,8 +24,8 @@ const AttributesDisplay = ({
 
       // Récupérer les attributs de la catégorie et les valeurs de l'annonce
       const [attributesResponse, valuesResponse] = await Promise.all([
-        axios.get(`http://localhost:5000/api/attributes/by-category/${categoryId}`),
-        axios.get(`http://localhost:5000/api/attributes/values/${annonceId}`)
+        axios.get(`${process.env.REACT_APP_API_URL}/api/attributes/by-category/${categoryId}`),
+        axios.get(`${process.env.REACT_APP_API_URL}/api/attributes/values/${annonceId}`)
       ]);
 
       const categoryAttributes = attributesResponse.data;

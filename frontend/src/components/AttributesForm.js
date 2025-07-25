@@ -33,7 +33,7 @@ const AttributesForm = ({
     try {
       setLoading(true);
       console.log('Fetching attributes for category:', categoryId);
-      const response = await axios.get(`http://localhost:5000/api/attributes/by-category/${categoryId}`);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/attributes/by-category/${categoryId}`);
       console.log('Attributes received:', response.data);
       setAttributes(response.data);
       
@@ -53,7 +53,7 @@ const AttributesForm = ({
 
   const fetchAttributeValues = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/attributes/values/${annonceId}`);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/attributes/values/${annonceId}`);
       const values = {};
       Object.keys(response.data).forEach(attributeId => {
         values[attributeId] = response.data[attributeId].value;

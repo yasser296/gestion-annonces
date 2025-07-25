@@ -11,7 +11,7 @@ const useCategories = () => {
   // Charger toutes les catégories
   const fetchCategories = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/categories');
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/categories`);
       setCategories(response.data);
     } catch (err) {
       setError('Erreur lors du chargement des catégories');
@@ -22,7 +22,7 @@ const useCategories = () => {
   // Charger toutes les sous-catégories
   const fetchSousCategories = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/sous-categories');
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/sous-categories`);
       setSousCategories(response.data);
     } catch (err) {
       setError('Erreur lors du chargement des sous-catégories');
@@ -38,7 +38,7 @@ const useCategories = () => {
     }
 
     try {
-      const response = await axios.get(`http://localhost:5000/api/sous-categories/by-category/${categorieId}`);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/sous-categories/by-category/${categorieId}`);
       setSousCategories(response.data);
       return response.data;
     } catch (err) {

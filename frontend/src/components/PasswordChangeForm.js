@@ -79,7 +79,7 @@ const PasswordChangeForm = ({ onSuccess, onCancel, className = '' }) => {
     
     try {
       const response = await axios.patch(
-        `http://localhost:5000/api/users/${user.id}/password`,
+        `${process.env.REACT_APP_API_URL}/api/users/${user.id}/password`,
         {
           ancien_mot_de_passe: formData.ancien_mot_de_passe,
           nouveau_mot_de_passe: formData.nouveau_mot_de_passe

@@ -14,7 +14,7 @@
 //     if (!userToken) return;
 
 //     try {
-//       const response = await axios.get('http://localhost:5000/api/wishlist/count', {
+//       const response = await axios.get('${process.env.REACT_APP_API_URL}/api/wishlist/count', {
 //         headers: { Authorization: `Bearer ${userToken}` }
 //       });
 //       setWishlistCount(response.data.count);

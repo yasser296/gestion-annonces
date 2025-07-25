@@ -19,7 +19,7 @@ const AdminAnnonces = () => {
 
   const fetchAnnonces = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/admin/annonces', {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/admin/annonces`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -38,7 +38,7 @@ const AdminAnnonces = () => {
   const handleToggleStatus = async (id) => {
     try {
       await axios.patch(
-        `http://localhost:5000/api/admin/annonces/${id}/toggle-status`,
+        `${process.env.REACT_APP_API_URL}/api/admin/annonces/${id}/toggle-status`,
         {},
         {
           headers: {
@@ -59,7 +59,7 @@ const AdminAnnonces = () => {
     });
     if (confirmed) {
       try {
-        await axios.delete(`http://localhost:5000/api/admin/annonces/${id}`, {
+        await axios.delete(`${process.env.REACT_APP_API_URL}/api/admin/annonces/${id}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
@@ -162,7 +162,7 @@ const AdminAnnonces = () => {
                       {annonce.images && annonce.images[0] ? (
                         <img
                           className="h-10 w-10 rounded object-cover"
-                          src={`http://localhost:5000${annonce.images[0]}`}
+                          src={`${process.env.REACT_APP_API_URL}${annonce.images[0]}`}
                           alt={annonce.titre}
                         />
                       ) : (

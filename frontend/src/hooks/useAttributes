@@ -20,7 +20,7 @@ const useAttributes = () => {
       setLoading(true);
       setError(null);
 
-      const response = await axios.get(`http://localhost:5000/api/attributes/by-category/${categoryId}`);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/attributes/by-category/${categoryId}`);
       setAttributes(response.data);
 
       // Initialiser les valeurs vides
@@ -44,7 +44,7 @@ const useAttributes = () => {
 
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:5000/api/attributes/values/${annonceId}`);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/attributes/values/${annonceId}`);
       
       const values = {};
       Object.keys(response.data).forEach(attributeId => {
@@ -66,7 +66,7 @@ const useAttributes = () => {
       setLoading(true);
       setError(null);
 
-      await axios.post(`http://localhost:5000/api/attributes/values/${annonceId}`, {
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/attributes/values/${annonceId}`, {
         attributes: values
       }, {
         headers: {

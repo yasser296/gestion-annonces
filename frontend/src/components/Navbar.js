@@ -46,7 +46,7 @@ const Navbar = () => {
   const fetchNotificationCount = async () => {
     try {
       const response = await axios.get(
-        'http://localhost:5000/api/demandes-vendeur/admin/toutes?statut=en_attente',
+        `${process.env.REACT_APP_API_URL}/api/demandes-vendeur/admin/toutes?statut=en_attente`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -83,7 +83,7 @@ const Navbar = () => {
 
   const checkCanCreateAnnonce = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/demandes-vendeur/can-create-annonce', {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/demandes-vendeur/can-create-annonce`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -97,7 +97,7 @@ const Navbar = () => {
 
   const fetchWishlistCount = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/wishlist/count', {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/wishlist/count`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }

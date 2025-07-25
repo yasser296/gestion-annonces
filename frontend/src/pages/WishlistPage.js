@@ -19,7 +19,7 @@ const WishlistPage = () => {
 
   const fetchWishlist = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/wishlist', {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/wishlist`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -38,7 +38,7 @@ const WishlistPage = () => {
     setCleaning(true);
     try {
       const response = await axios.post(
-        'http://localhost:5000/api/wishlist/clean',
+        `${process.env.REACT_APP_API_URL}/api/wishlist/clean`,
         {},
         {
           headers: {
@@ -76,7 +76,7 @@ const WishlistPage = () => {
   const handleRemoveFromWishlist = async (annonceId) => {
     try {
       await axios.delete(
-        `http://localhost:5000/api/wishlist/remove/${annonceId}`,
+        `${process.env.REACT_APP_API_URL}/api/wishlist/remove/${annonceId}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -163,7 +163,7 @@ const WishlistPage = () => {
                     <div className="h-48 bg-gray-200 relative">
                       {annonce.images && annonce.images[0] ? (
                         <img
-                          src={`http://localhost:5000${annonce.images[0]}`}
+                          src={`${process.env.REACT_APP_API_URL}${annonce.images[0]}`}
                           alt={annonce.titre}
                           className="w-full h-full object-cover"
                         />

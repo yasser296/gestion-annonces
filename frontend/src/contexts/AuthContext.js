@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, mot_de_passe) => {
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/login`, {
         email,
         mot_de_passe
       });
@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      await axios.post('http://localhost:5000/api/auth/register', userData);
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/register`, userData);
       return { success: true };
     } catch (error) {
       return { 

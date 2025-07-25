@@ -20,7 +20,7 @@ const WishlistButton = ({ annonceId, isOwner = false, className = "" }) => {
   const checkWishlistStatus = async () => {
     try {
       const response = await axios.get(
-        `http://localhost:5000/api/wishlist/check/${annonceId}`,
+        `${process.env.REACT_APP_API_URL}/api/wishlist/check/${annonceId}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -61,7 +61,7 @@ const WishlistButton = ({ annonceId, isOwner = false, className = "" }) => {
     try {
       if (isInWishlist) {
         await axios.delete(
-          `http://localhost:5000/api/wishlist/remove/${annonceId}`,
+          `${process.env.REACT_APP_API_URL}/api/wishlist/remove/${annonceId}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -73,7 +73,7 @@ const WishlistButton = ({ annonceId, isOwner = false, className = "" }) => {
         window.dispatchEvent(new Event('wishlistUpdated'));
       } else {
         await axios.post(
-          `http://localhost:5000/api/wishlist/add/${annonceId}`,
+          `${process.env.REACT_APP_API_URL}/api/wishlist/add/${annonceId}`,
           {},
           {
             headers: {

@@ -46,7 +46,7 @@ const EditAnnoncePage = () => {
 
   const fetchAnnonce = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/annonces/${id}`);
+      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/annonces/${id}`);
       const { titre, description, prix, ville, marque, etat, categorie_id, sous_categorie_id, images } = res.data;
       setFormData({
         titre,
@@ -72,7 +72,7 @@ const EditAnnoncePage = () => {
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/categories');
+      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/categories`);
       setCategories(res.data);
       console.log("Categories chargées :", res.data);
     } catch (err) {
@@ -82,7 +82,7 @@ const EditAnnoncePage = () => {
 
   const fetchSousCategoriesByCategory = async (categorieId) => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/sous-categories/by-category/${categorieId}`);
+      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/sous-categories/by-category/${categorieId}`);
       setSousCategories(res.data);
       console.log("Sous-catégories chargées :", res.data);
     } catch (err) {
@@ -158,7 +158,7 @@ const EditAnnoncePage = () => {
       });
       
       // 1. Mettre à jour l'annonce
-      await axios.put(`http://localhost:5000/api/annonces/${id}`, formDataToSend, {
+      await axios.put(`${process.env.REACT_APP_API_URL}/api/annonces/${id}`, formDataToSend, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'multipart/form-data'
@@ -167,7 +167,7 @@ const EditAnnoncePage = () => {
       
       // 2. Sauvegarder les attributs si ils existent - NOUVEAU
       if (Object.keys(attributeValues).length > 0) {
-        await axios.post(`http://localhost:5000/api/attributes/values/${id}`, {
+        await axios.post(`${process.env.REACT_APP_API_URL}/api/attributes/values/${id}`, {
           attributes: attributeValues
         }, {
           headers: {
@@ -364,7 +364,7 @@ const EditAnnoncePage = () => {
                   {existingImages.map((image, index) => (
                     <div key={index} className="relative">
                       <img
-                        src={`http://localhost:5000${image}`}
+                        src={`${process.env.REACT_APP_API_URL}${image}`}
                         alt={`Image ${index + 1}`}
                         className="w-full h-24 object-cover rounded"
                       />

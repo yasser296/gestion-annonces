@@ -55,7 +55,7 @@ const SearchPage = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/categories');
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/categories`);
       setCategories(response.data);
     } catch (error) {
       console.error('Erreur:', error);
@@ -64,7 +64,7 @@ const SearchPage = () => {
 
   const fetchSousCategories = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/sous-categories');
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/sous-categories`);
       setSousCategories(response.data);
     } catch (error) {
       console.error('Erreur:', error);
@@ -73,7 +73,7 @@ const SearchPage = () => {
 
   const fetchSousCategoriesByCategory = async (categorieId) => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/sous-categories/by-category/${categorieId}`);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/sous-categories/by-category/${categorieId}`);
       setSousCategories(response.data);
     } catch (error) {
       console.error('Erreur:', error);
@@ -97,7 +97,7 @@ const SearchPage = () => {
         }
       });
       
-      const response = await axios.get(`http://localhost:5000/api/annonces?${params}`);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/annonces?${params}`);
       setAnnonces(response.data);
     } catch (error) {
       console.error('Erreur:', error);

@@ -53,7 +53,7 @@ const AnnonceCard = ({ annonce, variant = 'default' }) => {
       <div className={`relative ${imageHeightClasses[variant]} overflow-hidden`}>
         {annonce.images && annonce.images[0] ? (
           <img
-            src={`http://localhost:5000${annonce.images[0]}`}
+            src={`${process.env.REACT_APP_API_URL}${annonce.images[0]}`}
             alt={annonce.titre}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             loading="lazy"

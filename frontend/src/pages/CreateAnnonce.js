@@ -40,7 +40,7 @@ const CreateAnnonce = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/categories');
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/categories`);
       setCategories(response.data);
     } catch (error) {
       console.error('Erreur lors du chargement des catégories:', error);
@@ -49,7 +49,7 @@ const CreateAnnonce = () => {
 
   const fetchSousCategoriesByCategory = async (categorieId) => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/sous-categories/by-category/${categorieId}`);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/sous-categories/by-category/${categorieId}`);
       setSousCategories(response.data);
     } catch (error) {
       console.error('Erreur lors du chargement des sous-catégories:', error);
@@ -112,7 +112,7 @@ const CreateAnnonce = () => {
 
     try {
       // 1. Créer l'annonce
-      const annonceResponse = await axios.post('http://localhost:5000/api/annonces', formDataToSend, {
+      const annonceResponse = await axios.post(`${process.env.REACT_APP_API_URL}/api/annonces`, formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -122,7 +122,7 @@ const CreateAnnonce = () => {
 
       // 2. Sauvegarder les attributs si ils existent - NOUVEAU
       if (Object.keys(attributeValues).length > 0) {
-        await axios.post(`http://localhost:5000/api/attributes/values/${annonceId}`, {
+        await axios.post(`${process.env.REACT_APP_API_URL}/api/attributes/values/${annonceId}`, {
           attributes: attributeValues
         }, {
           headers: {

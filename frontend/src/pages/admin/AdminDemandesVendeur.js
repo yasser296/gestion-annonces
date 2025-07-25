@@ -19,7 +19,7 @@ const AdminDemandesVendeur = () => {
   const fetchDemandes = async () => {
     try {
       const response = await axios.get(
-        `http://localhost:5000/api/demandes-vendeur/admin/toutes?statut=${filter}`,
+        `${process.env.REACT_APP_API_URL}/api/demandes-vendeur/admin/toutes?statut=${filter}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -49,7 +49,7 @@ const AdminDemandesVendeur = () => {
 
     try {
       await axios.put(
-        `http://localhost:5000/api/demandes-vendeur/admin/${id}/traiter`,
+        `${process.env.REACT_APP_API_URL}/api/demandes-vendeur/admin/${id}/traiter`,
         { statut, message_admin: messageAdmin },
         {
           headers: {

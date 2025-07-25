@@ -35,7 +35,7 @@ const AdminAttributes = () => {
 
   const fetchAttributes = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/attributes/admin/all', {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/attributes/admin/all`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       setAttributes(response.data);
@@ -46,7 +46,7 @@ const AdminAttributes = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/categories', {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/categories`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       setCategories(response.data);
@@ -62,14 +62,14 @@ const AdminAttributes = () => {
     try {
       if (editingAttribute) {
         await axios.put(
-          `http://localhost:5000/api/attributes/admin/${editingAttribute._id}`,
+          `${process.env.REACT_APP_API_URL}/api/attributes/admin/${editingAttribute._id}`,
           formData,
           { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
         );
         showPopup({ type: 'success', title: 'Succès', message: 'Attribut mis à jour' });
       } else {
         await axios.post(
-          'http://localhost:5000/api/attributes/admin',
+          `${process.env.REACT_APP_API_URL}/api/attributes/admin`,
           formData,
           { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
         );
@@ -114,7 +114,7 @@ const AdminAttributes = () => {
 
     if (confirmed) {
       try {
-        await axios.delete(`http://localhost:5000/api/attributes/admin/${attributeId}`, {
+        await axios.delete(`${process.env.REACT_APP_API_URL}/api/attributes/admin/${attributeId}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         showPopup({ type: 'success', title: 'Succès', message: 'Attribut supprimé' });

@@ -39,10 +39,11 @@ const AdminCategories = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/admin/categories', {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/admin/categories`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       setCategories(response.data);
+      setLoading(false);
     } catch (error) {
       console.error('Erreur:', error);
     }
@@ -50,7 +51,7 @@ const AdminCategories = () => {
 
   const fetchSousCategories = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/admin/sous-categories', {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/admin/sous-categories`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       setSousCategories(response.data);
@@ -67,14 +68,14 @@ const AdminCategories = () => {
     try {
       if (editingCategory) {
         await axios.put(
-          `http://localhost:5000/api/admin/categories/${editingCategory._id}`,
+          `${process.env.REACT_APP_API_URL}/api/admin/categories/${editingCategory._id}`,
           categoryFormData,
           { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
         );
         showPopup({ type: 'success', title: 'Succès', message: 'Catégorie mise à jour' });
       } else {
         await axios.post(
-          'http://localhost:5000/api/admin/categories',
+          `${process.env.REACT_APP_API_URL}/api/admin/categories`,
           categoryFormData,
           { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
         );
@@ -114,7 +115,7 @@ const AdminCategories = () => {
 
     if (confirmed) {
       try {
-        await axios.delete(`http://localhost:5000/api/admin/categories/${categoryId}`, {
+        await axios.delete(`${process.env.REACT_APP_API_URL}/api/admin/categories/${categoryId}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         showPopup({ type: 'success', title: 'Succès', message: 'Catégorie supprimée' });
@@ -136,14 +137,14 @@ const AdminCategories = () => {
     try {
       if (editingSubCategory) {
         await axios.put(
-          `http://localhost:5000/api/admin/sous-categories/${editingSubCategory._id}`,
+          `${process.env.REACT_APP_API_URL}/api/admin/sous-categories/${editingSubCategory._id}`,
           subCategoryFormData,
           { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
         );
         showPopup({ type: 'success', title: 'Succès', message: 'Sous-catégorie mise à jour' });
       } else {
         await axios.post(
-          'http://localhost:5000/api/admin/sous-categories',
+          `${process.env.REACT_APP_API_URL}/api/admin/sous-categories`,
           subCategoryFormData,
           { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
         );
@@ -184,7 +185,7 @@ const AdminCategories = () => {
 
     if (confirmed) {
       try {
-        await axios.delete(`http://localhost:5000/api/admin/sous-categories/${subCategoryId}`, {
+        await axios.delete(`${process.env.REACT_APP_API_URL}/api/admin/sous-categories/${subCategoryId}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         showPopup({ type: 'success', title: 'Succès', message: 'Sous-catégorie supprimée' });

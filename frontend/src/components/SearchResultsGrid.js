@@ -126,7 +126,7 @@ const SearchResultsGrid = ({ annonces, title, loading }) => {
                 <div className="w-48 h-32 flex-shrink-0 rounded-lg overflow-hidden">
                   {annonce.images && annonce.images[0] ? (
                     <img
-                      src={`http://localhost:5000${annonce.images[0]}`}
+                      src={`${process.env.REACT_APP_API_URL}${annonce.images[0]}`}
                       alt={annonce.titre}
                       className="w-full h-full object-cover"
                     />

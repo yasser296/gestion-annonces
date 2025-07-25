@@ -21,10 +21,10 @@ const DemandeVendeur = () => {
     try {
       // Vérifier le statut actuel de l'utilisateur
       const canCreateResponse = await axios.get(
-        'http://localhost:5000/api/demandes-vendeur/can-create-annonce',
+        new URL('/api/demandes-vendeur/can-create-annonce', process.env.REACT_APP_API_URL).toString(),
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
+        Authorization: `Bearer ${localStorage.getItem('token')}`
           }
         }
       );
@@ -54,7 +54,7 @@ const DemandeVendeur = () => {
 
       // Vérifier les demandes existantes
       const demandeResponse = await axios.get(
-        'http://localhost:5000/api/demandes-vendeur/ma-demande',
+        `${process.env.REACT_APP_API_URL}/api/demandes-vendeur/ma-demande`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -87,7 +87,7 @@ const DemandeVendeur = () => {
 
     try {
       await axios.post(
-        'http://localhost:5000/api/demandes-vendeur/demande',
+        `${process.env.REACT_APP_API_URL}/api/demandes-vendeur/demande`,
         { message_demande: message },
         {
           headers: {

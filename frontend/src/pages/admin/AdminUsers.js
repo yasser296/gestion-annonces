@@ -65,7 +65,7 @@ const AdminUsers = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/admin/users', {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/admin/users`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -114,7 +114,7 @@ const AdminUsers = () => {
 
     try {
       const response = await axios.post(
-        'http://localhost:5000/api/admin/users',
+        `${process.env.REACT_APP_API_URL}/api/admin/users`,
         createFormData,
         {
           headers: {
@@ -200,7 +200,7 @@ const AdminUsers = () => {
     e.preventDefault();
     try {
       await axios.put(
-        `http://localhost:5000/api/admin/users/${editingUser._id}`,
+        `${process.env.REACT_APP_API_URL}/api/admin/users/${editingUser._id}`,
         {
           nom: editFormData.nom,
           email: editFormData.email,
@@ -215,7 +215,7 @@ const AdminUsers = () => {
 
       if (editFormData.role !== editingUser.role) {
         await axios.patch(
-          `http://localhost:5000/api/admin/users/${editingUser._id}/role`,
+          `${process.env.REACT_APP_API_URL}/api/admin/users/${editingUser._id}/role`,
           { role_id: editFormData.role },
           {
             headers: {
@@ -244,7 +244,7 @@ const AdminUsers = () => {
 
     if (result.isConfirmed) {
       try {
-        await axios.delete(`http://localhost:5000/api/admin/users/${userId}`, {
+        await axios.delete(`${process.env.REACT_APP_API_URL}/api/admin/users/${userId}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
@@ -379,7 +379,7 @@ const AdminUsers = () => {
                           const newRoleId = parseInt(e.target.value);
                           try {
                             await axios.patch(
-                              `http://localhost:5000/api/admin/users/${user._id}/role`,
+                              `${process.env.REACT_APP_API_URL}/api/admin/users/${user._id}/role`,
                               { role_id: newRoleId },
                               {
                                 headers: {
