@@ -196,7 +196,7 @@ const Navbar = () => {
                 )}
               </Link>
               
-              <Link 
+              {/* <Link 
                 to="/categories" 
                 className={`text-gray-700 hover:text-orange-500 transition-colors font-medium relative ${
                   location.pathname.includes('/category') ? 'text-orange-500' : ''
@@ -206,7 +206,7 @@ const Navbar = () => {
                 {location.pathname.includes('/category') && (
                   <div className="absolute -bottom-1 left-0 right-0 h-0.5 gradient-orange rounded-full"></div>
                 )}
-              </Link>
+              </Link> */}
 
               {/* Bouton Déposer une annonce */}
               {user ? (
@@ -406,9 +406,9 @@ const Navbar = () => {
               <Link to="/" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
                 Accueil
               </Link>
-              <Link to="/categories" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
+              {/* <Link to="/categories" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
                 Catégories
-              </Link>
+              </Link> */}
               {user ? (
                 <>
                   <Link to={`/profil/${user.id}`} className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">

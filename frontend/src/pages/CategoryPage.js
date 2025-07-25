@@ -1,5 +1,4 @@
-// CategoryPage.js - VERSION CORRIGÉE pour éliminer le bug de panique
-
+// CategoryPage.js - Version complète avec design amélioré et toutes les fonctionnalités
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
@@ -13,13 +12,13 @@ const CategoryPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // CORRECTION 1: États de contrôle pour éviter les boucles
+  // États de contrôle pour éviter les boucles infinies
   const [isInitialized, setIsInitialized] = useState(false);
   const [isPriceStatsLoaded, setIsPriceStatsLoaded] = useState(false);
   const isFirstRender = useRef(true);
   const priceInitialized = useRef(false);
 
-  // États existants
+  // États principaux
   const [annonces, setAnnonces] = useState([]);
   const [category, setCategory] = useState(null);
   const [sousCategories, setSousCategories] = useState([]);
@@ -39,7 +38,7 @@ const CategoryPage = () => {
 
   const [attributeFilters, setAttributeFilters] = useState({});
   
-  // CORRECTION 2: Initialisation sécurisée du prix range
+  // Initialisation sécurisée du prix range
   const [priceRange, setPriceRange] = useState(() => {
     const minPrice = searchParams.get('min_prix');
     const maxPrice = searchParams.get('max_prix');
@@ -51,7 +50,7 @@ const CategoryPage = () => {
   
   const [isFilteringByPrice, setIsFilteringByPrice] = useState(false);
 
-  // CORRECTION 3: Validation robuste des valeurs de prix
+  // Validation robuste des valeurs de prix
   const validatePriceRange = useCallback((range, stats) => {
     if (!Array.isArray(range) || range.length !== 2) {
       return stats ? [stats.suggestedMin, stats.suggestedMax] : [0, 10000];
@@ -75,6 +74,7 @@ const CategoryPage = () => {
     return [Math.max(0, minVal), Math.max(minVal + 100, maxVal)];
   }, []);
 
+  // Fonctions de fetch avec useCallback pour éviter les re-renders
   const fetchCategory = useCallback(async () => {
     try {
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/categories/${categoryId}`);
@@ -97,12 +97,22 @@ const CategoryPage = () => {
     try {
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/attributes/by-category/${categoryId}`);
       setCategoryAttributes(response.data);
+      
+      // Initialiser les filtres d'attributs depuis l'URL
+      const initialAttributeFilters = {};
+      categoryAttributes.forEach(attr => {
+        const value = searchParams.get(`attr_${attr._id}`);
+        if (value) {
+          initialAttributeFilters[attr._id] = value;
+        }
+      });
+      setAttributeFilters(initialAttributeFilters);
     } catch (error) {
       console.error('Erreur lors du chargement des attributs:', error);
     }
-  }, [categoryId]);
+  }, [categoryId, searchParams]);
 
-  // CORRECTION 4: fetchPriceStats sécurisé
+  // fetchPriceStats sécurisé
   const fetchPriceStats = useCallback(async () => {
     try {
       const params = new URLSearchParams();
@@ -116,25 +126,22 @@ const CategoryPage = () => {
       
       const stats = response.data;
       
-      // Valider les stats reçues
       if (stats && typeof stats.suggestedMin === 'number' && typeof stats.suggestedMax === 'number') {
         setPriceStats(stats);
         setIsPriceStatsLoaded(true);
         
-        // CORRECTION 5: Initialisation du prix SEULEMENT la première fois
+        // Initialisation du prix SEULEMENT la première fois
         if (!priceInitialized.current) {
           const minPrice = searchParams.get('min_prix');
           const maxPrice = searchParams.get('max_prix');
           
           let initialRange;
           if (minPrice || maxPrice) {
-            // Utiliser les valeurs de l'URL si présentes
             initialRange = [
               minPrice ? parseInt(minPrice) : stats.suggestedMin,
               maxPrice ? parseInt(maxPrice) : stats.suggestedMax
             ];
           } else {
-            // Sinon utiliser les valeurs par défaut des stats
             initialRange = [stats.suggestedMin, stats.suggestedMax];
           }
           
@@ -142,52 +149,37 @@ const CategoryPage = () => {
           setPriceRange(validatedRange);
           priceInitialized.current = true;
         }
-      } else {
-        // Fallback si les stats sont invalides
-        setPriceStats({
-          minPrice: 0,
-          maxPrice: 10000,
-          suggestedMin: 0,
-          suggestedMax: 10000,
-          step: 100
-        });
-        setIsPriceStatsLoaded(true);
       }
     } catch (error) {
-      console.error('Erreur lors du chargement des statistiques de prix:', error);
-      setPriceStats({
-        minPrice: 0,
-        maxPrice: 10000,
-        suggestedMin: 0,
-        suggestedMax: 10000,
-        step: 100
-      });
-      setIsPriceStatsLoaded(true);
+      console.error('Erreur lors du chargement des stats de prix:', error);
+      setIsPriceStatsLoaded(true); // Marquer comme chargé même en cas d'erreur
     }
   }, [categoryId, filters.sous_categorie, searchParams, validatePriceRange]);
 
+  // fetchAnnonces avec tous les filtres
   const fetchAnnonces = useCallback(async () => {
-    if (!isPriceStatsLoaded) return; // Attendre que les stats soient chargées
-    
     try {
       setLoading(true);
       const params = new URLSearchParams();
+      
+      // Filtres de base
       params.append('categorie', categoryId);
       params.append('show_inactive', 'false');
       
+      // Ajouter tous les filtres actifs
       Object.keys(filters).forEach(key => {
-        if (filters[key]) params.append(key, filters[key]);
+        if (filters[key] && key !== 'tri') {
+          params.append(key, filters[key]);
+        }
       });
-
-      if (priceStats && priceRange) {
-        if (priceRange[0] > priceStats.suggestedMin) {
-          params.append('min_prix', priceRange[0]);
-        }
-        if (priceRange[1] < priceStats.suggestedMax) {
-          params.append('max_prix', priceRange[1]);
-        }
+      
+      // Filtres de prix
+      if (priceStats && (priceRange[0] > priceStats.suggestedMin || priceRange[1] < priceStats.suggestedMax)) {
+        params.append('min_prix', priceRange[0]);
+        params.append('max_prix', priceRange[1]);
       }
-
+      
+      // Filtres d'attributs
       Object.keys(attributeFilters).forEach(attributeId => {
         if (attributeFilters[attributeId]) {
           params.append(`attr_${attributeId}`, attributeFilters[attributeId]);
@@ -195,45 +187,57 @@ const CategoryPage = () => {
       });
       
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/annonces?${params}`);
-      setAnnonces(response.data);
+      let fetchedAnnonces = response.data;
+      
+      // Appliquer le tri côté client
+      switch (filters.tri) {
+        case 'date_asc':
+          fetchedAnnonces.sort((a, b) => new Date(a.date_publication) - new Date(b.date_publication));
+          break;
+        case 'prix_asc':
+          fetchedAnnonces.sort((a, b) => a.prix - b.prix);
+          break;
+        case 'prix_desc':
+          fetchedAnnonces.sort((a, b) => b.prix - a.prix);
+          break;
+        case 'titre_asc':
+          fetchedAnnonces.sort((a, b) => a.titre.localeCompare(b.titre));
+          break;
+        case 'titre_desc':
+          fetchedAnnonces.sort((a, b) => b.titre.localeCompare(a.titre));
+          break;
+        default: // date_desc
+          fetchedAnnonces.sort((a, b) => new Date(b.date_publication) - new Date(a.date_publication));
+      }
+      
+      setAnnonces(fetchedAnnonces);
     } catch (error) {
       console.error('Erreur lors du chargement des annonces:', error);
     } finally {
       setLoading(false);
     }
-  }, [categoryId, filters, priceRange, priceStats, attributeFilters, isPriceStatsLoaded]);
+  }, [categoryId, filters, priceRange, priceStats, attributeFilters]);
 
-  // CORRECTION 6: Gestion sécurisée des changements de prix
-  const handlePriceRangeChange = useCallback((newRange) => {
-    if (!isPriceStatsLoaded || !priceStats) return;
-    
-    const validatedRange = validatePriceRange(newRange, priceStats);
-    setPriceRange(validatedRange);
-    setIsFilteringByPrice(true);
-  }, [validatePriceRange, priceStats, isPriceStatsLoaded]);
-
-  const handlePriceRangeChangeComplete = useCallback((finalRange) => {
-    setIsFilteringByPrice(false);
-  }, []);
-
+  // Mise à jour de l'URL avec debounce pour le prix
   const updateURL = useCallback(() => {
-    if (!isInitialized) return; // Ne pas mettre à jour l'URL avant l'initialisation complète
+    if (!isInitialized) return;
     
     const params = new URLSearchParams();
     
+    // Ajouter les filtres de base
     Object.keys(filters).forEach(key => {
-      if (filters[key]) params.set(key, filters[key]);
+      if (filters[key] && filters[key] !== 'date_desc') {
+        params.set(key, filters[key]);
+      }
     });
     
-    if (priceStats && priceRange) {
-      if (priceRange[0] > priceStats.suggestedMin) {
-        params.set('min_prix', priceRange[0]);
-      }
-      if (priceRange[1] < priceStats.suggestedMax) {
-        params.set('max_prix', priceRange[1]);
-      }
+    // Ajouter les filtres de prix
+    if (priceStats && (priceRange[0] > priceStats.suggestedMin || priceRange[1] < priceStats.suggestedMax)) {
+      params.set('min_prix', priceRange[0]);
+      params.set('max_prix', priceRange[1]);
     }
     
+    // Ajouter les filtres d'attributs
     Object.keys(attributeFilters).forEach(attributeId => {
       if (attributeFilters[attributeId]) {
         params.set(`attr_${attributeId}`, attributeFilters[attributeId]);
@@ -243,6 +247,7 @@ const CategoryPage = () => {
     setSearchParams(params);
   }, [filters, priceRange, priceStats, attributeFilters, setSearchParams, isInitialized]);
 
+  // Gestionnaires d'événements
   const handleFilterChange = useCallback((e) => {
     setFilters(prev => ({
       ...prev,
@@ -255,6 +260,15 @@ const CategoryPage = () => {
       ...prev,
       [attributeId]: value
     }));
+  }, []);
+
+  const handlePriceRangeChange = useCallback((newRange) => {
+    setIsFilteringByPrice(true);
+    setPriceRange(newRange);
+  }, []);
+
+  const handlePriceRangeChangeComplete = useCallback(() => {
+    setIsFilteringByPrice(false);
   }, []);
 
   const handleResetFilters = useCallback(() => {
@@ -274,7 +288,7 @@ const CategoryPage = () => {
     }
   }, [priceStats]);
 
-  // CORRECTION 7: Effects sécurisés avec dépendances contrôlées
+  // Effects sécurisés avec dépendances contrôlées
   useEffect(() => {
     if (categoryId) {
       const initializeData = async () => {
@@ -303,7 +317,7 @@ const CategoryPage = () => {
     }
   }, [fetchAnnonces, isPriceStatsLoaded]);
 
-  // Effect pour l'URL (avec débounce)
+  // Effect pour l'URL avec débounce
   useEffect(() => {
     if (!isFirstRender.current) {
       const timeoutId = setTimeout(() => {
@@ -317,11 +331,12 @@ const CategoryPage = () => {
   // Effect pour refresh des stats quand sous-catégorie change
   useEffect(() => {
     if (filters.sous_categorie && isPriceStatsLoaded) {
-      priceInitialized.current = false; // Reset pour permettre re-init
+      priceInitialized.current = false;
       fetchPriceStats();
     }
   }, [filters.sous_categorie, fetchPriceStats, isPriceStatsLoaded]);
 
+  // Fonctions utilitaires
   const filteredAnnonces = annonces.filter(a => 
     !user || (a.user_id !== user.id && a.user_id?._id !== user.id)
   );
@@ -352,389 +367,338 @@ const CategoryPage = () => {
           <select
             value={value}
             onChange={(e) => handleAttributeFilterChange(attribute._id, e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent transition-all"
           >
-            <option value="">Toutes les options</option>
+            <option value="">Sélectionner...</option>
             {attribute.options?.map((option, index) => (
-              <option key={index} value={option}>
-                {option}
-              </option>
+              <option key={index} value={option}>{option}</option>
             ))}
           </select>
         );
-
-      case 'boolean':
-        return (
-          <select
-            value={value}
-            onChange={(e) => handleAttributeFilterChange(attribute._id, e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
-          >
-            <option value="">Indifférent</option>
-            <option value="true">Oui</option>
-            <option value="false">Non</option>
-          </select>
-        );
-
+      
       case 'number':
         return (
           <input
             type="number"
             value={value}
             onChange={(e) => handleAttributeFilterChange(attribute._id, e.target.value)}
-            placeholder={attribute.placeholder || `Filtrer par ${attribute.nom.toLowerCase()}`}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
+            placeholder={`${attribute.nom}...`}
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent transition-all"
           />
         );
-
+      
       default:
         return (
           <input
             type="text"
             value={value}
             onChange={(e) => handleAttributeFilterChange(attribute._id, e.target.value)}
-            placeholder={attribute.placeholder || `Filtrer par ${attribute.nom.toLowerCase()}`}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
+            placeholder={`${attribute.nom}...`}
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent transition-all"
           />
         );
     }
   };
 
-  if (loading && !category) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-orange-500"></div>
-      </div>
-    );
-  }
-
-  if (!category && !loading) {
-    return (
-      <div className="container mx-auto px-4 py-8 text-center">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">Catégorie non trouvée</h1>
-        <button
-          onClick={() => navigate('/')}
-          className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition"
-        >
-          Retour à l'accueil
-        </button>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header de la catégorie */}
-      <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white py-8">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center space-x-4 mb-4">
-            <button
-              onClick={() => navigate('/')}
-              className="text-white hover:text-orange-200 transition"
-            >
-              ← Retour à l'accueil
-            </button>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <div className="text-6xl">{category?.icone}</div>
-            <div>
-              <h1 className="text-4xl font-bold">{category?.nom}</h1>
-              <p className="text-xl opacity-90">
-                {filteredAnnonces.length} annonce{filteredAnnonces.length > 1 ? 's' : ''} disponible{filteredAnnonces.length > 1 ? 's' : ''}
-                {priceStats && priceStats.totalAnnonces > 0 && (
-                  <span className="ml-2 text-sm">
-                    • Prix moyen: {new Intl.NumberFormat('fr-MA').format(priceStats.avgPrice)} MAD
-                  </span>
-                )}
-              </p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+      {/* En-tête de catégorie moderne */}
+      <div className="bg-gradient-to-r from-orange-400 via-pink-500 to-purple-600 relative overflow-hidden">
+        <div className="absolute inset-0 bg-black opacity-20"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent"></div>
+        
+        <div className="relative max-w-7xl mx-auto px-4 py-16">
+          <div className="text-center text-white">
+            <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center mx-auto mb-6">
+              <span className="text-4xl">{category?.icone || '📂'}</span>
             </div>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">
+              {category?.nom || 'Catégorie'}
+            </h1>
+            <p className="text-xl opacity-90 mb-6">
+              {filteredAnnonces.length} annonce{filteredAnnonces.length !== 1 ? 's' : ''} disponible{filteredAnnonces.length !== 1 ? 's' : ''}
+            </p>
+            
+            {/* Sous-catégories en chips modernes */}
+            {sousCategories.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-3">
+                <button
+                  onClick={() => setFilters({...filters, sous_categorie: ''})}
+                  className={`px-6 py-3 rounded-full transition-all font-medium ${
+                    !filters.sous_categorie
+                      ? 'bg-white text-gray-900 shadow-lg'
+                      : 'bg-white/20 text-white hover:bg-white/30'
+                  }`}
+                >
+                  Toutes
+                </button>
+                {sousCategories.map((sousCategorie) => (
+                  <button
+                    key={sousCategorie._id}
+                    onClick={() => setFilters({...filters, sous_categorie: sousCategorie._id})}
+                    className={`px-6 py-3 rounded-full transition-all font-medium ${
+                      filters.sous_categorie === sousCategorie._id
+                        ? 'bg-white text-gray-900 shadow-lg'
+                        : 'bg-white/20 text-white hover:bg-white/30'
+                    }`}
+                  >
+                    {sousCategorie.icone} {sousCategorie.nom}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Barre de filtres à gauche */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-bold text-gray-900">Filtres</h2>
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="lg:hidden text-orange-500 hover:text-orange-600"
-                >
-                  {showFilters ? 'Masquer' : 'Afficher'}
-                </button>
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Sidebar des filtres moderne */}
+          <div className="lg:w-1/4">
+            {/* Bouton toggle pour mobile */}
+            <div className="lg:hidden mb-6">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="w-full bg-white rounded-2xl p-4 shadow-lg flex items-center justify-between font-medium"
+              >
+                <span className="flex items-center space-x-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+                  </svg>
+                  <span>Filtres</span>
+                </span>
+                <span>{showFilters ? 'Masquer' : 'Afficher'}</span>
+              </button>
+            </div>
+
+            {/* Panneau des filtres */}
+            <div className={`space-y-6 ${showFilters ? 'block' : 'hidden lg:block'}`}>
+              {/* Card de recherche */}
+              <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <svg className="w-5 h-5 mr-2 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  Recherche
+                </h3>
+                <input
+                  type="text"
+                  name="recherche"
+                  placeholder="Mots-clés..."
+                  value={filters.recherche}
+                  onChange={handleFilterChange}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent transition-all"
+                />
               </div>
 
-              <div className={`space-y-6 ${showFilters ? 'block' : 'hidden lg:block'}`}>
-                {/* Recherche */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Rechercher
-                  </label>
-                  <input
-                    type="text"
-                    name="recherche"
-                    placeholder="Mots-clés..."
-                    value={filters.recherche}
-                    onChange={handleFilterChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
-                  />
-                </div>
+              {/* Card de localisation */}
+              <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <svg className="w-5 h-5 mr-2 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  </svg>
+                  Localisation
+                </h3>
+                <input
+                  type="text"
+                  name="ville"
+                  placeholder="Ville..."
+                  value={filters.ville}
+                  onChange={handleFilterChange}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent transition-all"
+                />
+              </div>
 
-                {/* Sous-catégories */}
-                {sousCategories.length > 0 && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Sous-catégorie
-                    </label>
-                    <select
-                      name="sous_categorie"
-                      value={filters.sous_categorie}
-                      onChange={handleFilterChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
-                    >
-                      <option value="">Toutes les sous-catégories</option>
-                      {sousCategories.map((sousCategorie) => (
-                        <option key={sousCategorie._id} value={sousCategorie._id}>
-                          {sousCategorie.icone} {sousCategorie.nom}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                {/* Ville */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Ville
-                  </label>
-                  <input
-                    type="text"
-                    name="ville"
-                    placeholder="Ville..."
-                    value={filters.ville}
-                    onChange={handleFilterChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
-                  />
-                </div>
-
-                {/* PRICE RANGE SLIDER - SEULEMENT SI LES STATS SONT CHARGÉES */}
-                {priceStats && isPriceStatsLoaded && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
-                      <span className="flex items-center justify-between">
-                        <span>Prix ({priceStats.currency || 'MAD'})</span>
-                        {isFilteringByPrice && (
-                          <span className="text-xs text-orange-500 flex items-center">
-                            <span className="inline-block w-2 h-2 bg-orange-500 rounded-full animate-pulse mr-1"></span>
-                            Filtrage...
-                          </span>
-                        )}
-                      </span>
-                    </label>
-                    
+              {/* Card de prix */}
+              {priceStats && (
+                <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <svg className="w-5 h-5 mr-2 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                    </svg>
+                    Prix
+                  </h3>
+                  <div className="space-y-4">
                     <PriceRangeSlider
                       min={priceStats.suggestedMin}
                       max={priceStats.suggestedMax}
                       value={priceRange}
                       onChange={handlePriceRangeChange}
                       onChangeComplete={handlePriceRangeChangeComplete}
-                      step={priceStats.step}
-                      currency="MAD"
-                      priceRanges={priceStats.priceRanges}
+                    />
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>{priceRange[0]} MAD</span>
+                      <span>{priceRange[1]} MAD</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Card des critères généraux */}
+              <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <svg className="w-5 h-5 mr-2 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Critères
+                </h3>
+                <div className="space-y-4">
+                  {/* État */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">État</label>
+                    <select
+                      name="etat"
+                      value={filters.etat}
+                      onChange={handleFilterChange}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent transition-all"
+                    >
+                      <option value="">Tous états</option>
+                      <option value="Neuf">Neuf</option>
+                      <option value="Comme neuf">Comme neuf</option>
+                      <option value="Bon état">Bon état</option>
+                      <option value="État moyen">État moyen</option>
+                    </select>
+                  </div>
+
+                  {/* Marque */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Marque</label>
+                    <input
+                      type="text"
+                      name="marque"
+                      placeholder="Marque..."
+                      value={filters.marque}
+                      onChange={handleFilterChange}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent transition-all"
                     />
                   </div>
-                )}
-
-                {/* État */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    État
-                  </label>
-                  <select
-                    name="etat"
-                    value={filters.etat}
-                    onChange={handleFilterChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
-                  >
-                    <option value="">Tous états</option>
-                    <option value="Neuf">Neuf</option>
-                    <option value="Comme neuf">Comme neuf</option>
-                    <option value="Bon état">Bon état</option>
-                    <option value="État moyen">État moyen</option>
-                  </select>
                 </div>
-
-                {/* Marque */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Marque
-                  </label>
-                  <input
-                    type="text"
-                    name="marque"
-                    placeholder="Marque..."
-                    value={filters.marque}
-                    onChange={handleFilterChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
-                  />
-                </div>
-
-                {/* Attributs spécifiques */}
-                {categoryAttributes.length > 0 && (
-                  <>
-                    <hr className="border-gray-200" />
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-700 mb-4 flex items-center">
-                        <span className="mr-2">🔧</span>
-                        Critères spécifiques
-                      </h3>
-                      <div className="space-y-4">
-                        {categoryAttributes.map((attribute) => (
-                          <div key={attribute._id}>
-                            <label className="block text-sm font-medium text-gray-600 mb-1">
-                              {attribute.nom}
-                            </label>
-                            {renderAttributeFilter(attribute)}
-                            {attribute.description && (
-                              <p className="text-xs text-gray-500 mt-1">
-                                {attribute.description}
-                              </p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {/* Tri */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Trier par
-                  </label>
-                  <select
-                    name="tri"
-                    value={filters.tri}
-                    onChange={handleFilterChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
-                  >
-                    <option value="date_desc">Plus récent</option>
-                    <option value="date_asc">Plus ancien</option>
-                    <option value="prix_asc">Prix croissant</option>
-                    <option value="prix_desc">Prix décroissant</option>
-                    <option value="titre_asc">Titre A-Z</option>
-                    <option value="titre_desc">Titre Z-A</option>
-                  </select>
-                </div>
-
-                {/* Bouton reset */}
-                <button
-                  onClick={handleResetFilters}
-                  className="w-full bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 transition"
-                >
-                  Réinitialiser les filtres
-                </button>
               </div>
+
+              {/* Card des attributs spécifiques */}
+              {categoryAttributes.length > 0 && (
+                <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <svg className="w-5 h-5 mr-2 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Critères spécifiques
+                  </h3>
+                  <div className="space-y-4">
+                    {categoryAttributes.map((attribute) => (
+                      <div key={attribute._id}>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          {attribute.nom}
+                        </label>
+                        {renderAttributeFilter(attribute)}
+                        {attribute.description && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            {attribute.description}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Card de tri */}
+              <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <svg className="w-5 h-5 mr-2 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" />
+                  </svg>
+                  Trier par
+                </h3>
+                <select
+                  name="tri"
+                  value={filters.tri}
+                  onChange={handleFilterChange}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent transition-all"
+                >
+                  <option value="date_desc">Plus récent</option>
+                  <option value="date_asc">Plus ancien</option>
+                  <option value="prix_asc">Prix croissant</option>
+                  <option value="prix_desc">Prix décroissant</option>
+                  <option value="titre_asc">Titre A-Z</option>
+                  <option value="titre_desc">Titre Z-A</option>
+                </select>
+              </div>
+
+              {/* Bouton reset moderne */}
+              <button
+                onClick={handleResetFilters}
+                className="w-full bg-gradient-to-r from-gray-500 to-gray-600 text-white px-6 py-4 rounded-2xl hover:shadow-lg transition-all transform hover:scale-105 font-semibold flex items-center justify-center space-x-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span>Réinitialiser les filtres</span>
+              </button>
+
+              {/* Indicateur de filtres actifs */}
+              {hasActiveFilters() && (
+                <div className="bg-gradient-to-r from-orange-100 to-pink-100 rounded-2xl p-4 border-l-4 border-orange-500">
+                  <div className="flex items-center space-x-2">
+                    <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-orange-800 font-medium text-sm">
+                      Filtres appliqués
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Résultats à droite */}
-          <div className="lg:col-span-3">
-            {/* Filtres actifs */}
-            {hasActiveFilters() && (
-              <div className="mb-6 bg-white rounded-lg shadow-sm p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-medium text-gray-700">Filtres actifs :</h3>
-                  <button
-                    onClick={handleResetFilters}
-                    className="text-xs text-red-500 hover:text-red-600"
-                  >
-                    Tout supprimer
-                  </button>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(filters).map(([key, value]) => {
-                    if (!value || value === 'date_desc') return null;
-                    
-                    let displayValue = value;
-                    let displayKey = key;
-                    
-                    if (key === 'sous_categorie') {
-                      displayValue = getSelectedSubCategoryName();
-                      displayKey = 'Sous-catégorie';
-                    } else {
-                      displayKey = key.charAt(0).toUpperCase() + key.slice(1);
+          {/* Contenu principal */}
+          <div className="lg:w-3/4">
+            {/* Titre avec compteur */}
+            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 mb-8">
+              <div className="flex flex-col md:flex-row md:items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                    {getSelectedSubCategoryName() 
+                      ? `${getSelectedSubCategoryName()} dans ${category?.nom}`
+                      : `Toutes les annonces dans ${category?.nom}`
                     }
-                    
-                    return (
-                      <span
-                        key={key}
-                        className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-orange-100 text-orange-800"
-                      >
-                        <strong>{displayKey}:</strong>&nbsp;{displayValue}
-                        <button
-                          onClick={() => setFilters({...filters, [key]: key === 'tri' ? 'date_desc' : ''})}
-                          className="ml-2 text-orange-600 hover:text-orange-800"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    );
-                  })}
-
-                  {priceStats && (priceRange[0] > priceStats.suggestedMin || priceRange[1] < priceStats.suggestedMax) && (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
-                      <strong>Prix:</strong>&nbsp;{new Intl.NumberFormat('fr-MA').format(priceRange[0])} - {new Intl.NumberFormat('fr-MA').format(priceRange[1])} MAD
-                      <button
-                        onClick={() => setPriceRange([priceStats.suggestedMin, priceStats.suggestedMax])}
-                        className="ml-2 text-green-600 hover:text-green-800"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  )}
-
-                  {Object.entries(attributeFilters).map(([attributeId, value]) => {
-                    if (!value) return null;
-                    
-                    const attribute = categoryAttributes.find(attr => attr._id === attributeId);
-                    if (!attribute) return null;
-                    
-                    return (
-                      <span
-                        key={attributeId}
-                        className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
-                      >
-                        <strong>{attribute.nom}:</strong>&nbsp;{value}
-                        <button
-                          onClick={() => handleAttributeFilterChange(attributeId, '')}
-                          className="ml-2 text-blue-600 hover:text-blue-800"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    );
-                  })}
+                  </h2>
+                  <p className="text-gray-600">
+                    {filteredAnnonces.length} annonce{filteredAnnonces.length !== 1 ? 's' : ''} trouvée{filteredAnnonces.length !== 1 ? 's' : ''}
+                  </p>
                 </div>
+                
+                {/* Stats rapides */}
+                {priceStats && (
+                  <div className="mt-4 md:mt-0 flex space-x-4 text-sm text-gray-600">
+                    <div className="text-center">
+                      <div className="font-semibold text-gray-900">{priceStats.min} MAD</div>
+                      <div>Prix min</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-semibold text-gray-900">{priceStats.max} MAD</div>
+                      <div>Prix max</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-semibold text-gray-900">{Math.round(priceStats.avg)} MAD</div>
+                      <div>Prix moyen</div>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
 
+            {/* Grille des résultats */}
             <SearchResultsGrid 
               annonces={filteredAnnonces}
-              title={
-                filters.sous_categorie 
-                  ? `${getSelectedSubCategoryName()} dans ${category?.nom}`
-                  : `Toutes les annonces dans ${category?.nom}`
-              }
               loading={loading}
             />
 
+            {/* Message si aucun résultat */}
             {!loading && filteredAnnonces.length === 0 && (
-              <div className="text-center py-16 bg-white rounded-lg shadow-md">
+              <div className="text-center py-16 bg-white rounded-2xl shadow-lg">
                 <div className="text-6xl mb-4">🔍</div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Aucune annonce trouvée</h3>
                 <p className="text-gray-500 mb-6">
@@ -742,7 +706,7 @@ const CategoryPage = () => {
                 </p>
                 <button
                   onClick={handleResetFilters}
-                  className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition"
+                  className="bg-gradient-to-r from-orange-500 to-pink-500 text-white px-6 py-3 rounded-xl hover:shadow-lg transition-all transform hover:scale-105 font-semibold"
                 >
                   Réinitialiser les filtres
                 </button>

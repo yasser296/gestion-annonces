@@ -205,9 +205,9 @@ const HomePage = () => {
             <span className="bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent"> cherchez</span>
           </h1>
           <p className="text-white text-xl mb-12 opacity-90 max-w-2xl mx-auto">
-            Des milliers d'annonces dans toutes les catégories au Maroc
+            Des milliers d'annonces dans tous les domaines au Maroc
           </p>
-          
+
           {/* Barre de recherche moderne avec effet glassmorphism */}
           <div className="max-w-5xl mx-auto">
             <div className="glass-effect rounded-3xl p-3 shadow-2xl border border-white/20">
@@ -217,71 +217,78 @@ const HomePage = () => {
                     <svg className="w-5 h-5 text-gray-400 group-focus-within:text-orange-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
-                  </div>
-                  <input
+                    </div>
+                    <input
                     type="text"
                     name="recherche"
                     placeholder="Que recherchez-vous ?"
                     value={filters.recherche}
                     onChange={handleFilterChange}
                     className="w-full pl-12 pr-4 py-4 rounded-2xl border-0 focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-gray-700 bg-gray-50/50 focus:bg-white transition-all search-glow"
-                  />
-                </div>
-                
-                <div className="flex-1 relative group">
-                  <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                    />
+                  </div>
+                  
+                  <div className="flex-1 relative group">
+                    <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                     <svg className="w-5 h-5 text-gray-400 group-focus-within:text-orange-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                     </svg>
-                  </div>
-                  <select
+                    </div>
+                    <select
                     name="categorie"
                     value={filters.categorie}
-                    onChange={handleFilterChange}
+                    onChange={e => {
+                      const value = e.target.value;
+                      if (value) {
+                      navigate(`/category/${value}`);
+                      } else {
+                      setFilters({ ...filters, categorie: '' });
+                      }
+                    }}
                     className="w-full pl-12 pr-4 py-4 rounded-2xl border-0 focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-gray-700 bg-gray-50/50 focus:bg-white transition-all appearance-none"
-                  >
+                    >
                     <option value="">Toutes catégories</option>
                     {categories.map((category) => (
                       <option key={category._id} value={category._id}>
-                        {category.nom}
+                      {category.nom}
                       </option>
                     ))}
-                  </select>
-                </div>
+                    </select>
+                  </div>
 
-                <div className="flex-1 relative group">
-                  <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                  <div className="flex-1 relative group">
+                    <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                     <svg className="w-5 h-5 text-gray-400 group-focus-within:text-orange-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                  </div>
-                  <input
+                    </div>
+                    <input
                     type="text"
                     name="ville"
                     placeholder="Ville"
                     value={filters.ville}
                     onChange={handleFilterChange}
                     className="w-full pl-12 pr-4 py-4 rounded-2xl border-0 focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-gray-700 bg-gray-50/50 focus:bg-white transition-all"
-                  />
-                </div>
+                    />
+                  </div>
 
-                <button
-                  onClick={handleSearch}
-                  className="bg-gradient-to-r from-orange-500 to-pink-500 text-white px-8 py-4 rounded-2xl hover:shadow-xl transition-all transform hover:scale-105 font-semibold flex items-center justify-center space-x-2 min-w-[140px]"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <button
+                    onClick={handleSearch}
+                    className="bg-gradient-to-r from-orange-500 to-pink-500 text-white px-8 py-4 rounded-2xl hover:shadow-xl transition-all transform hover:scale-105 font-semibold flex items-center justify-center space-x-2 min-w-[140px]"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <span>Rechercher</span>
-                </button>
+                    </svg>
+                    <span>Rechercher</span>
+                  </button>
+                  </div>
+                </div>
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
+              </div>
 
-      {/* Section des catégories avec cards modernes */}
+              {/* Section des catégories avec cards modernes */}
       <div className="max-w-7xl mx-auto px-4 py-16">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">Explorez par catégorie</h2>
