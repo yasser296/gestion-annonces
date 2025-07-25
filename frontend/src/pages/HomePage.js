@@ -1,4 +1,4 @@
-// frontend/src/pages/HomePage.js
+// HomePage.js - Version complète avec toutes les fonctionnalités préservées
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -23,7 +23,6 @@ const HomePage = () => {
   const [isFiltered, setIsFiltered] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
-
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
@@ -42,7 +41,7 @@ const HomePage = () => {
     if (!isInitialLoad) {
       fetchAnnonces();
     }
-  }, [filters]);
+  }, [filters, isInitialLoad]);
 
   // Charger les sous-catégories quand une catégorie est sélectionnée
   useEffect(() => {
@@ -177,166 +176,144 @@ const HomePage = () => {
     .sort((a, b) => new Date(b.date_publication) - new Date(a.date_publication))
     .slice(0, 20);
 
-  if (loading) {
+  if (loading && annonces.length === 0) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gray-50">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-orange-500"></div>
+      <div className="flex justify-center items-center h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement des annonces...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4">
-          <h1 className="text-4xl font-bold mb-4">Trouvez ce que vous cherchez</h1>
-          <p className="text-xl mb-8">Des milliers d'annonces dans toutes les catégories</p>
-          
-          {/* Barre de recherche principale */}
-          <div className="bg-white rounded-lg shadow-lg p-4">
-            <div className="flex flex-col md:flex-row gap-4">
-              <input
-                type="text"
-                name="recherche"
-                placeholder="Que recherchez-vous ?"
-                value={filters.recherche}
-                onChange={handleFilterChange}
-                className="flex-1 px-4 py-3 text-gray-700 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
-              />
-              <select
-                name="categorie"
-                value={filters.categorie}
-                onChange={(e) => {
-                  if (e.target.value) {
-                    // Si une catégorie est sélectionnée, naviguer directement
-                    handleCategoryFilter(e.target.value);
-                  }
-                }}
-                className="px-4 py-3 text-gray-700 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
-              >
-                <option value="">Toutes catégories</option>
-                {categories.map((cat) => (
-                  <option key={cat._id} value={cat._id}>
-                    {cat.icone} {cat.nom}
-                  </option>
-                ))}
-              </select>
-              
-              {/* Sous-catégories - affiché seulement si une catégorie est sélectionnée */}
-              {/* {filters.categorie && sousCategories.length > 0 && (
-                <select
-                  name="sous_categorie"
-                  value={filters.sous_categorie}
-                  onChange={handleFilterChange}
-                  className="px-4 py-3 text-gray-700 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
-                >
-                  <option value="">Toutes sous-catégories</option>
-                  {sousCategories.map((sousCat) => (
-                    <option key={sousCat._id} value={sousCat._id}>
-                      {sousCat.icone} {sousCat.nom}
-                    </option>
-                  ))}
-                </select>
-              )} */}
-              
-              <input
-                type="text"
-                name="ville"
-                placeholder="Ville"
-                value={filters.ville}
-                onChange={handleFilterChange}
-                className="px-4 py-3 text-gray-700 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
-              />
-              <button
-                onClick={handleSearch}
-                className="bg-orange-500 text-white px-8 py-3 rounded-lg hover:bg-orange-600 transition"
-              >
-                Rechercher
-              </button>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+      {/* Hero Section avec dégradé moderne */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-orange-400 via-pink-500 to-purple-600">
+        {/* Effet de superposition avec motifs */}
+        <div className="absolute inset-0 bg-black opacity-20"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent"></div>
+        
+        {/* Formes décoratives */}
+        <div className="absolute top-0 left-0 w-72 h-72 bg-gradient-to-br from-white/10 to-transparent rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-tl from-yellow-400/20 to-transparent rounded-full blur-3xl"></div>
 
-            {/* Lien vers recherche avancée */}
-            {/* <div className="mt-4 text-center">
-              <button
-                onClick={() => navigate('/search')}
-                className="text-orange-500 hover:text-orange-600 text-sm font-medium"
-              >
-                🔍 Recherche avancée
-              </button>
-            </div> */}
-            
-            {/* Filtres avancés */}
-            {/* <div className="mt-4">
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="text-orange-500 hover:text-orange-600 text-sm font-medium"
-              >
-                {showFilters ? 'Masquer' : 'Afficher'} les filtres avancés
-              </button>
-              
-              {showFilters && (
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="relative max-w-7xl mx-auto px-4 py-20 text-center">
+          <h1 className="text-white text-5xl md:text-6xl font-bold mb-6 tracking-tight">
+            Trouvez ce que vous 
+            <span className="bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent"> cherchez</span>
+          </h1>
+          <p className="text-white text-xl mb-12 opacity-90 max-w-2xl mx-auto">
+            Des milliers d'annonces dans toutes les catégories au Maroc
+          </p>
+          
+          {/* Barre de recherche moderne avec effet glassmorphism */}
+          <div className="max-w-5xl mx-auto">
+            <div className="glass-effect rounded-3xl p-3 shadow-2xl border border-white/20">
+              <div className="flex flex-col md:flex-row gap-3">
+                <div className="flex-1 relative group">
+                  <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                    <svg className="w-5 h-5 text-gray-400 group-focus-within:text-orange-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
                   <input
-                    type="number"
-                    name="min_prix"
-                    placeholder="Prix minimum"
-                    value={filters.min_prix}
+                    type="text"
+                    name="recherche"
+                    placeholder="Que recherchez-vous ?"
+                    value={filters.recherche}
                     onChange={handleFilterChange}
-                    className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
+                    className="w-full pl-12 pr-4 py-4 rounded-2xl border-0 focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-gray-700 bg-gray-50/50 focus:bg-white transition-all search-glow"
                   />
-                  <input
-                    type="number"
-                    name="max_prix"
-                    placeholder="Prix maximum"
-                    value={filters.max_prix}
-                    onChange={handleFilterChange}
-                    className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
-                  />
-                  <button
-                    onClick={handleResetFilters}
-                    className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
-                  >
-                    Réinitialiser les filtres
-                  </button>
                 </div>
-              )}
-            </div> */}
+                
+                <div className="flex-1 relative group">
+                  <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                    <svg className="w-5 h-5 text-gray-400 group-focus-within:text-orange-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                  </div>
+                  <select
+                    name="categorie"
+                    value={filters.categorie}
+                    onChange={handleFilterChange}
+                    className="w-full pl-12 pr-4 py-4 rounded-2xl border-0 focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-gray-700 bg-gray-50/50 focus:bg-white transition-all appearance-none"
+                  >
+                    <option value="">Toutes catégories</option>
+                    {categories.map((category) => (
+                      <option key={category._id} value={category._id}>
+                        {category.nom}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex-1 relative group">
+                  <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                    <svg className="w-5 h-5 text-gray-400 group-focus-within:text-orange-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    name="ville"
+                    placeholder="Ville"
+                    value={filters.ville}
+                    onChange={handleFilterChange}
+                    className="w-full pl-12 pr-4 py-4 rounded-2xl border-0 focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-gray-700 bg-gray-50/50 focus:bg-white transition-all"
+                  />
+                </div>
+
+                <button
+                  onClick={handleSearch}
+                  className="bg-gradient-to-r from-orange-500 to-pink-500 text-white px-8 py-4 rounded-2xl hover:shadow-xl transition-all transform hover:scale-105 font-semibold flex items-center justify-center space-x-2 min-w-[140px]"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <span>Rechercher</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Catégories principales avec indication de sélection */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-800">Catégories</h2>
-          {(filters.categorie || filters.sous_categorie) && (
-            <button
-              onClick={() => {
-                setFilters({ ...filters, categorie: '', sous_categorie: '' });
-              }}
-              className="text-sm text-orange-500 hover:text-orange-600 flex items-center space-x-1"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-              <span>Afficher toutes les catégories</span>
-            </button>
-          )}
+      {/* Section des catégories avec cards modernes */}
+      <div className="max-w-7xl mx-auto px-4 py-16">
+        <div className="text-center mb-12">
+          <h2 className="text-4xl font-bold text-gray-900 mb-4">Explorez par catégorie</h2>
+          <p className="text-gray-600 text-lg">Découvrez nos catégories les plus populaires</p>
         </div>
         
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-8">
-          {/* Bouton "Toutes" */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-6 mb-16">
+          {/* Bouton Toutes catégories */}
           <button
-            onClick={() => handleCategoryFilter('')}
-            className={`rounded-lg shadow-md p-4 transition-all duration-200 ${
+            onClick={() => setFilters({...filters, categorie: ''})}
+            className={`group relative overflow-hidden rounded-3xl p-6 text-center transition-all duration-300 transform hover:scale-105 hover:shadow-2xl category-card ${
               !filters.categorie 
-                ? 'bg-orange-500 text-white shadow-lg transform scale-105' 
-                : 'bg-white hover:shadow-lg hover:scale-105'
+                ? 'bg-gradient-to-br from-orange-400 to-pink-500 text-white shadow-xl scale-105' 
+                : 'bg-white hover:shadow-xl shadow-lg'
             }`}
           >
-            <div className="text-3xl mb-2 text-center">🏠</div>
-            <p className="text-sm font-medium text-center">Toutes</p>
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-400/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div className="relative">
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 transition-all ${
+                !filters.categorie 
+                  ? 'bg-white/20' 
+                  : 'bg-gradient-to-br from-orange-100 to-pink-100 group-hover:from-orange-200 group-hover:to-pink-200'
+              }`}>
+                <svg className={`w-8 h-8 transition-colors ${!filters.categorie ? 'text-white' : 'text-orange-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z" />
+                </svg>
+              </div>
+              <p className={`font-semibold transition-colors ${!filters.categorie ? 'text-white' : 'text-gray-800 group-hover:text-orange-600'}`}>
+                Toutes
+              </p>
+            </div>
           </button>
           
           {/* Boutons de catégories */}
@@ -344,44 +321,72 @@ const HomePage = () => {
             <button
               key={category._id}
               onClick={() => handleCategoryFilter(category._id)}
-              className="rounded-lg shadow-md p-4 transition-all duration-200 bg-white hover:shadow-lg hover:scale-105"
+              className="group relative overflow-hidden bg-white rounded-3xl p-6 text-center shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-2xl category-card"
             >
-              <div className="text-3xl mb-2 text-center">{category.icone}</div>
-              <p className="text-sm font-medium text-center text-gray-700">
-                {category.nom}
-              </p>
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-400/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="relative">
+                <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 group-hover:from-orange-100 group-hover:to-pink-100 rounded-2xl flex items-center justify-center mx-auto mb-4 transition-all">
+                  <span className="text-3xl">{category.icone}</span>
+                </div>
+                <p className="font-semibold text-gray-800 group-hover:text-orange-600 transition-colors">
+                  {category.nom}
+                </p>
+              </div>
             </button>
           ))}
         </div>
 
-        {/* Sous-catégories si une catégorie est sélectionnée */}
-        {/* {filters.categorie && sousCategories.length > 0 && (
-          <div className="mb-8">
-            <h3 className="text-lg font-semibold mb-4">Sous-catégories</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-              {sousCategories.map((sousCategorie) => (
+        {/* Filtres avancés avec style moderne */}
+        <div className="text-center mb-8">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="glass-effect text-gray-700 px-8 py-3 rounded-full hover:shadow-lg transition-all border border-white/20 flex items-center space-x-2 mx-auto"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+            </svg>
+            <span>{showFilters ? 'Masquer les filtres' : 'Plus de filtres'}</span>
+          </button>
+        </div>
+
+        {showFilters && (
+          <div className="glass-effect rounded-3xl p-8 shadow-xl border border-white/20 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">Prix minimum</label>
+                <input
+                  type="number"
+                  name="min_prix"
+                  placeholder="0 MAD"
+                  value={filters.min_prix}
+                  onChange={handleFilterChange}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent transition-all"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">Prix maximum</label>
+                <input
+                  type="number"
+                  name="max_prix"
+                  placeholder="1000 MAD"
+                  value={filters.max_prix}
+                  onChange={handleFilterChange}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent transition-all"
+                />
+              </div>
+              <div className="flex items-end">
                 <button
-                  key={sousCategorie._id}
-                  onClick={() => handleSubCategoryFilter(sousCategorie._id)}
-                  className={`rounded-lg shadow-sm p-3 transition-all duration-200 text-sm ${
-                    filters.sous_categorie === sousCategorie._id 
-                      ? 'bg-orange-400 text-white shadow-md transform scale-105' 
-                      : 'bg-white hover:shadow-md hover:scale-105'
-                  }`}
+                  onClick={handleResetFilters}
+                  className="w-full bg-gradient-to-r from-gray-500 to-gray-600 text-white px-6 py-3 rounded-xl hover:shadow-lg transition-all transform hover:scale-105 font-semibold"
                 >
-                  <div className="text-xl mb-1 text-center">{sousCategorie.icone}</div>
-                  <p className={`font-medium text-center ${
-                    filters.sous_categorie === sousCategorie._id ? 'text-white' : 'text-gray-700'
-                  }`}>
-                    {sousCategorie.nom}
-                  </p>
+                  Réinitialiser
                 </button>
-              ))}
+              </div>
             </div>
           </div>
-        )} */}
+        )}
 
-        {/* Si des filtres sont appliqués, afficher les résultats de recherche */}
+        {/* Contenu principal */}
         {isFiltered ? (
           <SearchResultsGrid 
             annonces={annonces.filter(a => !user || (a.user_id !== user.id && a.user_id?._id !== user.id))}
@@ -396,39 +401,70 @@ const HomePage = () => {
           />
         ) : (
           <>
-            {/* Annonces récentes */}
+            {/* Annonces récentes avec design moderne */}
             {recentAnnonces.length > 0 && (
-              <CategoryCarousel
-                title="Annonces récentes"
-                annonces={recentAnnonces}
-                icon="🆕"
-              />
+              <div className="mb-16">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-blue-500 rounded-2xl flex items-center justify-center">
+                      <span className="text-xl">🆕</span>
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900">Annonces récentes</h3>
+                  </div>
+                </div>
+                <CategoryCarousel
+                  title=""
+                  annonces={recentAnnonces}
+                  icon="🆕"
+                />
+              </div>
             )}
 
             {/* Annonces par catégorie */}
             {Object.values(annoncesByCategory).map(({ category, annonces }) => (
-              <CategoryCarousel
-                key={category._id}
-                title={`${category.nom} populaires`}
-                annonces={annonces}
-                icon={category.icone}
-                categoryId={category._id}
-                onViewAll={() => navigate(`/category/${category._id}`)}
-              />
+              <div key={category._id} className="mb-16">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-pink-500 rounded-2xl flex items-center justify-center">
+                      <span className="text-xl">{category.icone}</span>
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900">{category.nom} populaires</h3>
+                  </div>
+                  <button
+                    onClick={() => navigate(`/category/${category._id}`)}
+                    className="text-orange-600 hover:text-orange-700 font-semibold flex items-center space-x-1 transition-colors group"
+                  >
+                    <span>Voir tout</span>
+                    <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+                <CategoryCarousel
+                  title=""
+                  annonces={annonces}
+                  icon={category.icone}
+                  categoryId={category._id}
+                  onViewAll={() => navigate(`/category/${category._id}`)}
+                />
+              </div>
             ))}
           </>
         )}
 
         {/* Message si aucune annonce */}
-        {annonces.length === 0 && (
-          <div className="text-center py-16 bg-white rounded-lg shadow-md">
-            <svg className="w-24 h-24 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p className="text-gray-500 text-lg">Aucune annonce trouvée</p>
+        {annonces.length === 0 && !loading && (
+          <div className="text-center py-20 glass-effect rounded-3xl shadow-xl border border-white/20">
+            <div className="w-24 h-24 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Aucune annonce trouvée</h3>
+            <p className="text-gray-600 mb-6">Essayez de modifier vos critères de recherche</p>
             <button
               onClick={handleResetFilters}
-              className="mt-4 bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition"
+              className="bg-gradient-to-r from-orange-500 to-pink-500 text-white px-8 py-3 rounded-xl hover:shadow-lg transition-all transform hover:scale-105 font-semibold"
             >
               Réinitialiser les filtres
             </button>
