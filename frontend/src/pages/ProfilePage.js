@@ -1,7 +1,9 @@
+// frontend/src/pages/ProfilePage.js - Version corrigée pour isOwnProfile
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
+import PasswordChangeForm from '../components/PasswordChangeForm';
 
 const ProfilePage = () => {
   const { userId } = useParams();
@@ -11,6 +13,7 @@ const ProfilePage = () => {
   const [userAnnonces, setUserAnnonces] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
   const location = useLocation();
   const [formData, setFormData] = useState({
     nom: '',
@@ -20,7 +23,21 @@ const ProfilePage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const isOwnProfile = currentUser && currentUser.id === parseInt(userId);
+  // CORRECTION: Comparaison plus robuste pour isOwnProfile
+  const isOwnProfile = currentUser && (
+    String(currentUser.id) === String(userId) || 
+    currentUser._id === userId 
+  );
+
+  // DEBUG: Ajoutons des console.log pour diagnostiquer
+  useEffect(() => {
+    console.log('DEBUG ProfilePage:');
+    console.log('currentUser:', currentUser);
+    console.log('userId from URL:', userId);
+    console.log('currentUser.id:', currentUser?.id);
+    console.log('currentUser._id:', currentUser?._id);
+    console.log('isOwnProfile:', isOwnProfile);
+  }, [currentUser, userId, isOwnProfile]);
 
   useEffect(() => {
     fetchProfileData();
@@ -75,7 +92,6 @@ const ProfilePage = () => {
       setEditMode(false);
       fetchProfileData();
       
-      // Mettre à jour les données locales si c'est le profil de l'utilisateur connecté
       if (isOwnProfile) {
         const updatedUser = { ...currentUser, ...formData };
         localStorage.setItem('user', JSON.stringify(updatedUser));
@@ -83,6 +99,16 @@ const ProfilePage = () => {
     } catch (error) {
       setError(error.response?.data?.message || 'Erreur lors de la mise à jour');
     }
+  };
+
+  const handlePasswordChangeSuccess = (message) => {
+    setSuccess(message);
+    setShowPasswordForm(false);
+  };
+
+  const handlePasswordChangeCancel = () => {
+    setShowPasswordForm(false);
+    setError('');
   };
 
   const formatDate = (date) => {
@@ -94,14 +120,11 @@ const ProfilePage = () => {
   };
 
   const formatPrice = (price) => {
-  // Format fr-FR pour forcer l'espace insécable, puis remplace par un espace normal
-  return (
-    new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(price)
-      .replace(/\u202f/g, ' ') // remplace espace insécable fine par espace classique
-    + ' DH'
-  );
-};
-
+    return (
+      new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(price)
+        .replace(/\u202f/g, ' ') + ' DH'
+    );
+  };
 
   if (loading) {
     return (
@@ -147,7 +170,29 @@ const ProfilePage = () => {
               </div>
             )}
 
-            {!editMode ? (
+            {/* Affichage conditionnel */}
+            {showPasswordForm && (isOwnProfile || (currentUser && currentUser.role === "admin")) ? (
+              // Formulaire de changement de mot de passe
+              <div className="space-y-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Changer le mot de passe</h3>
+                  <button
+                    onClick={handlePasswordChangeCancel}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <PasswordChangeForm
+                  onSuccess={handlePasswordChangeSuccess}
+                  onCancel={handlePasswordChangeCancel}
+                  className="p-0 bg-transparent shadow-none"
+                />
+              </div>
+            ) : !editMode ? (
+              // Vue normale du profil
               <div className="space-y-4">
                 <div>
                   <p className="text-sm text-gray-500">Email</p>
@@ -159,15 +204,34 @@ const ProfilePage = () => {
                 </div>
                 
                 {(isOwnProfile || (currentUser && currentUser.role === "admin")) && (
-                  <button
-                    onClick={() => setEditMode(true)}
-                    className="w-full mt-4 bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-700 transition"
-                  >
-                    Modifier le profil
-                  </button>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => setEditMode(true)}
+                      className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-700 transition"
+                    >
+                      Modifier le profil
+                    </button>
+                    
+                    {/* Bouton pour changer le mot de passe - avec condition simplifiée pour le test */}
+                    {(isOwnProfile || (currentUser && currentUser.role === "admin")) && (
+                      <button
+                        onClick={() => {
+                          console.log('Bouton mot de passe cliqué!');
+                          setShowPasswordForm(true);
+                        }}
+                        className="w-full bg-gray-600 text-white py-2 rounded-lg hover:bg-gray-700 transition flex items-center justify-center space-x-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        <span>Changer le mot de passe</span>
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             ) : (
+              // Formulaire de modification du profil (existant)
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -243,7 +307,7 @@ const ProfilePage = () => {
           </div>
         </div>
 
-        {/* Annonces de l'utilisateur */}
+        {/* Annonces de l'utilisateur - Section inchangée */}
         <div className="lg:col-span-2">
           <h2 className="text-xl font-bold mb-4">
             {isOwnProfile ? 'Mes annonces' : `Annonces de ${profileData.nom}`}
@@ -275,30 +339,27 @@ const ProfilePage = () => {
                         src={`http://localhost:5000${annonce.images[0]}`}
                         alt={annonce.titre}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
                       />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="p-4">
-                    <h3 className="font-semibold text-lg mb-2 truncate">{annonce.titre}</h3>
-                    <p className="text-xl font-bold text-orange-500 mb-2">{formatPrice(annonce.prix)}</p>
-                    
-                    <div className="flex items-center justify-between text-sm text-gray-600">
-                      <span className="flex items-center">
-                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        {annonce.ville}
-                      </span>
-                      <span>{formatDate(annonce.date_publication)}</span>
+                    ) : null}
+                    <div className="w-full h-full flex items-center justify-center text-gray-400" style={{display: annonce.images && annonce.images[0] ? 'none' : 'flex'}}>
+                      <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
                     </div>
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-bold text-lg mb-2 truncate">{annonce.titre}</h3>
+                    <p className="text-orange-600 font-bold text-xl mb-2">
+                      {formatPrice(annonce.prix)}
+                    </p>
+                    <p className="text-gray-600 text-sm mb-2">{annonce.ville}</p>
+                    <p className="text-gray-500 text-xs">
+                      {formatDate(annonce.date_publication)}
+                    </p>
                   </div>
                 </div>
               ))}
