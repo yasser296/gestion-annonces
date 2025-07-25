@@ -5,10 +5,12 @@ import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import usePopUp from '../hooks/usePopUp';
 
+
 const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const isCategoryPage = location.pathname.startsWith('/category/');
   const [showMenu, setShowMenu] = useState(false);
   const [canCreateAnnonce, setCanCreateAnnonce] = useState(false);
   const [createAnnonceReason, setCreateAnnonceReason] = useState('');
@@ -195,18 +197,19 @@ const Navbar = () => {
                   <div className="absolute -bottom-1 left-0 right-0 h-0.5 gradient-orange rounded-full"></div>
                 )}
               </Link>
-              
-              {/* <Link 
+              {isCategoryPage && (
+              <Link 
                 to="/categories" 
                 className={`text-gray-700 hover:text-orange-500 transition-colors font-medium relative ${
                   location.pathname.includes('/category') ? 'text-orange-500' : ''
                 }`}
               >
-                Catégories
+                Catégorie
                 {location.pathname.includes('/category') && (
                   <div className="absolute -bottom-1 left-0 right-0 h-0.5 gradient-orange rounded-full"></div>
                 )}
-              </Link> */}
+              </Link>
+              )}
 
               {/* Bouton Déposer une annonce */}
               {user ? (
@@ -406,9 +409,11 @@ const Navbar = () => {
               <Link to="/" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
                 Accueil
               </Link>
-              {/* <Link to="/categories" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
-                Catégories
-              </Link> */}
+              {isCategoryPage && (
+                <Link to="/categories" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
+                  Catégorie
+                </Link>
+              )}
               {user ? (
                 <>
                   <Link to={`/profil/${user.id}`} className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
