@@ -545,16 +545,16 @@ const CategoryPage = () => {
               )}
 
               {/* Card des critères généraux */}
-              <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+              {/* <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                   <svg className="w-5 h-5 mr-2 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   Critères
                 </h3>
-                <div className="space-y-4">
+                <div className="space-y-4"> */}
                   {/* État */}
-                  <div>
+                  {/* <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">État</label>
                     <select
                       name="etat"
@@ -568,10 +568,10 @@ const CategoryPage = () => {
                       <option value="Bon état">Bon état</option>
                       <option value="État moyen">État moyen</option>
                     </select>
-                  </div>
+                  </div> */}
 
                   {/* Marque avec autocomplétion */}
-                  <div>
+                  {/* <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Marque</label>
                     <AutocompleteInput
                       value={brandAutocomplete.searchValue}
@@ -583,7 +583,7 @@ const CategoryPage = () => {
                     />
                   </div>
                 </div>
-              </div>
+              </div> */}
 
               {/* Card des attributs spécifiques */}
               {categoryAttributes.length > 0 && (
