@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
+// CategoryPage.js - VERSION CORRIGÉE pour éliminer le bug de panique
+
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import SearchResultsGrid from '../components/SearchResultsGrid';
+import PriceRangeSlider from '../components/PriceRangeSlider';
 import { useAuth } from '../contexts/AuthContext';
 
 const CategoryPage = () => {
@@ -10,94 +13,181 @@ const CategoryPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  // CORRECTION 1: États de contrôle pour éviter les boucles
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [isPriceStatsLoaded, setIsPriceStatsLoaded] = useState(false);
+  const isFirstRender = useRef(true);
+  const priceInitialized = useRef(false);
+
+  // États existants
   const [annonces, setAnnonces] = useState([]);
   const [category, setCategory] = useState(null);
   const [sousCategories, setSousCategories] = useState([]);
   const [categoryAttributes, setCategoryAttributes] = useState([]);
+  const [priceStats, setPriceStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   
-  // État des filtres - incluant les attributs dynamiques
   const [filters, setFilters] = useState({
     sous_categorie: searchParams.get('sous_categorie') || '',
     ville: searchParams.get('ville') || '',
-    min_prix: searchParams.get('min_prix') || '',
-    max_prix: searchParams.get('max_prix') || '',
     recherche: searchParams.get('recherche') || '',
     etat: searchParams.get('etat') || '',
     marque: searchParams.get('marque') || '',
     tri: searchParams.get('tri') || 'date_desc'
   });
 
-  // État séparé pour les filtres d'attributs
   const [attributeFilters, setAttributeFilters] = useState({});
+  
+  // CORRECTION 2: Initialisation sécurisée du prix range
+  const [priceRange, setPriceRange] = useState(() => {
+    const minPrice = searchParams.get('min_prix');
+    const maxPrice = searchParams.get('max_prix');
+    return [
+      minPrice ? parseInt(minPrice) : 0,
+      maxPrice ? parseInt(maxPrice) : 10000
+    ];
+  });
+  
+  const [isFilteringByPrice, setIsFilteringByPrice] = useState(false);
 
-  useEffect(() => {
-    if (categoryId) {
-      fetchCategory();
-      fetchSousCategories();
-      fetchCategoryAttributes();
-      fetchAnnonces();
+  // CORRECTION 3: Validation robuste des valeurs de prix
+  const validatePriceRange = useCallback((range, stats) => {
+    if (!Array.isArray(range) || range.length !== 2) {
+      return stats ? [stats.suggestedMin, stats.suggestedMax] : [0, 10000];
     }
-  }, [categoryId]);
-
-  useEffect(() => {
-    fetchAnnonces();
-    updateURL();
-  }, [filters, attributeFilters]);
-
-  // Initialiser les filtres d'attributs depuis l'URL
-  useEffect(() => {
-    const initialAttributeFilters = {};
-    searchParams.forEach((value, key) => {
-      if (key.startsWith('attr_')) {
-        const attributeId = key.replace('attr_', '');
-        initialAttributeFilters[attributeId] = value;
+    
+    const [min, max] = range;
+    const minVal = Number(min) || 0;
+    const maxVal = Number(max) || 10000;
+    
+    if (stats) {
+      const clampedMin = Math.max(stats.suggestedMin, Math.min(stats.suggestedMax, minVal));
+      const clampedMax = Math.max(stats.suggestedMin, Math.min(stats.suggestedMax, maxVal));
+      
+      if (clampedMin >= clampedMax) {
+        return [stats.suggestedMin, stats.suggestedMax];
       }
-    });
-    setAttributeFilters(initialAttributeFilters);
-  }, [searchParams]);
+      
+      return [clampedMin, clampedMax];
+    }
+    
+    return [Math.max(0, minVal), Math.max(minVal + 100, maxVal)];
+  }, []);
 
-  const fetchCategory = async () => {
+  const fetchCategory = useCallback(async () => {
     try {
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/categories/${categoryId}`);
       setCategory(response.data);
     } catch (error) {
       console.error('Erreur lors du chargement de la catégorie:', error);
     }
-  };
+  }, [categoryId]);
 
-  const fetchSousCategories = async () => {
+  const fetchSousCategories = useCallback(async () => {
     try {
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/sous-categories/by-category/${categoryId}`);
       setSousCategories(response.data);
     } catch (error) {
       console.error('Erreur lors du chargement des sous-catégories:', error);
     }
-  };
+  }, [categoryId]);
 
-  const fetchCategoryAttributes = async () => {
+  const fetchCategoryAttributes = useCallback(async () => {
     try {
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/attributes/by-category/${categoryId}`);
       setCategoryAttributes(response.data);
     } catch (error) {
       console.error('Erreur lors du chargement des attributs:', error);
     }
-  };
+  }, [categoryId]);
 
-  const fetchAnnonces = async () => {
+  // CORRECTION 4: fetchPriceStats sécurisé
+  const fetchPriceStats = useCallback(async () => {
+    try {
+      const params = new URLSearchParams();
+      if (filters.sous_categorie) {
+        params.append('sous_categorie', filters.sous_categorie);
+      }
+      
+      const response = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/annonces/price-stats/${categoryId}?${params}`
+      );
+      
+      const stats = response.data;
+      
+      // Valider les stats reçues
+      if (stats && typeof stats.suggestedMin === 'number' && typeof stats.suggestedMax === 'number') {
+        setPriceStats(stats);
+        setIsPriceStatsLoaded(true);
+        
+        // CORRECTION 5: Initialisation du prix SEULEMENT la première fois
+        if (!priceInitialized.current) {
+          const minPrice = searchParams.get('min_prix');
+          const maxPrice = searchParams.get('max_prix');
+          
+          let initialRange;
+          if (minPrice || maxPrice) {
+            // Utiliser les valeurs de l'URL si présentes
+            initialRange = [
+              minPrice ? parseInt(minPrice) : stats.suggestedMin,
+              maxPrice ? parseInt(maxPrice) : stats.suggestedMax
+            ];
+          } else {
+            // Sinon utiliser les valeurs par défaut des stats
+            initialRange = [stats.suggestedMin, stats.suggestedMax];
+          }
+          
+          const validatedRange = validatePriceRange(initialRange, stats);
+          setPriceRange(validatedRange);
+          priceInitialized.current = true;
+        }
+      } else {
+        // Fallback si les stats sont invalides
+        setPriceStats({
+          minPrice: 0,
+          maxPrice: 10000,
+          suggestedMin: 0,
+          suggestedMax: 10000,
+          step: 100
+        });
+        setIsPriceStatsLoaded(true);
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des statistiques de prix:', error);
+      setPriceStats({
+        minPrice: 0,
+        maxPrice: 10000,
+        suggestedMin: 0,
+        suggestedMax: 10000,
+        step: 100
+      });
+      setIsPriceStatsLoaded(true);
+    }
+  }, [categoryId, filters.sous_categorie, searchParams, validatePriceRange]);
+
+  const fetchAnnonces = useCallback(async () => {
+    if (!isPriceStatsLoaded) return; // Attendre que les stats soient chargées
+    
     try {
       setLoading(true);
       const params = new URLSearchParams();
       params.append('categorie', categoryId);
       params.append('show_inactive', 'false');
       
-      // Ajouter les filtres de base
       Object.keys(filters).forEach(key => {
         if (filters[key]) params.append(key, filters[key]);
       });
 
-      // Ajouter les filtres d'attributs
+      if (priceStats && priceRange) {
+        if (priceRange[0] > priceStats.suggestedMin) {
+          params.append('min_prix', priceRange[0]);
+        }
+        if (priceRange[1] < priceStats.suggestedMax) {
+          params.append('max_prix', priceRange[1]);
+        }
+      }
+
       Object.keys(attributeFilters).forEach(attributeId => {
         if (attributeFilters[attributeId]) {
           params.append(`attr_${attributeId}`, attributeFilters[attributeId]);
@@ -105,87 +195,45 @@ const CategoryPage = () => {
       });
       
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/annonces?${params}`);
-      
-      // FILTRAGE CÔTÉ CLIENT EN ATTENDANT LA MISE À JOUR BACKEND
-      let filteredAnnonces = response.data;
-      
-      // Appliquer les filtres d'attributs côté client
-      if (Object.keys(attributeFilters).length > 0) {
-        for (const [attributeId, filterValue] of Object.entries(attributeFilters)) {
-          if (filterValue) {
-            const attribute = categoryAttributes.find(attr => attr._id === attributeId);
-            if (attribute) {
-              filteredAnnonces = await filterAnnoncesByAttribute(
-                filteredAnnonces, 
-                attributeId, 
-                filterValue, 
-                attribute.type
-              );
-            }
-          }
-        }
-      }
-      
-      setAnnonces(filteredAnnonces);
+      setAnnonces(response.data);
     } catch (error) {
       console.error('Erreur lors du chargement des annonces:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [categoryId, filters, priceRange, priceStats, attributeFilters, isPriceStatsLoaded]);
 
-  // Filtrage côté client par attributs (temporaire jusqu'à la mise à jour backend)
-  const filterAnnoncesByAttribute = async (annonces, attributeId, filterValue, attributeType) => {
-    const filtered = [];
+  // CORRECTION 6: Gestion sécurisée des changements de prix
+  const handlePriceRangeChange = useCallback((newRange) => {
+    if (!isPriceStatsLoaded || !priceStats) return;
     
-    for (const annonce of annonces) {
-      try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/attributes/values/${annonce._id}`
-        );
-        const attributeValues = response.data;
-        const annonceAttributeValue = attributeValues[attributeId];
-        
-        if (annonceAttributeValue) {
-          const value = annonceAttributeValue.value;
-          let matches = false;
-          
-          switch (attributeType) {
-            case 'string':
-            case 'select':
-              matches = value && value.toLowerCase().includes(filterValue.toLowerCase());
-              break;
-            case 'number':
-              matches = value && parseFloat(value) === parseFloat(filterValue);
-              break;
-            case 'boolean':
-              matches = value === (filterValue === 'true');
-              break;
-            default:
-              matches = value && value.toString().toLowerCase().includes(filterValue.toLowerCase());
-          }
-          
-          if (matches) {
-            filtered.push(annonce);
-          }
-        }
-      } catch (error) {
-        console.error('Erreur lors du filtrage par attribut:', error);
-      }
-    }
-    
-    return filtered;
-  };
+    const validatedRange = validatePriceRange(newRange, priceStats);
+    setPriceRange(validatedRange);
+    setIsFilteringByPrice(true);
+  }, [validatePriceRange, priceStats, isPriceStatsLoaded]);
 
-  const updateURL = () => {
+  const handlePriceRangeChangeComplete = useCallback((finalRange) => {
+    setIsFilteringByPrice(false);
+  }, []);
+
+  const updateURL = useCallback(() => {
+    if (!isInitialized) return; // Ne pas mettre à jour l'URL avant l'initialisation complète
+    
     const params = new URLSearchParams();
     
-    // Ajouter les filtres de base
     Object.keys(filters).forEach(key => {
       if (filters[key]) params.set(key, filters[key]);
     });
     
-    // Ajouter les filtres d'attributs
+    if (priceStats && priceRange) {
+      if (priceRange[0] > priceStats.suggestedMin) {
+        params.set('min_prix', priceRange[0]);
+      }
+      if (priceRange[1] < priceStats.suggestedMax) {
+        params.set('max_prix', priceRange[1]);
+      }
+    }
+    
     Object.keys(attributeFilters).forEach(attributeId => {
       if (attributeFilters[attributeId]) {
         params.set(`attr_${attributeId}`, attributeFilters[attributeId]);
@@ -193,35 +241,86 @@ const CategoryPage = () => {
     });
     
     setSearchParams(params);
-  };
+  }, [filters, priceRange, priceStats, attributeFilters, setSearchParams, isInitialized]);
 
-  const handleFilterChange = (e) => {
-    setFilters({
-      ...filters,
+  const handleFilterChange = useCallback((e) => {
+    setFilters(prev => ({
+      ...prev,
       [e.target.name]: e.target.value
-    });
-  };
+    }));
+  }, []);
 
-  const handleAttributeFilterChange = (attributeId, value) => {
-    setAttributeFilters({
-      ...attributeFilters,
+  const handleAttributeFilterChange = useCallback((attributeId, value) => {
+    setAttributeFilters(prev => ({
+      ...prev,
       [attributeId]: value
-    });
-  };
+    }));
+  }, []);
 
-  const handleResetFilters = () => {
+  const handleResetFilters = useCallback(() => {
     setFilters({
       sous_categorie: '',
       ville: '',
-      min_prix: '',
-      max_prix: '',
       recherche: '',
       etat: '',
       marque: '',
       tri: 'date_desc'
     });
     setAttributeFilters({});
-  };
+    
+    if (priceStats) {
+      const resetRange = [priceStats.suggestedMin, priceStats.suggestedMax];
+      setPriceRange(resetRange);
+    }
+  }, [priceStats]);
+
+  // CORRECTION 7: Effects sécurisés avec dépendances contrôlées
+  useEffect(() => {
+    if (categoryId) {
+      const initializeData = async () => {
+        await Promise.all([
+          fetchCategory(),
+          fetchSousCategories(),
+          fetchCategoryAttributes(),
+          fetchPriceStats()
+        ]);
+        
+        // Marquer comme initialisé après un court délai
+        setTimeout(() => {
+          setIsInitialized(true);
+          isFirstRender.current = false;
+        }, 100);
+      };
+      
+      initializeData();
+    }
+  }, [categoryId, fetchCategory, fetchSousCategories, fetchCategoryAttributes, fetchPriceStats]);
+
+  // Effect séparé pour les annonces
+  useEffect(() => {
+    if (isPriceStatsLoaded) {
+      fetchAnnonces();
+    }
+  }, [fetchAnnonces, isPriceStatsLoaded]);
+
+  // Effect pour l'URL (avec débounce)
+  useEffect(() => {
+    if (!isFirstRender.current) {
+      const timeoutId = setTimeout(() => {
+        updateURL();
+      }, isFilteringByPrice ? 300 : 0);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [updateURL, isFilteringByPrice]);
+
+  // Effect pour refresh des stats quand sous-catégorie change
+  useEffect(() => {
+    if (filters.sous_categorie && isPriceStatsLoaded) {
+      priceInitialized.current = false; // Reset pour permettre re-init
+      fetchPriceStats();
+    }
+  }, [filters.sous_categorie, fetchPriceStats, isPriceStatsLoaded]);
 
   const filteredAnnonces = annonces.filter(a => 
     !user || (a.user_id !== user.id && a.user_id?._id !== user.id)
@@ -231,6 +330,17 @@ const CategoryPage = () => {
     if (!filters.sous_categorie) return null;
     const subCategory = sousCategories.find(sc => sc._id === filters.sous_categorie);
     return subCategory?.nom;
+  };
+
+  const hasActiveFilters = () => {
+    const hasBasicFilters = Object.values(filters).some(value => value !== '' && value !== 'date_desc');
+    const hasAttributeFilters = Object.values(attributeFilters).some(value => value !== '');
+    const hasPriceFilter = priceStats && (
+      priceRange[0] > priceStats.suggestedMin || 
+      priceRange[1] < priceStats.suggestedMax
+    );
+    
+    return hasBasicFilters || hasAttributeFilters || hasPriceFilter;
   };
 
   const renderAttributeFilter = (attribute) => {
@@ -277,17 +387,7 @@ const CategoryPage = () => {
           />
         );
 
-      case 'date':
-        return (
-          <input
-            type="date"
-            value={value}
-            onChange={(e) => handleAttributeFilterChange(attribute._id, e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
-          />
-        );
-
-      default: // string
+      default:
         return (
           <input
             type="text"
@@ -342,6 +442,11 @@ const CategoryPage = () => {
               <h1 className="text-4xl font-bold">{category?.nom}</h1>
               <p className="text-xl opacity-90">
                 {filteredAnnonces.length} annonce{filteredAnnonces.length > 1 ? 's' : ''} disponible{filteredAnnonces.length > 1 ? 's' : ''}
+                {priceStats && priceStats.totalAnnonces > 0 && (
+                  <span className="ml-2 text-sm">
+                    • Prix moyen: {new Intl.NumberFormat('fr-MA').format(priceStats.avgPrice)} MAD
+                  </span>
+                )}
               </p>
             </div>
           </div>
@@ -364,7 +469,7 @@ const CategoryPage = () => {
               </div>
 
               <div className={`space-y-6 ${showFilters ? 'block' : 'hidden lg:block'}`}>
-                {/* Recherche dans la catégorie */}
+                {/* Recherche */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Rechercher
@@ -379,7 +484,7 @@ const CategoryPage = () => {
                   />
                 </div>
 
-                {/* Sous-catégories avec SELECT */}
+                {/* Sous-catégories */}
                 {sousCategories.length > 0 && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -401,7 +506,7 @@ const CategoryPage = () => {
                   </div>
                 )}
 
-                {/* Localisation */}
+                {/* Ville */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Ville
@@ -416,30 +521,33 @@ const CategoryPage = () => {
                   />
                 </div>
 
-                {/* Prix */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Prix (MAD)
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      type="number"
-                      name="min_prix"
-                      placeholder="Min"
-                      value={filters.min_prix}
-                      onChange={handleFilterChange}
-                      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
-                    />
-                    <input
-                      type="number"
-                      name="max_prix"
-                      placeholder="Max"
-                      value={filters.max_prix}
-                      onChange={handleFilterChange}
-                      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-300"
+                {/* PRICE RANGE SLIDER - SEULEMENT SI LES STATS SONT CHARGÉES */}
+                {priceStats && isPriceStatsLoaded && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      <span className="flex items-center justify-between">
+                        <span>Prix ({priceStats.currency || 'MAD'})</span>
+                        {isFilteringByPrice && (
+                          <span className="text-xs text-orange-500 flex items-center">
+                            <span className="inline-block w-2 h-2 bg-orange-500 rounded-full animate-pulse mr-1"></span>
+                            Filtrage...
+                          </span>
+                        )}
+                      </span>
+                    </label>
+                    
+                    <PriceRangeSlider
+                      min={priceStats.suggestedMin}
+                      max={priceStats.suggestedMax}
+                      value={priceRange}
+                      onChange={handlePriceRangeChange}
+                      onChangeComplete={handlePriceRangeChangeComplete}
+                      step={priceStats.step}
+                      currency="MAD"
+                      priceRanges={priceStats.priceRanges}
                     />
                   </div>
-                </div>
+                )}
 
                 {/* État */}
                 <div>
@@ -475,7 +583,7 @@ const CategoryPage = () => {
                   />
                 </div>
 
-                {/* ATTRIBUTS SPÉCIFIQUES À LA CATÉGORIE */}
+                {/* Attributs spécifiques */}
                 {categoryAttributes.length > 0 && (
                   <>
                     <hr className="border-gray-200" />
@@ -537,8 +645,7 @@ const CategoryPage = () => {
           {/* Résultats à droite */}
           <div className="lg:col-span-3">
             {/* Filtres actifs */}
-            {(Object.values(filters).some(value => value !== '' && value !== 'date_desc') || 
-              Object.values(attributeFilters).some(value => value !== '')) && (
+            {hasActiveFilters() && (
               <div className="mb-6 bg-white rounded-lg shadow-sm p-4">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-medium text-gray-700">Filtres actifs :</h3>
@@ -550,7 +657,6 @@ const CategoryPage = () => {
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {/* Filtres de base */}
                   {Object.entries(filters).map(([key, value]) => {
                     if (!value || value === 'date_desc') return null;
                     
@@ -560,12 +666,6 @@ const CategoryPage = () => {
                     if (key === 'sous_categorie') {
                       displayValue = getSelectedSubCategoryName();
                       displayKey = 'Sous-catégorie';
-                    } else if (key === 'min_prix') {
-                      displayKey = 'Prix min';
-                      displayValue = `${value} MAD`;
-                    } else if (key === 'max_prix') {
-                      displayKey = 'Prix max';
-                      displayValue = `${value} MAD`;
                     } else {
                       displayKey = key.charAt(0).toUpperCase() + key.slice(1);
                     }
@@ -586,7 +686,18 @@ const CategoryPage = () => {
                     );
                   })}
 
-                  {/* Filtres d'attributs */}
+                  {priceStats && (priceRange[0] > priceStats.suggestedMin || priceRange[1] < priceStats.suggestedMax) && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
+                      <strong>Prix:</strong>&nbsp;{new Intl.NumberFormat('fr-MA').format(priceRange[0])} - {new Intl.NumberFormat('fr-MA').format(priceRange[1])} MAD
+                      <button
+                        onClick={() => setPriceRange([priceStats.suggestedMin, priceStats.suggestedMax])}
+                        className="ml-2 text-green-600 hover:text-green-800"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  )}
+
                   {Object.entries(attributeFilters).map(([attributeId, value]) => {
                     if (!value) return null;
                     
@@ -612,7 +723,6 @@ const CategoryPage = () => {
               </div>
             )}
 
-            {/* Grille des résultats */}
             <SearchResultsGrid 
               annonces={filteredAnnonces}
               title={
@@ -623,7 +733,6 @@ const CategoryPage = () => {
               loading={loading}
             />
 
-            {/* Message si aucun résultat */}
             {!loading && filteredAnnonces.length === 0 && (
               <div className="text-center py-16 bg-white rounded-lg shadow-md">
                 <div className="text-6xl mb-4">🔍</div>

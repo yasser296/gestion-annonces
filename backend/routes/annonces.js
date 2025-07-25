@@ -548,6 +548,199 @@ router.patch('/:id/toggle-status', authenticateToken, async (req, res) => {
   }
 });
 
+// Nouvelle route pour obtenir les statistiques de prix par catégorie
+router.get('/price-stats/:categoryId', async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+    const { sous_categorie } = req.query;
+    
+    // Construire les filtres
+    const filters = {
+      categorie_id: categoryId,
+      is_active: true,
+      prix: { $exists: true, $ne: null, $gt: 0 } // Exclure les prix nuls ou zéro
+    };
+    
+    // Ajouter le filtre de sous-catégorie si spécifié
+    if (sous_categorie) {
+      filters.sous_categorie_id = sous_categorie;
+    }
+    
+    // Utiliser l'agrégation pour calculer min, max et autres stats
+    const stats = await Annonce.aggregate([
+      { $match: filters },
+      {
+        $group: {
+          _id: null,
+          minPrice: { $min: '$prix' },
+          maxPrice: { $max: '$prix' },
+          avgPrice: { $avg: '$prix' },
+          totalAnnonces: { $sum: 1 },
+          // Distribution des prix par tranche
+          pricesArray: { $push: '$prix' }
+        }
+      }
+    ]);
+    
+    if (!stats || stats.length === 0) {
+      // Aucune annonce avec prix dans cette catégorie
+      return res.json({
+        minPrice: 0,
+        maxPrice: 10000,
+        avgPrice: 0,
+        totalAnnonces: 0,
+        suggestedMin: 0,
+        suggestedMax: 10000,
+        step: 100
+      });
+    }
+    
+    const result = stats[0];
+    
+    // Calculer des suggestions intelligentes pour le range
+    const range = result.maxPrice - result.minPrice;
+    let suggestedStep = 100;
+    
+    // Ajuster le step en fonction de la gamme de prix
+    if (range > 100000) {
+      suggestedStep = 5000;
+    } else if (range > 50000) {
+      suggestedStep = 2000;
+    } else if (range > 10000) {
+      suggestedStep = 500;
+    } else if (range > 5000) {
+      suggestedStep = 250;
+    } else if (range > 1000) {
+      suggestedStep = 100;
+    } else {
+      suggestedStep = 50;
+    }
+    
+    // Arrondir les valeurs min/max pour des ranges plus propres
+    const suggestedMin = Math.floor(result.minPrice / suggestedStep) * suggestedStep;
+    const suggestedMax = Math.ceil(result.maxPrice / suggestedStep) * suggestedStep;
+    
+    // Calculer des tranches de prix populaires pour suggestions
+    const prices = result.pricesArray.sort((a, b) => a - b);
+    const q1 = prices[Math.floor(prices.length * 0.25)];
+    const q3 = prices[Math.floor(prices.length * 0.75)];
+    
+    res.json({
+      minPrice: result.minPrice,
+      maxPrice: result.maxPrice,
+      avgPrice: Math.round(result.avgPrice),
+      totalAnnonces: result.totalAnnonces,
+      suggestedMin,
+      suggestedMax,
+      step: suggestedStep,
+      quartiles: {
+        q1: Math.round(q1),
+        q3: Math.round(q3)
+      },
+      // Tranches de prix populaires
+      priceRanges: [
+        { label: 'Économique', min: suggestedMin, max: q1 },
+        { label: 'Moyen', min: q1, max: q3 },
+        { label: 'Premium', min: q3, max: suggestedMax }
+      ]
+    });
+    
+  } catch (error) {
+    console.error('Erreur lors du calcul des statistiques de prix:', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// Nouvelle route pour obtenir des suggestions de prix basées sur les attributs
+router.get('/price-suggestions/:categoryId', async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+    const { attributeFilters } = req.query; // JSON string des filtres d'attributs
+    
+    let filters = {
+      categorie_id: categoryId,
+      is_active: true,
+      prix: { $exists: true, $ne: null, $gt: 0 }
+    };
+    
+    // Si des filtres d'attributs sont fournis, les appliquer
+    if (attributeFilters) {
+      const parsed = JSON.parse(attributeFilters);
+      
+      // Ici vous pouvez ajouter la logique pour filtrer par attributs
+      // similaire à celle dans la fonction filterAnnoncesByAttributes
+      
+      // Pour l'instant, une version simplifiée
+      const pipeline = [
+        { $match: filters },
+        {
+          $lookup: {
+            from: 'annonceattributevalues',
+            localField: '_id',
+            foreignField: 'annonce_id',
+            as: 'attributeValues'
+          }
+        },
+        // Ajouter des conditions de filtrage par attributs ici
+        {
+          $group: {
+            _id: null,
+            minPrice: { $min: '$prix' },
+            maxPrice: { $max: '$prix' },
+            avgPrice: { $avg: '$prix' },
+            count: { $sum: 1 }
+          }
+        }
+      ];
+      
+      const result = await Annonce.aggregate(pipeline);
+      
+      if (result && result.length > 0) {
+        return res.json({
+          minPrice: result[0].minPrice,
+          maxPrice: result[0].maxPrice,
+          avgPrice: Math.round(result[0].avgPrice),
+          count: result[0].count
+        });
+      }
+    }
+    
+    // Fallback vers les stats générales de la catégorie
+    const generalStats = await Annonce.aggregate([
+      { $match: filters },
+      {
+        $group: {
+          _id: null,
+          minPrice: { $min: '$prix' },
+          maxPrice: { $max: '$prix' },
+          avgPrice: { $avg: '$prix' },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+    
+    if (generalStats && generalStats.length > 0) {
+      res.json({
+        minPrice: generalStats[0].minPrice,
+        maxPrice: generalStats[0].maxPrice,
+        avgPrice: Math.round(generalStats[0].avgPrice),
+        count: generalStats[0].count
+      });
+    } else {
+      res.json({
+        minPrice: 0,
+        maxPrice: 10000,
+        avgPrice: 0,
+        count: 0
+      });
+    }
+    
+  } catch (error) {
+    console.error('Erreur lors du calcul des suggestions de prix:', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
 
 
 module.exports = router;

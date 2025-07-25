@@ -46,6 +46,120 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 1.4;
 }
 
+/* Dans votre CSS global ou composant */
+.price-slider-track {
+  background: linear-gradient(to right, #f97316, #ea580c);
+}
+
+.price-slider-thumb {
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+}
+/* CORRECTION RAPIDE CSS - À ajouter dans votre index.css ou fichier CSS global */
+
+/* Masquer les labels redondants min/max sous le slider */
+.price-slider .slider-labels {
+  display: none !important;
+}
+
+/* Améliorer l'affichage des inputs */
+.price-slider .price-inputs {
+  margin-bottom: 1rem;
+}
+
+.price-slider .price-inputs input {
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  width: 5rem;
+}
+
+.price-slider .price-inputs input:focus {
+  outline: none;
+  border-color: #f97316;
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
+}
+
+/* Centrer l'affichage des valeurs */
+.price-slider .price-display {
+  text-align: center;
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.price-slider .price-display .values {
+  color: #f97316;
+}
+
+/* Corriger l'espacement du slider */
+.price-slider .slider-container {
+  margin: 1rem 0;
+  padding: 0 0.75rem;
+}
+
+/* Masquer les éléments dupliqués */
+.price-slider .duplicate-labels {
+  display: none !important;
+}
+
+/* Style pour les tooltips simplifiées */
+.price-slider .slider-tooltip {
+  position: absolute;
+  top: -2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2937;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.price-slider .slider-thumb:hover .slider-tooltip,
+.price-slider .slider-thumb.active .slider-tooltip {
+  opacity: 1;
+}
+
+/* SOLUTION ALTERNATIVE: Masquer complètement les labels du bas */
+.price-slider-container .bottom-labels {
+  display: none;
+}
+
+/* Améliorer la mise en page générale */
+.price-slider-wrapper {
+  background: white;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.price-slider-wrapper .title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.75rem;
+}
+
+/* Responsive pour mobile */
+@media (max-width: 640px) {
+  .price-slider .price-inputs {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .price-slider .price-inputs input {
+    width: 4rem;
+  }
+}
+  
+
 /* Éléments d'interface avec Inter */
 .ui-text {
   font-family: var(--font-secondary);
