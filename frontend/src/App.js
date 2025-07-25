@@ -1,11 +1,11 @@
-// frontend/src/App.js - Version finale avec ToastProvider
+// frontend/src/App.js 
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import { ToastProvider } from './contexts/ToastContext'; // NOUVEAU
+import { ToastProvider } from './contexts/ToastContext';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
-import CategoryPage from './pages/CategoryPage';
+import CategoryPage from './pages/CategoryPage'; // Remplace SearchPage
 import AnnonceDetail from './pages/AnnonceDetail';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -21,11 +21,11 @@ import AdminAnnonces from './pages/admin/AdminAnnonces';
 import DemandeVendeur from './pages/DemandeVendeur';
 import AdminDemandesVendeur from './pages/admin/AdminDemandesVendeur';
 import WishlistPage from './pages/WishlistPage';
-import SearchPage from './pages/SearchPage';
+// import SearchPage from './pages/SearchPage'; // SUPPRIMÉ
 import AdminAttributes from './pages/admin/AdminAttributes';
 import AdminCategories from './pages/admin/AdminCategories';
-import ErrorBoundary from './components/ErrorBoundary'; // NOUVEAU
-import LoadingSpinner from './components/LoadingSpinner'; // NOUVEAU
+import ErrorBoundary from './components/ErrorBoundary';
+import LoadingSpinner from './components/LoadingSpinner';
 
 function App() {
   return (
@@ -44,7 +44,15 @@ function App() {
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
                   <Route path="/profil/:userId" element={<ProfilePage />} />
-                  <Route path="/search" element={<SearchPage />} />
+                  
+                  {/* SUPPRIMÉ: Route vers SearchPage */}
+                  {/* <Route path="/search" element={<SearchPage />} /> */}
+                  
+                  {/* NOUVEAU: Redirection de /search vers la page d'accueil */}
+                  <Route 
+                    path="/search" 
+                    element={<Navigate to="/" replace />} 
+                  />
 
                   {/* Routes protégées - Utilisateurs connectés */}
                   <Route
@@ -72,14 +80,6 @@ function App() {
                     }
                   />
                   <Route
-                    path="/wishlist"
-                    element={
-                      <PrivateRoute>
-                        <WishlistPage />
-                      </PrivateRoute>
-                    }
-                  />
-                  <Route
                     path="/demande-vendeur"
                     element={
                       <PrivateRoute>
@@ -87,71 +87,40 @@ function App() {
                       </PrivateRoute>
                     }
                   />
-
-                  {/* Routes admin - Accès restreint */}
                   <Route
-                    path="/admin"
+                    path="/wishlist"
                     element={
-                      <AdminRoute>
-                        <AdminDashboard />
-                      </AdminRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin/users"
-                    element={
-                      <AdminRoute>
-                        <AdminUsers />
-                      </AdminRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin/annonces"
-                    element={
-                      <AdminRoute>
-                        <AdminAnnonces />
-                      </AdminRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin/categories"
-                    element={
-                      <AdminRoute>
-                        <AdminCategories />
-                      </AdminRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin/attributes"
-                    element={
-                      <AdminRoute>
-                        <AdminAttributes />
-                      </AdminRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin/demandes-vendeur"
-                    element={
-                      <AdminRoute>
-                        <AdminDemandesVendeur />
-                      </AdminRoute>
+                      <PrivateRoute>
+                        <WishlistPage />
+                      </PrivateRoute>
                     }
                   />
 
-                  {/* Route 404 - Page non trouvée */}
-                  <Route path="*" element={<NotFound />} />
+                  {/* Routes Admin */}
+                  <Route
+                    path="/admin/*"
+                    element={
+                      <AdminRoute>
+                        <Routes>
+                          <Route path="/" element={<AdminDashboard />} />
+                          <Route path="/users" element={<AdminUsers />} />
+                          <Route path="/annonces" element={<AdminAnnonces />} />
+                          <Route path="/demandes-vendeur" element={<AdminDemandesVendeur />} />
+                          <Route path="/attributes" element={<AdminAttributes />} />
+                          <Route path="/categories" element={<AdminCategories />} />
+                        </Routes>
+                      </AdminRoute>
+                    }
+                  />
                 </Routes>
               </main>
-              
-              {/* Footer */}
-              <Footer />
             </div>
           </Router>
         </ToastProvider>
       </AuthProvider>
     </ErrorBoundary>
   );
-}
+};
 
 // NOUVEAU: Composant de page 404
 const NotFound = () => (

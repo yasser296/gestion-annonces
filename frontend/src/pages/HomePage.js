@@ -112,22 +112,37 @@ const HomePage = () => {
   };
 
   const handleCategoryFilter = (categoryId) => {
-    setFilters({
-      ...filters,
-      categorie: categoryId === filters.categorie ? '' : categoryId,
-      sous_categorie: '' // Réinitialiser la sous-catégorie
-    });
+    // Rediriger vers CategoryPage au lieu de filtrer sur place
+    navigate(`/category/${categoryId}`);
   };
 
   const handleSubCategoryFilter = (subCategoryId) => {
-    setFilters({
-      ...filters,
-      sous_categorie: subCategoryId === filters.sous_categorie ? '' : subCategoryId
-    });
+    // Trouver la catégorie parent de cette sous-catégorie
+    const sousCategorie = sousCategories.find(sc => sc._id === subCategoryId);
+    const categoryId = sousCategorie?.categorie_id?._id || sousCategorie?.categorie_id;
+    
+    if (categoryId) {
+      // Rediriger vers CategoryPage avec la sous-catégorie pré-sélectionnée
+      navigate(`/category/${categoryId}?sous_categorie=${subCategoryId}`);
+    }
   };
 
   const handleSearch = () => {
-    fetchAnnonces();
+    if (filters.categorie) {
+      // Si une catégorie est sélectionnée, naviguer vers CategoryPage avec les filtres
+      const params = new URLSearchParams();
+      Object.keys(filters).forEach(key => {
+        if (filters[key] && key !== 'categorie') {
+          params.append(key, filters[key]);
+        }
+      });
+      
+      const queryString = params.toString();
+      navigate(`/category/${filters.categorie}${queryString ? `?${queryString}` : ''}`);
+    } else {
+      // Si aucune catégorie n'est sélectionnée, garder le filtrage local
+      fetchAnnonces();
+    }
   };
 
   const handleResetFilters = () => {
@@ -192,7 +207,12 @@ const HomePage = () => {
               <select
                 name="categorie"
                 value={filters.categorie}
-                onChange={handleFilterChange}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    // Si une catégorie est sélectionnée, naviguer directement
+                    handleCategoryFilter(e.target.value);
+                  }
+                }}
                 className="px-4 py-3 text-gray-700 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
               >
                 <option value="">Toutes catégories</option>
@@ -204,7 +224,7 @@ const HomePage = () => {
               </select>
               
               {/* Sous-catégories - affiché seulement si une catégorie est sélectionnée */}
-              {filters.categorie && sousCategories.length > 0 && (
+              {/* {filters.categorie && sousCategories.length > 0 && (
                 <select
                   name="sous_categorie"
                   value={filters.sous_categorie}
@@ -218,7 +238,7 @@ const HomePage = () => {
                     </option>
                   ))}
                 </select>
-              )}
+              )} */}
               
               <input
                 type="text"
@@ -237,14 +257,14 @@ const HomePage = () => {
             </div>
 
             {/* Lien vers recherche avancée */}
-            <div className="mt-4 text-center">
+            {/* <div className="mt-4 text-center">
               <button
                 onClick={() => navigate('/search')}
                 className="text-orange-500 hover:text-orange-600 text-sm font-medium"
               >
                 🔍 Recherche avancée
               </button>
-            </div>
+            </div> */}
             
             {/* Filtres avancés */}
             {/* <div className="mt-4">
@@ -324,16 +344,10 @@ const HomePage = () => {
             <button
               key={category._id}
               onClick={() => handleCategoryFilter(category._id)}
-              className={`rounded-lg shadow-md p-4 transition-all duration-200 ${
-                filters.categorie === category._id 
-                  ? 'bg-orange-500 text-white shadow-lg transform scale-105' 
-                  : 'bg-white hover:shadow-lg hover:scale-105'
-              }`}
+              className="rounded-lg shadow-md p-4 transition-all duration-200 bg-white hover:shadow-lg hover:scale-105"
             >
               <div className="text-3xl mb-2 text-center">{category.icone}</div>
-              <p className={`text-sm font-medium text-center ${
-                filters.categorie === category._id ? 'text-white' : 'text-gray-700'
-              }`}>
+              <p className="text-sm font-medium text-center text-gray-700">
                 {category.nom}
               </p>
             </button>
@@ -341,7 +355,7 @@ const HomePage = () => {
         </div>
 
         {/* Sous-catégories si une catégorie est sélectionnée */}
-        {filters.categorie && sousCategories.length > 0 && (
+        {/* {filters.categorie && sousCategories.length > 0 && (
           <div className="mb-8">
             <h3 className="text-lg font-semibold mb-4">Sous-catégories</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
@@ -365,7 +379,7 @@ const HomePage = () => {
               ))}
             </div>
           </div>
-        )}
+        )} */}
 
         {/* Si des filtres sont appliqués, afficher les résultats de recherche */}
         {isFiltered ? (
@@ -399,10 +413,7 @@ const HomePage = () => {
                 annonces={annonces}
                 icon={category.icone}
                 categoryId={category._id}
-                onViewAll={() => {
-                  handleCategoryFilter(category._id);
-                  window.scrollTo(0, 0);
-                }}
+                onViewAll={() => navigate(`/category/${category._id}`)}
               />
             ))}
           </>
