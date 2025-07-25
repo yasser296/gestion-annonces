@@ -11,6 +11,7 @@ const demandesVendeurRoutes = require('./routes/demandesVendeur');
 const wishlistRoutes = require('./routes/wishlist');
 const attributesRoutes = require('./routes/attributes'); // NOUVEAU
 const path = require('path');
+const autocompleteRoutes = require('./routes/autocomplete');
 
 dotenv.config();
 // server.js
@@ -35,6 +36,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/demandes-vendeur', demandesVendeurRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/attributes', attributesRoutes); // NOUVEAU
+app.use('/api/autocomplete', autocompleteRoutes);
 
 const PORT = process.env.PORT || 5000;
 const HOST = process.env.HOST || 'localhost';

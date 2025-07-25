@@ -1,9 +1,11 @@
-// CategoryPage.js - Version complète avec design amélioré et toutes les fonctionnalités
+// CategoryPage.js - Intégration de l'autocomplétion dans les filtres
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import SearchResultsGrid from '../components/SearchResultsGrid';
 import PriceRangeSlider from '../components/PriceRangeSlider';
+import AutocompleteInput from '../components/AutocompleteInput';
+import useAutocomplete from '../hooks/useAutocomplete';
 import { useAuth } from '../contexts/AuthContext';
 
 const CategoryPage = () => {
@@ -12,7 +14,7 @@ const CategoryPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // États de contrôle pour éviter les boucles infinies
+  // États de contrôle
   const [isInitialized, setIsInitialized] = useState(false);
   const [isPriceStatsLoaded, setIsPriceStatsLoaded] = useState(false);
   const isFirstRender = useRef(true);
@@ -37,8 +39,6 @@ const CategoryPage = () => {
   });
 
   const [attributeFilters, setAttributeFilters] = useState({});
-  
-  // Initialisation sécurisée du prix range
   const [priceRange, setPriceRange] = useState(() => {
     const minPrice = searchParams.get('min_prix');
     const maxPrice = searchParams.get('max_prix');
@@ -47,8 +47,27 @@ const CategoryPage = () => {
       maxPrice ? parseInt(maxPrice) : 10000
     ];
   });
-  
   const [isFilteringByPrice, setIsFilteringByPrice] = useState(false);
+
+  // Hooks d'autocomplétion pour les champs de recherche et ville
+  const searchAutocomplete = useAutocomplete(filters.recherche, (searchData) => {
+    setFilters(prev => ({ ...prev, recherche: searchData.query }));
+  });
+
+  const cityAutocomplete = useAutocomplete(filters.ville, (searchData) => {
+    setFilters(prev => ({ ...prev, ville: searchData.query }));
+  });
+
+  const brandAutocomplete = useAutocomplete(filters.marque, (searchData) => {
+    setFilters(prev => ({ ...prev, marque: searchData.query }));
+  });
+
+  // Synchroniser les hooks avec les filtres
+  useEffect(() => {
+    searchAutocomplete.setSearchValue(filters.recherche);
+    cityAutocomplete.setSearchValue(filters.ville);
+    brandAutocomplete.setSearchValue(filters.marque);
+  }, [filters.recherche, filters.ville, filters.marque]);
 
   // Validation robuste des valeurs de prix
   const validatePriceRange = useCallback((range, stats) => {
@@ -74,7 +93,7 @@ const CategoryPage = () => {
     return [Math.max(0, minVal), Math.max(minVal + 100, maxVal)];
   }, []);
 
-  // Fonctions de fetch avec useCallback pour éviter les re-renders
+  // Fonctions de fetch avec useCallback
   const fetchCategory = useCallback(async () => {
     try {
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/categories/${categoryId}`);
@@ -98,9 +117,8 @@ const CategoryPage = () => {
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/attributes/by-category/${categoryId}`);
       setCategoryAttributes(response.data);
       
-      // Initialiser les filtres d'attributs depuis l'URL
       const initialAttributeFilters = {};
-      categoryAttributes.forEach(attr => {
+      response.data.forEach(attr => {
         const value = searchParams.get(`attr_${attr._id}`);
         if (value) {
           initialAttributeFilters[attr._id] = value;
@@ -112,7 +130,6 @@ const CategoryPage = () => {
     }
   }, [categoryId, searchParams]);
 
-  // fetchPriceStats sécurisé
   const fetchPriceStats = useCallback(async () => {
     try {
       const params = new URLSearchParams();
@@ -130,7 +147,6 @@ const CategoryPage = () => {
         setPriceStats(stats);
         setIsPriceStatsLoaded(true);
         
-        // Initialisation du prix SEULEMENT la première fois
         if (!priceInitialized.current) {
           const minPrice = searchParams.get('min_prix');
           const maxPrice = searchParams.get('max_prix');
@@ -152,34 +168,29 @@ const CategoryPage = () => {
       }
     } catch (error) {
       console.error('Erreur lors du chargement des stats de prix:', error);
-      setIsPriceStatsLoaded(true); // Marquer comme chargé même en cas d'erreur
+      setIsPriceStatsLoaded(true);
     }
   }, [categoryId, filters.sous_categorie, searchParams, validatePriceRange]);
 
-  // fetchAnnonces avec tous les filtres
   const fetchAnnonces = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
       
-      // Filtres de base
       params.append('categorie', categoryId);
       params.append('show_inactive', 'false');
       
-      // Ajouter tous les filtres actifs
       Object.keys(filters).forEach(key => {
         if (filters[key] && key !== 'tri') {
           params.append(key, filters[key]);
         }
       });
       
-      // Filtres de prix
       if (priceStats && (priceRange[0] > priceStats.suggestedMin || priceRange[1] < priceStats.suggestedMax)) {
         params.append('min_prix', priceRange[0]);
         params.append('max_prix', priceRange[1]);
       }
       
-      // Filtres d'attributs
       Object.keys(attributeFilters).forEach(attributeId => {
         if (attributeFilters[attributeId]) {
           params.append(`attr_${attributeId}`, attributeFilters[attributeId]);
@@ -206,7 +217,7 @@ const CategoryPage = () => {
         case 'titre_desc':
           fetchedAnnonces.sort((a, b) => b.titre.localeCompare(a.titre));
           break;
-        default: // date_desc
+        default:
           fetchedAnnonces.sort((a, b) => new Date(b.date_publication) - new Date(a.date_publication));
       }
       
@@ -218,26 +229,22 @@ const CategoryPage = () => {
     }
   }, [categoryId, filters, priceRange, priceStats, attributeFilters]);
 
-  // Mise à jour de l'URL avec debounce pour le prix
   const updateURL = useCallback(() => {
     if (!isInitialized) return;
     
     const params = new URLSearchParams();
     
-    // Ajouter les filtres de base
     Object.keys(filters).forEach(key => {
       if (filters[key] && filters[key] !== 'date_desc') {
         params.set(key, filters[key]);
       }
     });
     
-    // Ajouter les filtres de prix
     if (priceStats && (priceRange[0] > priceStats.suggestedMin || priceRange[1] < priceStats.suggestedMax)) {
       params.set('min_prix', priceRange[0]);
       params.set('max_prix', priceRange[1]);
     }
     
-    // Ajouter les filtres d'attributs
     Object.keys(attributeFilters).forEach(attributeId => {
       if (attributeFilters[attributeId]) {
         params.set(`attr_${attributeId}`, attributeFilters[attributeId]);
@@ -282,13 +289,18 @@ const CategoryPage = () => {
     });
     setAttributeFilters({});
     
+    // Reset des autocompletes
+    searchAutocomplete.resetSearch();
+    cityAutocomplete.resetSearch();
+    brandAutocomplete.resetSearch();
+    
     if (priceStats) {
       const resetRange = [priceStats.suggestedMin, priceStats.suggestedMax];
       setPriceRange(resetRange);
     }
-  }, [priceStats]);
+  }, [priceStats, searchAutocomplete, cityAutocomplete, brandAutocomplete]);
 
-  // Effects sécurisés avec dépendances contrôlées
+  // Effects
   useEffect(() => {
     if (categoryId) {
       const initializeData = async () => {
@@ -299,7 +311,6 @@ const CategoryPage = () => {
           fetchPriceStats()
         ]);
         
-        // Marquer comme initialisé après un court délai
         setTimeout(() => {
           setIsInitialized(true);
           isFirstRender.current = false;
@@ -310,14 +321,12 @@ const CategoryPage = () => {
     }
   }, [categoryId, fetchCategory, fetchSousCategories, fetchCategoryAttributes, fetchPriceStats]);
 
-  // Effect séparé pour les annonces
   useEffect(() => {
     if (isPriceStatsLoaded) {
       fetchAnnonces();
     }
   }, [fetchAnnonces, isPriceStatsLoaded]);
 
-  // Effect pour l'URL avec débounce
   useEffect(() => {
     if (!isFirstRender.current) {
       const timeoutId = setTimeout(() => {
@@ -328,7 +337,6 @@ const CategoryPage = () => {
     }
   }, [updateURL, isFilteringByPrice]);
 
-  // Effect pour refresh des stats quand sous-catégorie change
   useEffect(() => {
     if (filters.sous_categorie && isPriceStatsLoaded) {
       priceInitialized.current = false;
@@ -471,9 +479,9 @@ const CategoryPage = () => {
               </button>
             </div>
 
-            {/* Panneau des filtres */}
+            {/* Panneau des filtres avec autocomplétion */}
             <div className={`space-y-6 ${showFilters ? 'block' : 'hidden lg:block'}`}>
-              {/* Card de recherche */}
+              {/* Card de recherche avec autocomplétion */}
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                   <svg className="w-5 h-5 mr-2 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -481,17 +489,18 @@ const CategoryPage = () => {
                   </svg>
                   Recherche
                 </h3>
-                <input
-                  type="text"
-                  name="recherche"
+                <AutocompleteInput
+                  value={searchAutocomplete.searchValue}
+                  onChange={searchAutocomplete.handleInputChange}
+                  onSelect={searchAutocomplete.handleSuggestionSelect}
                   placeholder="Mots-clés..."
-                  value={filters.recherche}
-                  onChange={handleFilterChange}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent transition-all"
+                  type="titles"
+                  category={categoryId}
+                  showTrending={true}
                 />
               </div>
 
-              {/* Card de localisation */}
+              {/* Card de localisation avec autocomplétion */}
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                   <svg className="w-5 h-5 mr-2 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -499,13 +508,14 @@ const CategoryPage = () => {
                   </svg>
                   Localisation
                 </h3>
-                <input
-                  type="text"
-                  name="ville"
+                <AutocompleteInput
+                  value={cityAutocomplete.searchValue}
+                  onChange={cityAutocomplete.handleInputChange}
+                  onSelect={cityAutocomplete.handleSuggestionSelect}
                   placeholder="Ville..."
-                  value={filters.ville}
-                  onChange={handleFilterChange}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent transition-all"
+                  type="cities"
+                  category={categoryId}
+                  showTrending={true}
                 />
               </div>
 
@@ -560,16 +570,16 @@ const CategoryPage = () => {
                     </select>
                   </div>
 
-                  {/* Marque */}
+                  {/* Marque avec autocomplétion */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Marque</label>
-                    <input
-                      type="text"
-                      name="marque"
+                    <AutocompleteInput
+                      value={brandAutocomplete.searchValue}
+                      onChange={brandAutocomplete.handleInputChange}
+                      onSelect={brandAutocomplete.handleSuggestionSelect}
                       placeholder="Marque..."
-                      value={filters.marque}
-                      onChange={handleFilterChange}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent transition-all"
+                      type="brands"
+                      category={categoryId}
                     />
                   </div>
                 </div>
