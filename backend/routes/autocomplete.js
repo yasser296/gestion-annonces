@@ -1,5 +1,6 @@
 // backend/routes/autocomplete.js - Nouveau fichier pour l'autocomplétion
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
 const Annonce = require('../models/Annonce');
 const User = require('../models/User');
@@ -16,7 +17,23 @@ router.get('/suggestions', async (req, res) => {
       limit = 8 
     } = req.query;
 
-    if (!query || query.length < 2) {
+    console.log('🔍 AUTOCOMPLETE DEBUG:');
+    console.log('- query:', query);
+    console.log('- type:', type);
+    console.log('- category (string):', category);
+
+    let categoryObjectId = null;
+    if (category) {
+      try {
+        categoryObjectId = new mongoose.Types.ObjectId(category);
+        console.log('- category (ObjectId):', categoryObjectId);
+      } catch (error) {
+        console.log('❌ Invalid category ObjectId:', category);
+        return res.json([]); // ID invalide, retourner vide
+      }
+    }
+
+    if (!query || query.length < 1) {
       return res.json([]);
     }
 
@@ -39,14 +56,22 @@ router.get('/suggestions', async (req, res) => {
     // 1. Suggestions basées sur les titres d'annonces
     if (type === 'all' || type === 'titles') {
       const titleFilter = { 
-        titre: searchRegex, 
+        titre: { $regex: query, $options: 'i' }, 
         is_active: true 
       };
       
-      if (category) {
-        titleFilter.categorie_id = category;
+      if (categoryObjectId) {
+        titleFilter.categorie_id = categoryObjectId; // ← CHANGEMENT ICI
       }
 
+      console.log('📝 TITLES FILTER (corrected):', JSON.stringify(titleFilter));
+
+      // 🔍 AJOUT : Test avec ObjectId pour vérifier
+      const testCountWithObjectId = await Annonce.countDocuments({ 
+        categorie_id: categoryObjectId, 
+        is_active: true 
+      });
+      console.log('📊 Total annonces actives dans cette catégorie (ObjectId):', testCountWithObjectId);
       const titlesAgg = await Annonce.aggregate([
         { $match: titleFilter },
         { 
@@ -59,6 +84,9 @@ router.get('/suggestions', async (req, res) => {
         { $limit: parseInt(limit) }
       ]);
 
+      console.log('📝 Titles aggregation results (should work now):', titlesAgg.length, 'items');
+      console.log('📝 First few titles:', titlesAgg.slice(0, 3));
+
       const titles = titlesAgg.map(t => t._id);
       addUnique(titles, 'title', '📝');
     }
@@ -66,12 +94,12 @@ router.get('/suggestions', async (req, res) => {
     // 2. Suggestions de villes
     if (type === 'all' || type === 'cities') {
       const cityFilter = { 
-        ville: searchRegex, 
+        ville: { $regex: query, $options: 'i' }, 
         is_active: true 
       };
       
-      if (category) {
-        cityFilter.categorie_id = category;
+      if (categoryObjectId) {
+        cityFilter.categorie_id = categoryObjectId; // ← CHANGEMENT ICI
       }
 
       const citiesAgg = await Annonce.aggregate([
@@ -93,12 +121,12 @@ router.get('/suggestions', async (req, res) => {
     // 3. Suggestions de marques
     if (type === 'all' || type === 'brands') {
       const brandFilter = { 
-        marque: searchRegex, 
+        marque: { $regex: query, $options: 'i' }, 
         is_active: true 
       };
       
-      if (category) {
-        brandFilter.categorie_id = category;
+      if (categoryObjectId) {
+        brandFilter.categorie_id = categoryObjectId; // ← CHANGEMENT ICI
       }
 
       const brandsAgg = await Annonce.aggregate([
@@ -120,7 +148,7 @@ router.get('/suggestions', async (req, res) => {
     // 4. Suggestions de noms d'utilisateurs (vendeurs)
     if (type === 'all' || type === 'users') {
       const users = await User.find(
-        { nom: searchRegex },
+        { nom: new RegExp(query, 'i') },
         { nom: 1 }
       ).limit(parseInt(limit));
 
@@ -131,7 +159,7 @@ router.get('/suggestions', async (req, res) => {
     // 5. Suggestions de catégories
     if (type === 'all' || type === 'categories') {
       const categories = await Categorie.find(
-        { nom: searchRegex },
+        { nom: new RegExp(query, 'i') },
         { nom: 1, icone: 1 }
       ).limit(parseInt(limit));
 

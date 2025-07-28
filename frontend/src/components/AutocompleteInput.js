@@ -99,7 +99,10 @@ const AutocompleteInput = ({
   };
 
   const fetchSuggestions = useCallback(async (query) => {
+    console.log('🌐 fetchSuggestions called with:', query);
+    
     if (!query || query.length < 2) {
+      console.log('🚫 Query too short, clearing suggestions');
       setSuggestions([]);
       setLoading(false);
       return;
@@ -107,6 +110,8 @@ const AutocompleteInput = ({
 
     try {
       setLoading(true);
+      console.log('📡 Making API call...');
+      
       const params = new URLSearchParams({
         query: query,
         type: type,
@@ -121,10 +126,11 @@ const AutocompleteInput = ({
         `${process.env.REACT_APP_API_URL}/api/autocomplete/suggestions?${params}`
       );
       
+      console.log('✅ API response:', response.data.length, 'suggestions');
       setSuggestions(response.data);
       setSelectedIndex(-1);
     } catch (error) {
-      console.error('Erreur suggestions:', error);
+      console.error('❌ API error:', error);
       setSuggestions([]);
     } finally {
       setLoading(false);
@@ -133,15 +139,20 @@ const AutocompleteInput = ({
 
   // Debounced search
   useEffect(() => {
+    console.log('⚡ useEffect fetchSuggestions - value:', value, 'length:', value?.length);
+    
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
 
     if (value && value.length >= 2) {
+      console.log('⏱️ Setting timeout for fetchSuggestions');
       debounceRef.current = setTimeout(() => {
+        console.log('🚀 Calling fetchSuggestions with:', value);
         fetchSuggestions(value);
       }, debounceMs);
     } else {
+      console.log('❌ Clearing suggestions - value too short');
       setSuggestions([]);
       setLoading(false);
     }
@@ -149,19 +160,22 @@ const AutocompleteInput = ({
     return () => {
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
-      }
-    };
-  }, [value, debounceMs, fetchSuggestions]);
+    }
+  };
+}, [value, debounceMs, fetchSuggestions]);
 
   const handleInputChange = (e) => {
     const newValue = e.target.value;
+    console.log('🔍 handleInputChange:', newValue);
     onChange(newValue);
     setIsOpen(true);
   };
 
   const handleInputFocus = () => {
+    console.log('🎯 handleInputFocus - value:', value, 'trendingData:', trendingData.length);
     setIsOpen(true);
     if (!value && showTrending && trendingData.length > 0) {
+      console.log('📈 Setting trending suggestions');
       setSuggestions(trendingData);
     }
   };
