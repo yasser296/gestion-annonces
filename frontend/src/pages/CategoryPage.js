@@ -22,6 +22,7 @@ const CategoryPage = () => {
   const isFirstRender = useRef(true);
   const priceInitialized = useRef(false);
   const previousCategoryId = useRef(categoryId);
+  const previousSousCategorie = useRef('');
 
   // États principaux
   const [annonces, setAnnonces] = useState([]);
@@ -84,6 +85,39 @@ const CategoryPage = () => {
     }
   }, [categoryId]);
 
+  useEffect(() => {
+    // Vérifier si la sous-catégorie a réellement changé (et qu'on n'est pas au premier rendu)
+    if (!isFirstRender.current && 
+        previousSousCategorie.current !== filters.sous_categorie && 
+        filters.sous_categorie) {
+      
+      console.log('Changement de sous-catégorie détecté, réinitialisation des filtres de recherche');
+      console.log('Ancienne sous-catégorie:', previousSousCategorie.current);
+      console.log('Nouvelle sous-catégorie:', filters.sous_categorie);
+      
+      // Réinitialiser uniquement les filtres qui peuvent causer des conflits
+      setFilters(prev => ({
+        ...prev,
+        recherche: '',
+        marque: '',
+        etat: ''
+        // On garde: sous_categorie, ville, tri
+      }));
+      
+      // Réinitialiser les champs d'autocomplétion
+      searchAutocomplete.resetSearch();
+      brandAutocomplete.resetSearch();
+      
+      // Réinitialiser les attributs spécifiques
+      setAttributeFilters({});
+      
+      // Les filtres de prix seront rechargés automatiquement par l'autre useEffect
+    }
+    
+    // Mettre à jour la référence pour le prochain changement
+    previousSousCategorie.current = filters.sous_categorie;
+  }, [filters.sous_categorie, searchAutocomplete, brandAutocomplete]);
+
   // Synchroniser les hooks avec les filtres
   useEffect(() => {
     searchAutocomplete.setSearchValue(filters.recherche);
@@ -97,6 +131,40 @@ const CategoryPage = () => {
     }
     previousCategoryId.current = categoryId;
   }, [categoryId]);
+
+
+  useEffect(() => {
+    // Vérifier si la sous-catégorie a réellement changé (et qu'on n'est pas au premier rendu)
+    if (!isFirstRender.current && 
+        previousSousCategorie.current !== filters.sous_categorie && 
+        filters.sous_categorie) {
+      
+      console.log('Changement de sous-catégorie détecté, réinitialisation des filtres de recherche');
+      console.log('Ancienne sous-catégorie:', previousSousCategorie.current);
+      console.log('Nouvelle sous-catégorie:', filters.sous_categorie);
+      
+      // Réinitialiser uniquement les filtres qui peuvent causer des conflits
+      setFilters(prev => ({
+        ...prev,
+        recherche: '',
+        marque: '',
+        etat: ''
+        // On garde: sous_categorie, ville, tri
+      }));
+      
+      // Réinitialiser les champs d'autocomplétion
+      searchAutocomplete.resetSearch();
+      brandAutocomplete.resetSearch();
+      
+      // Réinitialiser les attributs spécifiques
+      setAttributeFilters({});
+      
+      // Les filtres de prix seront rechargés automatiquement par l'autre useEffect
+    }
+    
+    // Mettre à jour la référence pour le prochain changement
+    previousSousCategorie.current = filters.sous_categorie;
+  }, [filters.sous_categorie, searchAutocomplete, brandAutocomplete]);
 
   // Validation robuste des valeurs de prix
   const validatePriceRange = useCallback((range, stats) => {
@@ -359,7 +427,7 @@ const CategoryPage = () => {
   }, [fetchAnnonces, isPriceStatsLoaded]);
 
   useEffect(() => {
-    if (!isFirstRender.current) {
+    if (!isFirstRender.current ) {
       const timeoutId = setTimeout(() => {
         updateURL();
       }, isFilteringByPrice ? 300 : 0);
@@ -505,6 +573,20 @@ const CategoryPage = () => {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar des filtres moderne */}
           <div className="lg:w-1/4">
+
+            {/* Bouton reset moderne */}
+            {hasActiveFilters() && (
+              <button
+                onClick={handleResetFilters}
+                className="w-full bg-gradient-to-r from-gray-500 to-gray-600 text-white px-6 py-4 rounded-2xl hover:shadow-lg transition-all transform hover:scale-105 font-semibold flex items-center justify-center space-x-2 mb-8"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span>Réinitialiser les filtres</span>
+              </button>
+            )}
+              
             {/* Bouton toggle pour mobile */}
             <div className="lg:hidden mb-6">
               <button
@@ -675,16 +757,7 @@ const CategoryPage = () => {
                 </select>
               </div>
 
-              {/* Bouton reset moderne */}
-              <button
-                onClick={handleResetFilters}
-                className="w-full bg-gradient-to-r from-gray-500 to-gray-600 text-white px-6 py-4 rounded-2xl hover:shadow-lg transition-all transform hover:scale-105 font-semibold flex items-center justify-center space-x-2"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                <span>Réinitialiser les filtres</span>
-              </button>
+              
 
               {/* Indicateur de filtres actifs */}
               {hasActiveFilters() && (
