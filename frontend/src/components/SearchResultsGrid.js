@@ -1,10 +1,13 @@
 // SearchResultsGrid.js - Version moderne avec design amélioré
 import React, { useState } from 'react';
 import AnnonceCard from './AnnonceCard';
+import { useLocation } from 'react-router-dom';
 
 const SearchResultsGrid = ({ annonces, title, loading }) => {
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const [sortBy, setSortBy] = useState('recent');
+  const location = useLocation();
+  const isCategoryPage = location.pathname.startsWith('/category');
 
   // Trier les annonces
   const sortedAnnonces = [...annonces].sort((a, b) => {
@@ -159,7 +162,7 @@ const SearchResultsGrid = ({ annonces, title, loading }) => {
             />
           ))}
         </div>
-      ) : (
+      ) : ((!isCategoryPage) && (
         /* Message vide moderne */
         <div className="text-center py-16 bg-white rounded-2xl shadow-lg border border-gray-100">
           <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-3xl flex items-center justify-center mx-auto mb-6">
@@ -182,11 +185,13 @@ const SearchResultsGrid = ({ annonces, title, loading }) => {
               onClick={() => window.location.href = '/'}
               className="px-6 py-3 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl hover:shadow-lg transition-all transform hover:scale-105 font-medium"
             >
-              Explorer les catégories
+               les catégories
             </button>
           </div>
         </div>
+      )
       )}
+      
 
       {/* Pagination future (si nécessaire) */}
       {sortedAnnonces.length > 20 && (

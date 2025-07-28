@@ -7,18 +7,21 @@ import PriceRangeSlider from '../components/PriceRangeSlider';
 import AutocompleteInput from '../components/AutocompleteInput';
 import useAutocomplete from '../hooks/useAutocomplete';
 import { useAuth } from '../contexts/AuthContext';
+import CitySelect from '../components/CitySelect';
 
 const CategoryPage = () => {
   const { categoryId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [availableCities, setAvailableCities] = useState([]);
 
   // États de contrôle
   const [isInitialized, setIsInitialized] = useState(false);
   const [isPriceStatsLoaded, setIsPriceStatsLoaded] = useState(false);
   const isFirstRender = useRef(true);
   const priceInitialized = useRef(false);
+  const previousCategoryId = useRef(categoryId);
 
   // États principaux
   const [annonces, setAnnonces] = useState([]);
@@ -51,23 +54,49 @@ const CategoryPage = () => {
 
   // Hooks d'autocomplétion pour les champs de recherche et ville
   const searchAutocomplete = useAutocomplete(filters.recherche, (searchData) => {
-    setFilters(prev => ({ ...prev, recherche: searchData.query }));
+    // Valider que la recherche n'est pas vide
+    const query = searchData.query?.trim();
+    if (query) {
+      setFilters(prev => ({ ...prev, recherche: query }));
+    }
   });
 
-  const cityAutocomplete = useAutocomplete(filters.ville, (searchData) => {
-    setFilters(prev => ({ ...prev, ville: searchData.query }));
-  });
+  // const cityAutocomplete = useAutocomplete(filters.ville, (searchData) => {
+  //   setFilters(prev => ({ ...prev, ville: searchData.query }));
+  // });
 
   const brandAutocomplete = useAutocomplete(filters.marque, (searchData) => {
-    setFilters(prev => ({ ...prev, marque: searchData.query }));
+    // Valider que la marque n'est pas vide
+    const brand = searchData.query?.trim();
+    if (brand) {
+      setFilters(prev => ({ ...prev, marque: brand }));
+    }
   });
+
+  const fetchAvailableCities = useCallback(async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/annonces/cities/all?category=${categoryId}`
+      );
+      setAvailableCities(response.data);
+    } catch (error) {
+      console.error('Erreur lors du chargement des villes:', error);
+    }
+  }, [categoryId]);
 
   // Synchroniser les hooks avec les filtres
   useEffect(() => {
     searchAutocomplete.setSearchValue(filters.recherche);
-    cityAutocomplete.setSearchValue(filters.ville);
     brandAutocomplete.setSearchValue(filters.marque);
   }, [filters.recherche, filters.ville, filters.marque]);
+
+  useEffect(() => {
+    if (previousCategoryId.current && previousCategoryId.current !== categoryId) {
+      // La catégorie a changé, réinitialiser les filtres
+      handleResetFilters();
+    }
+    previousCategoryId.current = categoryId;
+  }, [categoryId]);
 
   // Validation robuste des valeurs de prix
   const validatePriceRange = useCallback((range, stats) => {
@@ -180,9 +209,11 @@ const CategoryPage = () => {
       params.append('categorie', categoryId);
       params.append('show_inactive', 'false');
       
+      // Ne pas ajouter les filtres vides ou avec seulement des espaces
       Object.keys(filters).forEach(key => {
-        if (filters[key] && key !== 'tri') {
-          params.append(key, filters[key]);
+        const value = filters[key];
+        if (value && typeof value === 'string' && value.trim().length > 0 && key !== 'tri') {
+          params.append(key, value.trim());
         }
       });
       
@@ -291,14 +322,13 @@ const CategoryPage = () => {
     
     // Reset des autocompletes
     searchAutocomplete.resetSearch();
-    cityAutocomplete.resetSearch();
     brandAutocomplete.resetSearch();
     
     if (priceStats) {
       const resetRange = [priceStats.suggestedMin, priceStats.suggestedMax];
       setPriceRange(resetRange);
     }
-  }, [priceStats, searchAutocomplete, cityAutocomplete, brandAutocomplete]);
+  }, [priceStats, searchAutocomplete, brandAutocomplete]);
 
   // Effects
   useEffect(() => {
@@ -308,7 +338,8 @@ const CategoryPage = () => {
           fetchCategory(),
           fetchSousCategories(),
           fetchCategoryAttributes(),
-          fetchPriceStats()
+          fetchPriceStats(),
+          fetchAvailableCities()
         ]);
         
         setTimeout(() => {
@@ -319,7 +350,7 @@ const CategoryPage = () => {
       
       initializeData();
     }
-  }, [categoryId, fetchCategory, fetchSousCategories, fetchCategoryAttributes, fetchPriceStats]);
+  }, [categoryId, fetchCategory, fetchSousCategories, fetchCategoryAttributes, fetchPriceStats, fetchAvailableCities]);
 
   useEffect(() => {
     if (isPriceStatsLoaded) {
@@ -343,6 +374,15 @@ const CategoryPage = () => {
       fetchPriceStats();
     }
   }, [filters.sous_categorie, fetchPriceStats, isPriceStatsLoaded]);
+
+  useEffect(() => {
+    // Réinitialiser les filtres quand on change de catégorie
+    if (!isFirstRender.current) {
+      handleResetFilters();
+      // Recharger les villes disponibles pour la nouvelle catégorie
+      fetchAvailableCities();
+    }
+  }, [categoryId]);
 
   // Fonctions utilitaires
   const filteredAnnonces = annonces.filter(a => 
@@ -407,6 +447,8 @@ const CategoryPage = () => {
         );
     }
   };
+  console.log("filteredAnnonces:", filteredAnnonces, "loading:", loading);
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
@@ -500,7 +542,7 @@ const CategoryPage = () => {
                 />
               </div>
 
-              {/* Card de localisation avec autocomplétion */}
+              {/* Card de localisation avec select */}
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                   <svg className="w-5 h-5 mr-2 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -508,14 +550,11 @@ const CategoryPage = () => {
                   </svg>
                   Localisation
                 </h3>
-                <AutocompleteInput
-                  value={cityAutocomplete.searchValue}
-                  onChange={cityAutocomplete.handleInputChange}
-                  onSelect={cityAutocomplete.handleSuggestionSelect}
-                  placeholder="Ville..."
-                  type="cities"
-                  category={categoryId}
-                  showTrending={true}
+                <CitySelect
+                  value={filters.ville}
+                  onChange={handleFilterChange}
+                  categoryId={categoryId}
+                  showCount={true}
                 />
               </div>
 
@@ -707,8 +746,8 @@ const CategoryPage = () => {
             />
 
             {/* Message si aucun résultat */}
-            {!loading && filteredAnnonces.length === 0 && (
-              <div className="text-center py-16 bg-white rounded-2xl shadow-lg">
+            {(!loading && filteredAnnonces.length === 0) && (
+              <div className="text-center py-16 bg-white rounded-2xl shadow-lg mt-8">
                 <div className="text-6xl mb-4">🔍</div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Aucune annonce trouvée</h3>
                 <p className="text-gray-500 mb-6">

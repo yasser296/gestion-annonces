@@ -741,6 +741,50 @@ router.get('/price-suggestions/:categoryId', async (req, res) => {
   }
 });
 
+router.get('/cities/all', async (req, res) => {
+  try {
+    const { category } = req.query;
+    
+    const matchFilter = { 
+      is_active: true, 
+      ville: { $exists: true, $ne: '' } 
+    };
+    
+    // Filtrer par catégorie si fournie
+    if (category) {
+      try {
+        matchFilter.categorie_id = new mongoose.Types.ObjectId(category);
+      } catch (error) {
+        console.log('Invalid category ID');
+      }
+    }
+    
+    // Récupérer toutes les villes uniques avec leur nombre d'annonces
+    const cities = await Annonce.aggregate([
+      { $match: matchFilter },
+      { 
+        $group: { 
+          _id: '$ville', 
+          count: { $sum: 1 } 
+        } 
+      },
+      { $sort: { _id: 1 } }, // Tri alphabétique
+      {
+        $project: {
+          _id: 0,
+          ville: '$_id',
+          count: 1
+        }
+      }
+    ]);
+    
+    res.json(cities);
+  } catch (error) {
+    console.error('Erreur récupération villes:', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
 
 
 module.exports = router;

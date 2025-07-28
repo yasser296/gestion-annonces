@@ -7,6 +7,111 @@ const User = require('../models/User');
 const Categorie = require('../models/Categorie');
 const SousCategorie = require('../models/SousCategorie');
 
+
+// Route pour suggestions de villes populaires avec filtrage par catégorie
+router.get('/cities/popular', async (req, res) => {
+  try {
+    const { limit = 10, category = null } = req.query;
+
+    const matchFilter = { 
+      is_active: true, 
+      ville: { $exists: true, $ne: '' } 
+    };
+
+    // Ajouter le filtre de catégorie si fourni
+    if (category) {
+      try {
+        matchFilter.categorie_id = new mongoose.Types.ObjectId(category);
+      } catch (error) {
+        console.log('Invalid category ID for popular cities');
+      }
+    }
+
+    const popularCities = await Annonce.aggregate([
+      { $match: matchFilter },
+      { 
+        $group: { 
+          _id: '$ville', 
+          count: { $sum: 1 } 
+        } 
+      },
+      { $sort: { count: -1 } },
+      { $limit: parseInt(limit) },
+      {
+        $project: {
+          _id: 0,
+          ville: '$_id',
+          count: 1
+        }
+      }
+    ]);
+
+    res.json(popularCities);
+  } catch (error) {
+    console.error('Erreur popular cities:', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// Route pour suggestions de recherches populaires avec filtrage par catégorie
+router.get('/searches/trending', async (req, res) => {
+  try {
+    const { limit = 10, category = null } = req.query;
+
+    const matchFilter = { 
+      is_active: true,
+      titre: { $exists: true, $ne: '' }
+    };
+
+    // Ajouter le filtre de catégorie si fourni
+    if (category) {
+      try {
+        matchFilter.categorie_id = new mongoose.Types.ObjectId(category);
+      } catch (error) {
+        console.log('Invalid category ID for trending searches');
+      }
+    }
+
+    // Récupérer les titres les plus fréquents comme "trending"
+    const trendingSearches = await Annonce.aggregate([
+      { $match: matchFilter },
+      // Extraire les mots significatifs des titres (> 3 caractères)
+      {
+        $project: {
+          words: {
+            $filter: {
+              input: { $split: [{ $toLower: "$titre" }, " "] },
+              as: "word",
+              cond: { $gt: [{ $strLenCP: "$$word" }, 3] }
+            }
+          }
+        }
+      },
+      { $unwind: "$words" },
+      {
+        $group: {
+          _id: "$words",
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { count: -1 } },
+      { $limit: parseInt(limit) },
+      {
+        $project: {
+          _id: 0,
+          term: "$_id",
+          count: 1
+        }
+      }
+    ]);
+
+    res.json(trendingSearches);
+  } catch (error) {
+    console.error('Erreur trending searches:', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
 // Route principale d'autocomplétion
 router.get('/suggestions', async (req, res) => {
   try {
@@ -21,6 +126,12 @@ router.get('/suggestions', async (req, res) => {
     console.log('- query:', query);
     console.log('- type:', type);
     console.log('- category (string):', category);
+
+    // Validation stricte de la query
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery || trimmedQuery.length < 1) {
+      return res.json([]);
+    }
 
     let categoryObjectId = null;
     if (category) {
@@ -43,12 +154,16 @@ router.get('/suggestions', async (req, res) => {
     // Helper pour éviter les doublons
     const addUnique = (items, type, icon = '🔍') => {
       items.forEach(item => {
-        if (item && !results.find(r => r.text.toLowerCase() === item.toLowerCase())) {
-          results.push({
-            text: item,
-            type: type,
-            icon: icon
-          });
+        // Validation stricte : ignorer les valeurs vides ou null
+        if (item && item.trim && item.trim().length > 0) {
+          const trimmedItem = item.trim();
+          if (!results.find(r => r.text.toLowerCase() === trimmedItem.toLowerCase())) {
+            results.push({
+              text: trimmedItem,
+              type: type,
+              icon: icon
+            });
+          }
         }
       });
     };
@@ -213,7 +328,13 @@ router.get('/suggestions', async (req, res) => {
     });
 
     // Limiter le nombre total de résultats
-    res.json(results.slice(0, parseInt(limit)));
+    const validResults = results.filter(result => 
+      result.text && 
+      result.text.trim().length > 0 &&
+      result.type
+    );
+
+    res.json(validResults.slice(0, parseInt(limit)));
 
   } catch (error) {
     console.error('Erreur autocomplete:', error);
