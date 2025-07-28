@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import WishlistButton from '../components/WishlistButton';
 import AttributesDisplay from '../components/AttributesDisplay'; // NOUVEAU
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import usePopUp from '../hooks/usePopUp';
 
 const AnnonceDetail = () => {
@@ -64,6 +64,15 @@ const AnnonceDetail = () => {
       });
     }
   };
+
+    // Fonction pour obtenir le texte du bouton retour
+    const getBackButtonText = () => {
+      if (from.includes('/mes-annonces')) return 'Retour à mes annonces';
+      if (from.includes('/category')) return 'Retour à la catégorie';
+      if (from.includes('/admin/annonces')) return 'Retour à l\'administration';
+      if (from === '/') return 'Retour à l\'accueil';
+      return 'Retour';
+    };
 
   useEffect(() => {
     fetchAnnonce();
@@ -131,6 +140,22 @@ const AnnonceDetail = () => {
     <>
       <PopUpComponent />
       <div className="max-w-7xl mx-auto px-4 py-8">
+        
+        {/* Bouton de retour */}
+        <div className="mb-6">
+          <button
+            onClick={() => navigate(from)}
+            className="flex items-center space-x-2 text-gray-600 hover:text-orange-500 transition-colors group"
+          >
+            <FontAwesomeIcon 
+              icon={faArrowLeft} 
+              className="group-hover:-translate-x-1 transition-transform"
+            />
+            <span className="font-medium">{getBackButtonText()}</span>
+          </button>
+        </div>
+
+        {/* Boutons de modification */}
         {(isOwner || isAdmin) && (
           <div className="mb-4 flex justify-end gap-3">
             <button

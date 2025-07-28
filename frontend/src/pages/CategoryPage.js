@@ -634,7 +634,7 @@ const CategoryPage = () => {
                 </h3>
                 <CitySelect
                   value={filters.ville}
-                  onChange={handleFilterChange}
+                  onChange={(value) => setFilters(prev => ({ ...prev, ville: value }))}
                   categoryId={categoryId}
                   showCount={true}
                 />
