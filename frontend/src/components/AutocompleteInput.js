@@ -295,7 +295,7 @@ const AutocompleteInput = ({
     return groups;
   };
 
-  const shouldShowSuggestions = isOpen && (suggestions.length > 0 || loading);
+  const shouldShowSuggestions = isOpen && (suggestions.length > 0 || loading || (value && value.trim().length >= 2));
 
   // Composant Dropdown rendu dans un portal
   const DropdownPortal = () => {
@@ -390,13 +390,18 @@ const AutocompleteInput = ({
               ))}
 
               {!loading && suggestions.length === 0 && value && value.trim().length >= 2 && (
-                <div className="p-4 text-center text-gray-500">
-                  <svg className="w-8 h-8 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-6 text-center text-gray-500">
+                  <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                  <div className="text-sm">Aucune suggestion trouvée</div>
-                  <div className="text-xs text-gray-400 mt-1">
-                    Essayez avec d'autres mots-clés
+                  <div className="text-base font-medium text-gray-700 mb-1">
+                    Aucun résultat trouvé
+                  </div>
+                  <div className="text-sm text-gray-400 mb-4">
+                    pour "{value}"
+                  </div>
+                  <div className="text-xs text-gray-400 bg-gray-50 px-3 py-2 rounded-lg inline-block">
+                    Essayez avec d'autres mots-clés ou vérifiez l'orthographe
                   </div>
                 </div>
               )}

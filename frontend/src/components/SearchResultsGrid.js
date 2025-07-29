@@ -175,17 +175,17 @@ const SearchResultsGrid = ({ annonces, title, loading }) => {
             Essayez de modifier vos critères de recherche ou explorez d'autres catégories
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <button
+            {/* <button
               onClick={() => window.history.back()}
               className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all font-medium"
             >
               Retour
-            </button>
+            </button> */}
             <button
               onClick={() => window.location.href = '/'}
               className="px-6 py-3 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl hover:shadow-lg transition-all transform hover:scale-105 font-medium"
             >
-               les catégories
+               Retour
             </button>
           </div>
         </div>
