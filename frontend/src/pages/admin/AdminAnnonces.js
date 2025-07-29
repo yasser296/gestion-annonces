@@ -37,12 +37,45 @@ const AdminAnnonces = () => {
 
   useEffect(() => {
     fetchAnnonces();
+    fetchCategories();
   }, []);
+
+    // NOUVEAU: Charger les sous-catégories quand une catégorie est sélectionnée
+  useEffect(() => {
+    if (categoryFilter) {
+      fetchSousCategoriesByCategory(categoryFilter);
+      // Reset sous-catégorie quand on change de catégorie
+      setSubCategoryFilter('');
+    } else {
+      setSousCategories([]);
+      setSubCategoryFilter('');
+    }
+  }, [categoryFilter]);
 
   // NOUVEAU: Effet pour filtrer les annonces quand le terme de recherche ou le filtre de statut change
   useEffect(() => {
     filterAnnonces();
-  }, [annonces, searchTerm, statusFilter]);
+  }, [annonces, searchTerm, statusFilter, categoryFilter, subCategoryFilter]);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/categories`);
+      setCategories(response.data);
+    } catch (error) {
+      console.error('Erreur lors du chargement des catégories:', error);
+    }
+  };
+
+  // NOUVEAU: Fonction pour charger les sous-catégories par catégorie
+  const fetchSousCategoriesByCategory = async (categorieId) => {
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/sous-categories/by-category/${categorieId}`);
+      setSousCategories(response.data);
+    } catch (error) {
+      console.error('Erreur lors du chargement des sous-catégories:', error);
+      setSousCategories([]);
+    }
+  };
 
   // NOUVEAU: Fonction de filtrage
   const filterAnnonces = () => {
@@ -66,6 +99,22 @@ const AdminAnnonces = () => {
         return true;
       });
     }
+
+    // NOUVEAU: Filtrage par catégorie
+    if (categoryFilter) {
+      filtered = filtered.filter(annonce => {
+        const annonceCategorie = annonce.categorie_id?._id || annonce.categorie_id;
+        return annonceCategorie === categoryFilter;
+      });
+    }
+
+    // NOUVEAU: Filtrage par sous-catégorie
+    if (subCategoryFilter) {
+      filtered = filtered.filter(annonce => {
+        const annonceSousCategorie = annonce.sous_categorie_id?._id || annonce.sous_categorie_id;
+        return annonceSousCategorie === subCategoryFilter;
+      });
+    }
     
     setFilteredAnnonces(filtered);
     setCurrentPage(1); // Reset à la première page lors d'une nouvelle recherche
@@ -84,6 +133,28 @@ const AdminAnnonces = () => {
   // NOUVEAU: Gérer le changement du filtre de statut
   const handleStatusFilterChange = (status) => {
     setStatusFilter(status);
+  };
+
+  // NOUVEAU: Gérer les changements de filtres catégories
+  const handleCategoryFilterChange = (categoryId) => {
+    setCategoryFilter(categoryId);
+  };
+
+  const handleSubCategoryFilterChange = (subCategoryId) => {
+    setSubCategoryFilter(subCategoryId);
+  };
+
+  // NOUVEAU: Réinitialiser tous les filtres
+  const resetAllFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('all');
+    setCategoryFilter('');
+    setSubCategoryFilter('');
+  };
+
+  // NOUVEAU: Vérifier s'il y a des filtres actifs
+  const hasActiveFilters = () => {
+    return searchTerm || statusFilter !== 'all' || categoryFilter || subCategoryFilter;
   };
 
   const fetchAnnonces = async () => {
@@ -141,6 +212,7 @@ const AdminAnnonces = () => {
       fetchAnnonces();
     } catch (error) {
       console.error('Erreur lors du changement de statut:', error);
+      toast.error('Erreur lors du changement de statut');
     }
   };
 
@@ -263,9 +335,23 @@ const AdminAnnonces = () => {
                 Inactives
               </button>
             </div>
+
+            {/* NOUVEAU: Bouton filtres avancés */}
+            <button
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 ${
+                showAdvancedFilters || categoryFilter || subCategoryFilter
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <FontAwesomeIcon icon={faFilter} />
+              Filtres
+              <FontAwesomeIcon icon={showAdvancedFilters ? faChevronUp : faChevronDown} />
+            </button>
             
             {/* Résultats */}
-            {(searchTerm || statusFilter !== 'all') && (
+            {hasActiveFilters() && (
               <div className="text-sm text-gray-600 font-secondary">
                 {filteredAnnonces.length} résultat{filteredAnnonces.length !== 1 ? 's' : ''} sur {annonces.length}
               </div>
@@ -273,6 +359,94 @@ const AdminAnnonces = () => {
           </div>
         </div>
       </div>
+
+      {/* NOUVEAU: Panneau de filtres avancés */}
+      {showAdvancedFilters && (
+        <div className="mb-6">
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 border-t-4 border-t-blue-500">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <FontAwesomeIcon icon={faFilter} className="text-blue-500" />
+                Filtres avancés
+              </h3>
+              {(categoryFilter || subCategoryFilter) && (
+                <button
+                  onClick={() => {
+                    setCategoryFilter('');
+                    setSubCategoryFilter('');
+                  }}
+                  className="text-red-500 hover:text-red-600 transition text-sm flex items-center gap-1"
+                >
+                  <FontAwesomeIcon icon={faTimes} />
+                  Effacer les filtres catégories
+                </button>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Filtre par catégorie */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Catégorie
+                </label>
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => handleCategoryFilterChange(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
+                >
+                  <option value="">Toutes les catégories</option>
+                  {categories.map((category) => (
+                    <option key={category._id} value={category._id}>
+                      {category.icone} {category.nom}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Filtre par sous-catégorie */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Sous-catégorie
+                </label>
+                <select
+                  value={subCategoryFilter}
+                  onChange={(e) => handleSubCategoryFilterChange(e.target.value)}
+                  disabled={!categoryFilter}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option value="">
+                    {categoryFilter ? 'Toutes les sous-catégories' : 'Sélectionner une catégorie d\'abord'}
+                  </option>
+                  {sousCategories.map((subCategory) => (
+                    <option key={subCategory._id} value={subCategory._id}>
+                      {subCategory.icone} {subCategory.nom}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Résumé des filtres actifs */}
+            {(categoryFilter || subCategoryFilter) && (
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>Filtres actifs:</strong>
+                  {categoryFilter && (
+                    <span className="ml-2 px-2 py-1 bg-blue-100 rounded text-xs">
+                      {categories.find(c => c._id === categoryFilter)?.nom}
+                    </span>
+                  )}
+                  {subCategoryFilter && (
+                    <span className="ml-2 px-2 py-1 bg-blue-100 rounded text-xs">
+                      {sousCategories.find(sc => sc._id === subCategoryFilter)?.nom}
+                    </span>
+                  )}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Gestion des annonces</h1>
@@ -315,7 +489,7 @@ const AdminAnnonces = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredAnnonces.map((annonce) => (
+            {currentAnnonces.map((annonce) => (
               <tr 
                 key={annonce._id}
                 className="hover:bg-gray-50 cursor-pointer"
