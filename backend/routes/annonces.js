@@ -6,6 +6,7 @@ const Annonce = require('../models/Annonce');
 const User = require('../models/User');
 const Wishlist = require('../models/Wishlist');
 const SousCategorie = require('../models/SousCategorie');
+const jwt = require('jsonwebtoken');
 
 
 
@@ -267,8 +268,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Incrémenter les vues d'une annonce
-router.patch('/:id/vues', authenticateToken, async (req, res) => {
+// Incrémenter les vues d'une annonce - CORRIGÉ
+router.patch('/:id/vues', async (req, res) => {
   try {
     const annonce = await Annonce.findById(req.params.id);
 
@@ -276,18 +277,56 @@ router.patch('/:id/vues', authenticateToken, async (req, res) => {
       return res.status(404).json({ message: 'Annonce non trouvée' });
     }
 
-    // Si utilisateur connecté ET c'est le propriétaire
-    if (req.user && (
-        String(annonce.user_id) === String(req.user.id) ||
-        req.user.role === 'admin' || req.user.role_id === 1 // selon ta structure
+    // Vérification optionnelle de l'authentification (comme le middleware original)
+    let authenticatedUser = null;
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    
+    if (token) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const User = require('../models/User');
+        
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.id).populate('role');
+        
+        if (user) {
+          // Reproduire exactement la structure du middleware authenticateToken
+          authenticatedUser = {
+            id: user._id,
+            email: user.email,
+            nom: user.nom,
+            role_id: user.role_id,
+            role: user.role ? user.role.titre : null
+          };
+        }
+      } catch (err) {
+        // Token invalide, on continue sans utilisateur authentifié
+        console.log('Token invalide ou expiré');
+      }
+    }
+
+    // Si utilisateur connecté ET (c'est le propriétaire OU c'est un admin), ne pas compter
+    if (authenticatedUser && (
+        String(annonce.user_id) === String(authenticatedUser.id) ||
+        authenticatedUser.role === 'admin' || 
+        authenticatedUser.role_id === 1
       )) {
+      
+      let message;
+      if (String(annonce.user_id) === String(authenticatedUser.id)) {
+        message = "Vous êtes le propriétaire, la vue n'est pas comptabilisée";
+      } else if (authenticatedUser.role === 'admin' || authenticatedUser.role_id === 1) {
+        message = "Vous êtes administrateur, la vue n'est pas comptabilisée";
+      }
+      
       return res.json({
-        message: "Vous êtes le propriétaire, la vue n'est pas comptabilisée",
+        message: message,
         nombre_vues: annonce.nombre_vues,
       });
     }
 
-    // Sinon, incrémente
+    // Sinon, incrémente (que l'utilisateur soit connecté ou non)
     annonce.nombre_vues = (annonce.nombre_vues || 0) + 1;
     await annonce.save();
 
