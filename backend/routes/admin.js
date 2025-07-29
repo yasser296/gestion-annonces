@@ -569,6 +569,8 @@ router.get('/stats', async (req, res) => {
 });
 
 // Obtenir l'activité récente
+// Remarque : L'activité récente est considérée comme les actions des dernières 24 heures (1 jour).
+// Après 24h, une activité n'est plus considérée comme "récente" et ne sera plus retournée par cette route.
 router.get('/recent-activity', async (req, res) => {
   try {
     // Récupérer les utilisateurs récents (dernières 24h)

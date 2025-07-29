@@ -24,8 +24,10 @@ router.get('/:id', async (req, res) => {
 // Mettre à jour le profil (authentification requise)
 router.put('/:id', authenticateToken, async (req, res) => {
   const { nom, email, telephone } = req.body;
+  const isOwner = String(req.user.id) === String(req.params.id);
+  const isAdmin = req.user.role === 'admin' || req.user.role_id === 1;
 
-  if (req.user.id !== req.params.id) {
+  if (!isOwner && !isAdmin) {
     return res.status(403).json({ message: 'Accès refusé' });
   }
 
