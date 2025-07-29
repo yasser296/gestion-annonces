@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import usePopUp from '../hooks/usePopUp';
 
 const WishlistPage = () => {
@@ -10,6 +10,7 @@ const WishlistPage = () => {
   const [loading, setLoading] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
+  const from = location.state?.from || '/';
   const { showPopup, PopUpComponent } = usePopUp();
   const [cleaning, setCleaning] = useState(false);
 
@@ -114,9 +115,35 @@ const WishlistPage = () => {
     );
   }
 
+  const getBackButtonText = () => {
+    if (from.startsWith('/annonce/')) return 'Retour à l\'annonce';
+    if (from.startsWith('/mes-annonces')) return 'Retour à mes annonces';
+    if (from.startsWith('/admin')) return 'Retour à l\'administration';
+    if (from.startsWith('/profil/')) return 'Retour au profil';
+    if (from.startsWith('/nouvelle-annonce')) return 'Retour à la création d\'annonce';
+    if (from.startsWith('/modifier-annonce/')) return 'Retour à la modification d\'annonce';
+    if (from.startsWith('/demande-vendeur')) return 'Retour à la demande vendeur';
+    if (from.startsWith('/category')) return 'Retour aux catégories';
+    if (from === '/' || from === '' || !from) return 'Retour à l\'accueil';
+    return 'Retour';
+  };
+
   return (
     <>
       <PopUpComponent />
+      {/* Bouton de retour - À ajouter avant le header */}
+      <div className="max-w-7xl mx-auto px-4 pt-6">
+        <button
+          onClick={() => navigate(from)}
+          className="flex items-center space-x-2 text-gray-600 hover:text-orange-500 transition-colors group mb-4"
+        >
+          <FontAwesomeIcon 
+            icon={faArrowLeft} 
+            className="group-hover:-translate-x-1 transition-transform"
+          />
+          <span className="font-medium">{getBackButtonText()}</span>
+        </button>
+      </div>
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Mes favoris</h1>

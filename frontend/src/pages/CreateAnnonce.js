@@ -155,7 +155,11 @@ const CreateAnnonce = () => {
   const getBackButtonText = () => {
     if (from === '/mes-annonces') return 'Retour à mes annonces';
     if (from === '/') return 'Retour à l\'accueil';
-    if (from.includes('/category')) return 'Retour à la catégorie';
+    if (typeof from === 'string' && from.includes('/category')) return 'Retour à la catégorie';
+    if (typeof from === 'string' && from.includes('/wishlist')) return 'Retour à la wishlist';
+    if (from.startsWith('/annonce/')) return 'Retour à l\'annonce';
+    if (from.startsWith('/admin')) return 'Retour à l\'administration';
+    if (from.startsWith('/profil/')) return 'Retour au profil';    
     return 'Retour';
   };
 

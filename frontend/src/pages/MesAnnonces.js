@@ -243,12 +243,13 @@ const MesAnnonces = () => {
 
   const getBackButtonText = () => {
     if (from.startsWith('/annonce/')) return 'Retour à l\'annonce';
-    if (from.startsWith('/mes-annonces')) return 'Retour à mes annonces';
     if (from.startsWith('/admin')) return 'Retour à l\'administration';
     if (from.startsWith('/profil/')) return 'Retour au profil';
     if (from.startsWith('/nouvelle-annonce')) return 'Retour à la création d\'annonce';
     if (from.startsWith('/modifier-annonce/')) return 'Retour à la modification d\'annonce';
     if (from.startsWith('/demande-vendeur')) return 'Retour à la demande vendeur';
+    if (from.startsWith('/wishlist')) return 'Retour à la wishlist';
+    if (from.startsWith('/category')) return 'Retour aux catégories';
     if (from === '/' || from === '' || !from) return 'Retour à l\'accueil';
     return 'Retour';
   };
@@ -260,7 +261,7 @@ const MesAnnonces = () => {
         {/* Bouton de retour - À ajouter avant le header */}
         <div className="max-w-7xl mx-auto px-4 pt-6">
           <button
-            onClick={() => navigate(from)}
+            onClick={() => navigate(from, { state: { from: location.pathname } })}
             className="flex items-center space-x-2 text-gray-600 hover:text-orange-500 transition-colors group mb-4"
           >
             <FontAwesomeIcon 
