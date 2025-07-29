@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import AttributesForm from '../components/AttributesForm'; // NOUVEAU
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 
 const CreateAnnonce = () => {
   const [formData, setFormData] = useState({
@@ -14,6 +16,8 @@ const CreateAnnonce = () => {
     marque: '',
     etat: ''
   });
+
+  
   
   const [attributeValues, setAttributeValues] = useState({}); // NOUVEAU
   const [categories, setCategories] = useState([]);
@@ -23,6 +27,8 @@ const CreateAnnonce = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation(); // Ajout
+  const from = location.state?.from || '/mes-annonces';
 
   useEffect(() => {
     fetchCategories();
@@ -145,8 +151,29 @@ const CreateAnnonce = () => {
     selectedCategory: categories.find(cat => cat._id === formData.categorie_id)
   });
 
+  // Fonction pour obtenir le texte du bouton retour
+  const getBackButtonText = () => {
+    if (from === '/mes-annonces') return 'Retour à mes annonces';
+    if (from === '/') return 'Retour à l\'accueil';
+    if (from.includes('/category')) return 'Retour à la catégorie';
+    return 'Retour';
+  };
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
+      {/* Bouton de retour */}
+      <div className="mb-6">
+        <button
+          onClick={() => navigate(from)}
+          className="flex items-center space-x-2 text-gray-600 hover:text-orange-500 transition-colors group"
+        >
+          <FontAwesomeIcon 
+            icon={faArrowLeft} 
+            className="group-hover:-translate-x-1 transition-transform"
+          />
+          <span className="font-medium">{getBackButtonText()}</span>
+        </button>
+      </div>
       <div className="bg-white rounded-lg shadow-md p-6">
         <h1 className="text-2xl font-bold mb-6">Déposer une annonce</h1>
         

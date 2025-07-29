@@ -322,7 +322,9 @@ const AnnonceDetail = () => {
                 <h3 className="font-semibold text-lg mb-4">Contact</h3>
                 <div 
                   className="mb-4 cursor-pointer hover:text-orange-500"
-                  onClick={() => navigate(`/profil/${annonce.user_id?._id}`)}
+                  onClick={() => navigate(`/profil/${annonce.user_id._id}`, { 
+                    state: { from: location.pathname } 
+                  })}
                 >
                   <p className="text-gray-600">{annonce.user_id?.nom}</p>
                   <p className="text-sm text-gray-500">Voir le profil</p>

@@ -51,12 +51,15 @@ router.put('/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// NOUVELLE ROUTE: Changer le mot de passe (authentification requise)
+// ROUTE CORRIGÉE: Changer le mot de passe (authentification requise)
 router.patch('/:id/password', authenticateToken, async (req, res) => {
   const { ancien_mot_de_passe, nouveau_mot_de_passe } = req.body;
 
-  // Vérifier que l'utilisateur modifie son propre mot de passe
-  if (req.user.id !== req.params.id) {
+  // Vérifier que l'utilisateur modifie son propre mot de passe OU que c'est un admin
+  const isOwner = String(req.user.id) === String(req.params.id);
+  const isAdmin = req.user.role === 'admin' || req.user.role_id === 1;
+  
+  if (!isOwner && !isAdmin) {
     return res.status(403).json({ message: 'Accès refusé' });
   }
 

@@ -3,6 +3,8 @@ import { useNavigate, useLocation  } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import usePopUp from '../hooks/usePopUp';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 
 const MesAnnonces = () => {
   const [annonces, setAnnonces] = useState([]);
@@ -12,7 +14,8 @@ const MesAnnonces = () => {
   const [selectedIds, setSelectedIds] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
+  const location = useLocation(); // Ajout
+  const from = location.state?.from || '/';
   const { showPopup, PopUpComponent } = usePopUp();
 
   useEffect(() => {
@@ -238,14 +241,39 @@ const MesAnnonces = () => {
     );
   }
 
+  const getBackButtonText = () => {
+    if (from.startsWith('/annonce/')) return 'Retour à l\'annonce';
+    if (from.startsWith('/mes-annonces')) return 'Retour à mes annonces';
+    if (from.startsWith('/admin')) return 'Retour à l\'administration';
+    if (from.startsWith('/profil/')) return 'Retour au profil';
+    if (from.startsWith('/nouvelle-annonce')) return 'Retour à la création d\'annonce';
+    if (from.startsWith('/modifier-annonce/')) return 'Retour à la modification d\'annonce';
+    if (from.startsWith('/demande-vendeur')) return 'Retour à la demande vendeur';
+    if (from === '/' || from === '' || !from) return 'Retour à l\'accueil';
+    return 'Retour';
+  };
+
   return (
     <>
       <PopUpComponent />
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Bouton de retour - À ajouter avant le header */}
+        <div className="max-w-7xl mx-auto px-4 pt-6">
+          <button
+            onClick={() => navigate(from)}
+            className="flex items-center space-x-2 text-gray-600 hover:text-orange-500 transition-colors group mb-4"
+          >
+            <FontAwesomeIcon 
+              icon={faArrowLeft} 
+              className="group-hover:-translate-x-1 transition-transform"
+            />
+            <span className="font-medium">{getBackButtonText()}</span>
+          </button>
+        </div>
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Mes annonces</h1>
           <button
-            onClick={() => navigate('/nouvelle-annonce')}
+            onClick={() => navigate('/nouvelle-annonce', { state: { from: location.pathname } })}
             className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition"
           >
             + Nouvelle annonce
@@ -297,7 +325,7 @@ const MesAnnonces = () => {
             </svg>
             <p className="text-gray-500 text-lg mb-4">Vous n'avez pas encore d'annonces</p>
             <button
-              onClick={() => navigate('/nouvelle-annonce')}
+              onClick={() => navigate('/nouvelle-annonce', { state: { from: location.pathname } })}
               className="bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition"
             >
               Créer votre première annonce

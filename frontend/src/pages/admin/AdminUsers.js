@@ -1,6 +1,6 @@
 // frontend/src/pages/admin/AdminUsers.js - Version finale avec PasswordGenerator
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { confirmDialog } from "../../utils/confirmDialog";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -16,6 +16,7 @@ const AdminUsers = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const { showPopup, PopUpComponent } = usePopUp();
+  const location = useLocation(); // Ajout
   const toast = useNotification(); // NOUVEAU
   
   // États pour le formulaire d'édition
@@ -348,7 +349,13 @@ const AdminUsers = () => {
                   className="hover:bg-gray-50 cursor-pointer transition-colors"
                   onClick={(e) => {
                     if (e.target.closest('button') || e.target.closest('select')) return;
-                    navigate(`/profil/${user._id}`);
+                    if (user._id) {
+                      navigate(`/profil/${user._id}`, { 
+                        state: { from: location.pathname } 
+                      });
+                    } else {
+                      toast.error("ID utilisateur manquant, impossible d'accéder au profil.");
+                    }
                   }}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{user.nom}</div>

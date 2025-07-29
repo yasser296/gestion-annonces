@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import AttributesForm from '../components/AttributesForm'; // NOUVEAU
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 
 const EditAnnoncePage = () => {
   const { id } = useParams();
@@ -191,8 +193,29 @@ const EditAnnoncePage = () => {
     );
   }
 
+  // Fonction pour obtenir le texte du bouton retour
+  const getBackButtonText = () => {
+    if (from.includes('/annonce/')) return 'Retour à l\'annonce';
+    if (from.includes('/mes-annonces')) return 'Retour à mes annonces';
+    if (from.includes('/admin/annonces')) return 'Retour à l\'administration';
+    return 'Retour';
+  };
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
+      {/* Bouton de retour */}
+      <div className="mb-6">
+        <button
+          onClick={() => navigate(from)}
+          className="flex items-center space-x-2 text-gray-600 hover:text-orange-500 transition-colors group"
+        >
+          <FontAwesomeIcon 
+            icon={faArrowLeft} 
+            className="group-hover:-translate-x-1 transition-transform"
+          />
+          <span className="font-medium">{getBackButtonText()}</span>
+        </button>
+      </div>
       <div className="bg-white rounded-lg shadow-md p-6">
         <h1 className="text-2xl font-bold mb-6">Modifier l'annonce</h1>
         

@@ -143,7 +143,9 @@ const Navbar = () => {
 
   const handleCreateAnnonceClick = () => {
     if (canCreateAnnonce) {
-      navigate('/nouvelle-annonce');
+      navigate('/nouvelle-annonce', { 
+        state: { from: location.pathname } 
+      });
     } 
     else if (createAnnonceReason === 'demande_en_cours') {
       showPopup({

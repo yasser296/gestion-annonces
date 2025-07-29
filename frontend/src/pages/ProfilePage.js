@@ -1,14 +1,18 @@
 // ProfilePage.js - Version complète avec toutes les fonctionnalités préservées
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import PasswordChangeForm from '../components/PasswordChangeForm';
 
 const ProfilePage = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
+  const location = useLocation(); // Ajout
+  const from = location.state?.from || '/'; // Ajout
   
   const [profileData, setProfileData] = useState(null);
   const [userAnnonces, setUserAnnonces] = useState([]);
@@ -147,10 +151,32 @@ const ProfilePage = () => {
     );
   }
 
+  // Fonction pour obtenir le texte du bouton retour
+  const getBackButtonText = () => {
+    if (from.includes('/annonce/')) return 'Retour à l\'annonce';
+    if (from.includes('/mes-annonces')) return 'Retour à mes annonces';
+    if (from.includes('/admin')) return 'Retour à l\'administration';
+    if (from === '/') return 'Retour à l\'accueil';
+    return 'Retour';
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">      
       {/* Header du profil moderne */}
       <div className="bg-gradient-to-r from-blue-500 via-purple-600 to-pink-600 relative overflow-hidden">
+        {/* Bouton de retour - À ajouter avant le header */}
+        <div className="max-w-7xl mx-auto px-4 pt-6">
+          <button
+            onClick={() => navigate(from)}
+            className="flex items-center space-x-2 text-white hover:text-orange-500 transition-colors group mb-4"
+          >
+            <FontAwesomeIcon
+              icon={faArrowLeft}
+              className="group-hover:-translate-x-1 transition-transform"
+            />
+            <span className="font-medium">{getBackButtonText()}</span>
+          </button>
+        </div>
         <div className="absolute inset-0 bg-black opacity-20"></div>
         <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent"></div>
         
@@ -207,7 +233,7 @@ const ProfilePage = () => {
             {isOwnProfile && (
               <div className="flex space-x-3">
                 <button
-                  onClick={() => navigate('/nouvelle-annonce')}
+                  onClick={() => navigate('/nouvelle-annonce', { state: { from: location.pathname } })}
                   className="bg-white/20 backdrop-blur-md text-white px-6 py-3 rounded-xl hover:bg-white/30 transition-all font-medium flex items-center space-x-2"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
