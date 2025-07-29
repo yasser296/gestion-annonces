@@ -321,6 +321,12 @@ const CategoryPage = () => {
       }
       
       setAnnonces(fetchedAnnonces);
+      console.log('=== DEBUG FILTRES ATTRIBUTS ===');
+      console.log('attributeFilters:', attributeFilters);
+      console.log('Params envoyés au backend:');
+      params.forEach((value, key) => {
+        console.log(`${key}: ${value}`);
+      });
     } catch (error) {
       console.error('Erreur lors du chargement des annonces:', error);
     } finally {
@@ -362,11 +368,16 @@ const CategoryPage = () => {
   }, []);
 
   const handleAttributeFilterChange = useCallback((attributeId, value) => {
-    setAttributeFilters(prev => ({
+    console.log('Changement attribut:', { attributeId, value });
+    setAttributeFilters(prev => {
+    const newFilters = {
       ...prev,
       [attributeId]: value
-    }));
-  }, []);
+    };
+    console.log('Nouveaux filtres attributs:', newFilters);
+    return newFilters;
+  });
+}, []);
 
   const handlePriceRangeChange = useCallback((newRange) => {
     setIsFilteringByPrice(true);
@@ -516,7 +527,8 @@ const CategoryPage = () => {
     }
   };
   console.log("filteredAnnonces:", filteredAnnonces, "loading:", loading);
-
+  console.log('annonces', annonces);
+  console.log('filters', filters);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">

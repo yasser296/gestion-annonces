@@ -20,7 +20,6 @@ const upload = multer({ storage });
 
 const filterAnnoncesByAttributes = async (baseFilters, attributeFilters) => {
   if (Object.keys(attributeFilters).length === 0) {
-    // Pas de filtres d'attributs, utiliser la requête normale
     return await Annonce.find(baseFilters)
       .populate('categorie_id')
       .populate('sous_categorie_id')
@@ -28,158 +27,62 @@ const filterAnnoncesByAttributes = async (baseFilters, attributeFilters) => {
       .sort({ date_publication: -1 });
   }
 
-  // Pipeline d'agrégation pour filtrer par attributs
-  const pipeline = [
-    // Étape 1: Filtrer les annonces selon les critères de base
-    { $match: baseFilters },
+  const mongoose = require('mongoose');
 
-    // Étape 2: Joindre avec les valeurs d'attributs
-    {
-      $lookup: {
-        from: 'annonceattributevalues',
-        localField: '_id',
-        foreignField: 'annonce_id',
-        as: 'attributeValues'
-      }
-    },
-
-    // Étape 3: Ajouter un champ pour faciliter le filtrage
-    {
-      $addFields: {
-        attributeMap: {
-          $arrayToObject: {
-            $map: {
-              input: '$attributeValues',
-              as: 'attr',
-              in: {
-                k: { $toString: '$$attr.attribute_id' },
-                v: '$$attr.value'
-              }
-            }
-          }
-        }
-      }
-    }
-  ];
-
-  // Étape 4: Ajouter les conditions de filtrage par attributs
-  const attributeConditions = [];
+  // D'abord, trouver toutes les annonces qui ont les bonnes valeurs d'attributs
+  const AnnonceAttributeValue = require('../models/AnnonceAttributeValue');
+  
+  // Pour chaque filtre d'attribut, trouver les annonces correspondantes
+  const annonceIdsByAttribute = [];
   
   for (const [attributeId, filterValue] of Object.entries(attributeFilters)) {
-    const attributeFieldPath = `attributeMap.${attributeId}`;
+    // console.log(`Recherche pour attribut ${attributeId} avec valeur "${filterValue}"`);
     
-    // Récupérer le type d'attribut pour appliquer le bon filtre
-    const Attribute = require('../models/Attribute');
-    const attribute = await Attribute.findById(attributeId);
+    // Trouver toutes les valeurs d'attributs qui correspondent
+    const matchingValues = await AnnonceAttributeValue.find({
+      attribute_id: new mongoose.Types.ObjectId(attributeId), // IMPORTANT: utiliser 'new'
+      value: filterValue // Comparaison exacte pour les selects
+    }).select('annonce_id');
     
-    if (!attribute) continue;
+    const annonceIds = matchingValues.map(v => v.annonce_id);
+    // console.log(`Trouvé ${annonceIds.length} annonces avec cet attribut`);
     
-    let condition;
-    
-    switch (attribute.type) {
-      case 'string':
-      case 'select':
-        condition = {
-          [attributeFieldPath]: {
-            $regex: filterValue,
-            $options: 'i'
-          }
-        };
-        break;
-        
-      case 'number':
-        const numValue = parseFloat(filterValue);
-        if (!isNaN(numValue)) {
-          condition = {
-            [attributeFieldPath]: numValue
-          };
-        }
-        break;
-        
-      case 'boolean':
-        condition = {
-          [attributeFieldPath]: filterValue === 'true'
-        };
-        break;
-        
-      case 'date':
-        condition = {
-          [attributeFieldPath]: {
-            $gte: new Date(filterValue),
-            $lt: new Date(new Date(filterValue).getTime() + 24 * 60 * 60 * 1000)
-          }
-        };
-        break;
-        
-      default:
-        condition = {
-          [attributeFieldPath]: {
-            $regex: filterValue,
-            $options: 'i'
-          }
-        };
+    if (annonceIds.length === 0) {
+      // Si aucune annonce n'a cette valeur d'attribut, retourner un tableau vide
+      return [];
     }
     
-    if (condition) {
-      attributeConditions.push(condition);
-    }
+    annonceIdsByAttribute.push(annonceIds);
   }
   
-  if (attributeConditions.length > 0) {
-    pipeline.push({
-      $match: {
-        $and: attributeConditions
-      }
-    });
+  // Trouver l'intersection de toutes les annonces (celles qui ont TOUS les attributs requis)
+  let commonAnnonceIds = annonceIdsByAttribute[0];
+  for (let i = 1; i < annonceIdsByAttribute.length; i++) {
+    commonAnnonceIds = commonAnnonceIds.filter(id => 
+      annonceIdsByAttribute[i].some(otherId => otherId.toString() === id.toString())
+    );
   }
-
-  // Étape 5: Nettoyer et populer
-  pipeline.push(
-    // Supprimer les champs temporaires
-    {
-      $unset: ['attributeValues', 'attributeMap']
-    },
+  
+  // console.log(`Annonces communes après intersection: ${commonAnnonceIds.length}`);
+  
+  if (commonAnnonceIds.length === 0) {
+    return [];
+  }
+  
+  // Ajouter les IDs d'annonces au filtre de base
+  const finalFilters = {
+    ...baseFilters,
+    _id: { $in: commonAnnonceIds }
+  };
+  
+  // Récupérer les annonces complètes
+  const annonces = await Annonce.find(finalFilters)
+    .populate('categorie_id')
+    .populate('sous_categorie_id')
+    .populate('user_id')
+    .sort({ date_publication: -1 });
     
-    // Lookups pour populer
-    {
-      $lookup: {
-        from: 'categories',
-        localField: 'categorie_id',
-        foreignField: '_id',
-        as: 'categorie_id'
-      }
-    },
-    {
-      $lookup: {
-        from: 'souscategories',
-        localField: 'sous_categorie_id',
-        foreignField: '_id',
-        as: 'sous_categorie_id'
-      }
-    },
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'user_id',
-        foreignField: '_id',
-        as: 'user_id'
-      }
-    },
-    
-    // Dé-nester les résultats
-    {
-      $addFields: {
-        categorie_id: { $arrayElemAt: ['$categorie_id', 0] },
-        sous_categorie_id: { $arrayElemAt: ['$sous_categorie_id', 0] },
-        user_id: { $arrayElemAt: ['$user_id', 0] }
-      }
-    },
-    
-    // Trier
-    { $sort: { date_publication: -1 } }
-  );
-
-  return await Annonce.aggregate(pipeline);
+  return annonces;
 };
 
 // Obtenir annonces avec filtres
@@ -215,6 +118,19 @@ router.get('/', async (req, res) => {
     let annonces;
     
     if (Object.keys(attributeFilters).length > 0) {
+      // console.log('=== BACKEND: Filtres attributs reçus ===');
+      // console.log('attributeFilters:', attributeFilters);
+      
+      // // Ajouter un log pour voir les valeurs stockées
+      // const AnnonceAttributeValue = require('../models/AnnonceAttributeValue');
+      // const testValues = await AnnonceAttributeValue.find({
+      //   attribute_id: Object.keys(attributeFilters)[0]
+      // }).limit(10);
+      
+      // console.log('Exemples de valeurs stockées pour cet attribut:');
+      // testValues.forEach(v => {
+      //   console.log(`- Annonce ${v.annonce_id}: "${v.value}" (type: ${typeof v.value})`);
+      // });
       // Utiliser la fonction de filtrage par attributs
       annonces = await filterAnnoncesByAttributes(filters, attributeFilters);
     } else {
@@ -751,11 +667,14 @@ router.get('/cities/all', async (req, res) => {
     };
     
     // Filtrer par catégorie si fournie
-    if (category) {
+    if (category && category !== 'null' && category !== 'undefined') {
       try {
-        matchFilter.categorie_id = new mongoose.Types.ObjectId(category);
+        // Vérifier que c'est un ObjectId valide
+        if (mongoose.Types.ObjectId.isValid(category)) {
+          matchFilter.categorie_id = new mongoose.Types.ObjectId(category);
+        }
       } catch (error) {
-        console.log('Invalid category ID');
+        // Ignorer silencieusement les IDs invalides
       }
     }
     

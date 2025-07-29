@@ -122,10 +122,10 @@ router.get('/suggestions', async (req, res) => {
       limit = 8 
     } = req.query;
 
-    console.log('🔍 AUTOCOMPLETE DEBUG:');
-    console.log('- query:', query);
-    console.log('- type:', type);
-    console.log('- category (string):', category);
+    // console.log('🔍 AUTOCOMPLETE DEBUG:');
+    // console.log('- query:', query);
+    // console.log('- type:', type);
+    // console.log('- category (string):', category);
 
     // Validation stricte de la query
     const trimmedQuery = query.trim();
