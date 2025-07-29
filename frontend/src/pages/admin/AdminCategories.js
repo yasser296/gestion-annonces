@@ -4,10 +4,13 @@ import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
 import usePopUp from '../../hooks/usePopUp';
+import SearchInput from '../../components/SearchInput';
 
 const AdminCategories = () => {
   const [categories, setCategories] = useState([]);
   const [sousCategories, setSousCategories] = useState([]);
+  const [filteredCategories, setFilteredCategories] = useState([]); // NOUVEAU
+  const [filteredSousCategories, setFilteredSousCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showSubCategoryModal, setShowSubCategoryModal] = useState(false);
@@ -15,7 +18,9 @@ const AdminCategories = () => {
   const [editingSubCategory, setEditingSubCategory] = useState(null);
   const [activeTab, setActiveTab] = useState('categories');
   const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState('');
   const { showPopup, PopUpComponent } = usePopUp();
+  const [categoryFilter, setCategoryFilter] = useState('');
 
   const [categoryFormData, setCategoryFormData] = useState({
     nom: '',
@@ -36,6 +41,77 @@ const AdminCategories = () => {
     fetchCategories();
     fetchSousCategories();
   }, []);
+
+  // NOUVEAU: Effets pour filtrer selon l'onglet actif et le terme de recherche
+  useEffect(() => {
+    filterData();
+  }, [categories, sousCategories, searchTerm, activeTab, categoryFilter]);
+
+  // NOUVEAU: Fonction de filtrage
+  const filterData = () => {
+    // Filtrer les catégories (pas de filtre par catégorie, juste la recherche)
+    if (!searchTerm.trim()) {
+      setFilteredCategories(categories);
+    } else {
+      const searchLower = searchTerm.toLowerCase();
+      const filteredCats = categories.filter(category => 
+        category.nom.toLowerCase().includes(searchLower)
+      );
+      setFilteredCategories(filteredCats);
+    }
+
+    // Filtrer les sous-catégories (recherche textuelle + filtre par catégorie)
+    let filteredSubCats = sousCategories;
+
+    // D'abord filtrer par catégorie si un filtre est sélectionné
+    if (categoryFilter) {
+      filteredSubCats = filteredSubCats.filter(subCategory => 
+        subCategory.categorie_id?._id === categoryFilter
+      );
+    }
+
+    // Puis filtrer par terme de recherche si il y en a un
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
+      filteredSubCats = filteredSubCats.filter(subCategory => 
+        subCategory.nom.toLowerCase().includes(searchLower) ||
+        (subCategory.categorie_id?.nom && subCategory.categorie_id.nom.toLowerCase().includes(searchLower))
+      );
+    }
+
+    setFilteredSousCategories(filteredSubCats);
+  };
+
+// 4. AJOUTER CES NOUVELLES FONCTIONS (après clearSearch, vers ligne ~70)
+const handleCategoryFilterChange = (categoryId) => {
+  setCategoryFilter(categoryId);
+};
+
+const resetAllFilters = () => {
+  setSearchTerm('');
+  setCategoryFilter('');
+};
+
+const hasActiveFilters = () => {
+  return searchTerm || categoryFilter;
+};
+
+  // NOUVEAU: Gérer le changement du terme de recherche
+  const handleSearchChange = (value) => {
+    setSearchTerm(value);
+  };
+
+  // NOUVEAU: Effacer la recherche
+  const clearSearch = () => {
+    setSearchTerm('');
+  };
+
+  // NOUVEAU: Changer d'onglet et reset la recherche
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setSearchTerm(''); // Reset la recherche quand on change d'onglet
+    setCategoryFilter('');
+  };
 
   const fetchCategories = async () => {
     try {
@@ -239,7 +315,7 @@ const AdminCategories = () => {
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8">
               <button
-                onClick={() => setActiveTab('categories')}
+                onClick={() => handleTabChange('categories')}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'categories'
                     ? 'border-orange-500 text-orange-600'
@@ -249,7 +325,7 @@ const AdminCategories = () => {
                 Catégories ({categories.length})
               </button>
               <button
-                onClick={() => setActiveTab('sous-categories')}
+                onClick={() => handleTabChange('sous-categories')}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'sous-categories'
                     ? 'border-orange-500 text-orange-600'
@@ -261,6 +337,81 @@ const AdminCategories = () => {
             </nav>
           </div>
         </div>
+
+        {/* Barre de recherche pour CATÉGORIES uniquement */}
+        {activeTab === 'categories' && (
+          <div className="mb-6">
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <div className="flex flex-col sm:flex-row gap-4 items-center">
+                <div className="flex-1">
+                  <SearchInput
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    placeholder="Rechercher une catégorie..."
+                    onClear={clearSearch}
+                  />
+                </div>
+                {searchTerm && (
+                  <div className="text-sm text-gray-600 font-secondary">
+                    {filteredCategories.length} catégorie{filteredCategories.length !== 1 ? 's' : ''} sur {categories.length}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Barre de recherche et filtres pour SOUS-CATÉGORIES uniquement */}
+        {activeTab === 'sous-categories' && (
+          <div className="mb-6">
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <div className="flex flex-col lg:flex-row gap-4 items-center">
+                {/* Barre de recherche */}
+                <div className="flex-1">
+                  <SearchInput
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    placeholder="Rechercher une sous-catégorie..."
+                    onClear={clearSearch}
+                  />
+                </div>
+                
+                {/* Filtre par catégorie */}
+                <div className="w-full lg:w-64">
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => handleCategoryFilterChange(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent transition-all"
+                  >
+                    <option value="">Toutes les catégories</option>
+                    {categories.map((category) => (
+                      <option key={category._id} value={category._id}>
+                        {category.icone} {category.nom}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                {/* Bouton reset */}
+                {hasActiveFilters() && (
+                  <button
+                    onClick={resetAllFilters}
+                    className="px-4 py-2 text-red-500 hover:text-red-600 transition text-sm whitespace-nowrap"
+                  >
+                    Effacer tout
+                  </button>
+                )}
+                
+                {/* Compteur de résultats */}
+                {hasActiveFilters() && (
+                  <div className="text-sm text-gray-600 font-secondary whitespace-nowrap">
+                    {filteredSousCategories.length} résultat{filteredSousCategories.length !== 1 ? 's' : ''} sur {sousCategories.length}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Contenu des onglets */}
         {activeTab === 'categories' && (
@@ -289,7 +440,7 @@ const AdminCategories = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {categories.map((category) => (
+                  {filteredCategories.map((category) => (
                     <tr key={category._id}>
                       <td className="px-6 py-4 whitespace-nowrap text-2xl">{category.icone}</td>
                       <td className="px-6 py-4 whitespace-nowrap font-medium">{category.nom}</td>
@@ -323,6 +474,20 @@ const AdminCategories = () => {
                 </tbody>
               </table>
             </div>
+            {/* NOUVEAU: Message si aucun résultat pour les catégories */}
+            {filteredCategories.length === 0 && searchTerm && (
+              <div className="text-center py-12">
+                <div className="text-gray-500 text-lg">
+                  Aucune catégorie trouvée pour "{searchTerm}"
+                </div>
+                <button
+                  onClick={clearSearch}
+                  className="mt-4 text-orange-500 hover:text-orange-600 transition"
+                >
+                  Effacer la recherche
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -352,7 +517,7 @@ const AdminCategories = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {sousCategories.map((subCategory) => (
+                  {filteredSousCategories.map((subCategory) => (
                     <tr key={subCategory._id}>
                       <td className="px-6 py-4 whitespace-nowrap text-2xl">{subCategory.icone}</td>
                       <td className="px-6 py-4 whitespace-nowrap font-medium">{subCategory.nom}</td>
@@ -389,6 +554,25 @@ const AdminCategories = () => {
                 </tbody>
               </table>
             </div>
+            {/* NOUVEAU: Message si aucun résultat pour les sous-catégories */}
+            {filteredSousCategories.length === 0 && hasActiveFilters() && (
+              <div className="text-center py-12">
+                <div className="text-gray-500 text-lg mb-4">
+                  {searchTerm && categoryFilter 
+                    ? `Aucune sous-catégorie trouvée pour "${searchTerm}" dans cette catégorie`
+                    : searchTerm 
+                      ? `Aucune sous-catégorie trouvée pour "${searchTerm}"`
+                      : 'Aucune sous-catégorie dans cette catégorie'
+                  }
+                </div>
+                <button
+                  onClick={resetAllFilters}
+                  className="text-orange-500 hover:text-orange-600 transition"
+                >
+                  Effacer tous les filtres
+                </button>
+              </div>
+            )}
           </div>
         )}
 

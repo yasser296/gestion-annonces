@@ -100,7 +100,7 @@ const initAttributes = async () => {
           {
             nom: 'Année',
             type: 'number',
-            placeholder: 'Année de fabrication',
+            placeholder: 'Nombre d\'année d\'utilisation',
             required: true,
             ordre: 2
           },
