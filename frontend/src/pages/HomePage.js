@@ -6,6 +6,9 @@ import SearchResultsGrid from '../components/SearchResultsGrid';
 import AutocompleteInput from '../components/AutocompleteInput';
 import useAutocomplete from '../hooks/useAutocomplete';
 import { useAuth } from '../contexts/AuthContext';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
+
 
 const HomePage = () => {
   const [annonces, setAnnonces] = useState([]);
@@ -277,6 +280,9 @@ const HomePage = () => {
                     className="py-4 bg-white/90 backdrop-blur-sm border-white/30 focus:bg-white focus:ring-orange-500/50"
                   />
                 </div>
+                <div className="flex gap-3">
+
+                 
                 {/* Bouton recherche */}
                 <button
                   onClick={() => handleSearch()}
@@ -292,6 +298,20 @@ const HomePage = () => {
                     'Rechercher'
                   )}
                 </button>
+
+                {/* Bouton reset petit */}
+                {isFiltered && (
+                  <button
+                    onClick={handleResetFilters}
+                    className="px-4 py-4 bg-white/20 text-white rounded-xl hover:bg-white/30 transition-all transform hover:scale-105 flex items-center justify-center"
+                    title="Effacer tous les filtres"
+                  >
+                   <FontAwesomeIcon icon={faArrowsRotate} />
+                  </button>
+                )}
+               
+              </div>
+
               </div>
             </div>
           </div>
