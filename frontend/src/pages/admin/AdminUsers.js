@@ -8,16 +8,21 @@ import { faEdit, faTrash, faPlus, faDownload, faFileExport } from '@fortawesome/
 import usePopUp from '../../hooks/usePopUp';
 import PasswordGenerator from '../../components/PasswordGenerator';
 import { useNotification } from '../../contexts/ToastContext'; // NOUVEAU
+import SearchInput from '../../components/SearchInput';
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingUser, setEditingUser] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const { showPopup, PopUpComponent } = usePopUp();
-  const location = useLocation(); // Ajout
-  const toast = useNotification(); // NOUVEAU
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(20);
+  const location = useLocation();
+  const toast = useNotification();
   
   // États pour le formulaire d'édition
   const [editFormData, setEditFormData] = useState({
@@ -63,6 +68,39 @@ const AdminUsers = () => {
     fetchUsers();
     calculateStats();
   }, []);
+
+   // NOUVEAU: Effet pour filtrer les utilisateurs quand le terme de recherche change
+  useEffect(() => {
+    filterUsers();
+  }, [users, searchTerm]);
+
+  // NOUVEAU: Fonction de filtrage
+  const filterUsers = () => {
+    if (!searchTerm.trim()) {
+      setFilteredUsers(users);
+      setCurrentPage(1); // Reset à la première page
+      return;
+    }
+
+    const filtered = users.filter(user => 
+      user.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.telephone && user.telephone.includes(searchTerm))
+    );
+    
+    setFilteredUsers(filtered);
+    setCurrentPage(1); // Reset à la première page lors d'une nouvelle recherche
+  };
+
+  // NOUVEAU: Gérer le changement du terme de recherche
+  const handleSearchChange = (value) => {
+    setSearchTerm(value);
+  };
+
+  // NOUVEAU: Effacer la recherche
+  const clearSearch = () => {
+    setSearchTerm('');
+  };
 
   const fetchUsers = async () => {
     try {
@@ -266,6 +304,14 @@ const AdminUsers = () => {
     return new Date(dateString).toLocaleDateString('fr-FR');
   };
 
+  // NOUVEAU: Pagination pour les résultats filtrés
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentUsers = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -318,6 +364,27 @@ const AdminUsers = () => {
           </div>
         </div>
 
+        {/* NOUVEAU: Barre de recherche */}
+        <div className="mb-6">
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="flex flex-col sm:flex-row gap-4 items-center">
+              <div className="flex-1">
+                <SearchInput
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  placeholder="Rechercher par nom d'utilisateur, email ou téléphone..."
+                  onClear={clearSearch}
+                />
+              </div>
+              {searchTerm && (
+                <div className="text-sm text-gray-600 font-secondary">
+                  {filteredUsers.length} résultat{filteredUsers.length !== 1 ? 's' : ''} sur {users.length}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Tableau des utilisateurs */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <table className="min-w-full ui-text">
@@ -344,7 +411,7 @@ const AdminUsers = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {users.map((user) => (
+              {filteredUsers.map((user) => (
                 <tr key={user._id} 
                   className="hover:bg-gray-50 cursor-pointer transition-colors"
                   onClick={(e) => {
@@ -441,6 +508,30 @@ const AdminUsers = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Message si aucun résultat */}
+        {filteredUsers.length === 0 && searchTerm && (
+          <div className="text-center py-12">
+            <div className="text-gray-500 text-lg">
+              Aucun utilisateur trouvé pour "{searchTerm}"
+            </div>
+            <button
+              onClick={clearSearch}
+              className="mt-4 text-orange-500 hover:text-orange-600 transition"
+            >
+              Effacer la recherche
+            </button>
+          </div>
+        )}
+
+        {/* Message si pas d'utilisateurs du tout */}
+        {users.length === 0 && !loading && (
+          <div className="text-center py-12">
+            <div className="text-gray-500 text-lg">
+              Aucun utilisateur dans la base de données
+            </div>
+          </div>
+        )}
 
         {/* NOUVEAU: Modal de création avec PasswordGenerator */}
         {showCreateModal && (
